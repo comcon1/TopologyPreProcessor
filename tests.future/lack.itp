@@ -1,0 +1,6 @@
+; TPP topology lack
+#define dfTPP_ang_159   1 0.00 0.00 ;2
+; |    CM |    CT |   OXR
+#define dfTPP_ang_160   1 0.00 0.00 ;2 
+; |    HC |    CT |   OXR
+

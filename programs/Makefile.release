@@ -1,0 +1,34 @@
+LIBS         = -lboost_program_options -lopenbabel -lmysqlpp
+LDFLAGS      = -L/usr/lib/mysql
+CXXFLAGS     = -pipe -O0 -march=nocona
+CXXINC       = -I../include -I/usr/include/openbabel-2.0\
+ -I/usr/include/mysql++ -I/usr/include/mysql\
+ -DBUILD_DATE=\"`date +"%d-%m-%Y_%X"`\"
+CC           = gcc
+CXX          = g++ $(CXXFLAGS) $(CXXINC)
+LD           = $(CXX) $(LDFLAGS)
+WINPWD       = .
+OBJDIR       = ../objects.release
+
+all: tpprenum tppmktop tppreadbonds
+
+tpprenum: tpprenum.o $(OBJDIR)/strutil.o $(OBJDIR)/global.o $(OBJDIR)/pdbutils.o $(OBJDIR)/topio.o ../include/global.hpp ../include/pdbutils.hpp ../include/topio.hpp
+	$(LD) -o tpprenum tpprenum.o $(OBJDIR)/global.o $(OBJDIR)/topio.o $(OBJDIR)/pdbutils.o $(OBJDIR)/strutil.o $(LIBS)
+
+tpprenum.o: tpprenum.cpp
+	$(CXX) -o tpprenum.o -c $(WINPWD)/tpprenum.cpp
+
+tppmktop: tppmktop.cpp $(OBJDIR)/global.o $(OBJDIR)/db_scanner.o $(OBJDIR)/smartfit.o $(OBJDIR)/db_bonds.o $(OBJDIR)/topio.o $(OBJDIR)/strutil.o ../include/global.hpp ../include/db_scanner.hpp ../include/topio.hpp
+	$(CXX) $(LDFLAGS) -o tppmktop tppmktop.cpp $(OBJDIR)/global.o $(OBJDIR)/topio.o $(OBJDIR)/db_bonds.o $(OBJDIR)/smartfit.o $(OBJDIR)/strutil.o $(OBJDIR)/db_scanner.o $(LIBS)
+tppreadbonds: tppreadbonds.cpp $(OBJDIR)/calc.o $(OBJDIR)/hessian_accept.o $(OBJDIR)/global.o $(OBJDIR)/topio.o $(OBJDIR)/strutil.o ../include/global.hpp ../include/topio.hpp ../include/hessian_accept.hpp
+	$(CXX) $(LDFLAGS) -o tppreadbonds tppreadbonds.cpp $(OBJDIR)/calc.o $(OBJDIR)/hessian_accept.o $(OBJDIR)/global.o $(OBJDIR)/topio.o $(OBJDIR)/db_bonds.o $(OBJDIR)/smartfit.o $(OBJDIR)/strutil.o $(OBJDIR)/db_scanner.o $(LIBS) -llapack
+
+$(OBJDIR)/*.o:
+	cd .. && make -f Makefile.release && cd tests
+install: 
+	ln -s $(PWD)/tpprenum /usr/local/bin/tpprenum
+	ln -s $(PWD)/tppmktop /usr/local/bin/tppmktop
+	ln -s $(PWD)/tppreadbonds /usr/local/bin/tppreadbonds
+clean: 
+	rm -f tpprenum tppmktop tppreadbonds tpprenum.o tppmktop.o tppreadbonds.o
+

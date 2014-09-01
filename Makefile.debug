@@ -1,0 +1,53 @@
+LIBS         = -lstdc++ -lboost_program_options_d -lopenbabel -lmysqlpp
+LDFLAGS      =
+CXXFLAGS     = -O0 -ggdb
+CXXINC       = -Iinclude -I/usr/include/openbabel-2.0\
+ -I/usr/include/mysql++ -I/usr/include/mysql\
+ -DBUILD_DATE=\"`date +"%d-%m-%Y_%X"`\"
+CC           = gcc
+CXX          = g++ $(CXXFLAGS) $(CXXINC)
+LD           = $(CXX) $(LDFLAGS)
+
+WINPWD       = .
+OBJDIR       = .o.d
+DOCDIR       = docs
+DOCGEN       = cpp2latex -f
+
+all: $(OBJDIR)/global.o $(OBJDIR)/calc.o $(OBJDIR)/topio.o $(OBJDIR)/pdbutils.o \
+	$(OBJDIR)/strutil.o $(OBJDIR)/hessian_accept.o $(OBJDIR)/smartfit.o \
+	$(OBJDIR)/db_scanner.o $(OBJDIR)/db_bonds.o .programs
+
+.tests:
+	make -C tests.future
+
+.programs:
+	make -C programs -f Makefile.debug
+
+$(OBJDIR)/global.o: global.cpp include/global.hpp
+	$(CXX) -o $(OBJDIR)/global.o -c $(WINPWD)/global.cpp
+$(OBJDIR)/calc.o: include/calc.hpp calc.cpp
+	$(CXX) -o $(OBJDIR)/calc.o -c $(WINPWD)/calc.cpp
+$(OBJDIR)/topio.o: topio.cpp include/topio.hpp
+	$(CXX) -o $(OBJDIR)/topio.o -c $(WINPWD)/topio.cpp
+$(OBJDIR)/db_scanner.o: db_scanner.cpp include/db_scanner.hpp $(OBJDIR)/global.o
+	$(CXX) -o $(OBJDIR)/db_scanner.o -c $(WINPWD)/db_scanner.cpp
+$(OBJDIR)/db_bonds.o: db_bonds.cpp include/db_scanner.hpp $(OBJDIR)/global.o
+	$(CXX) -o $(OBJDIR)/db_bonds.o -c $(WINPWD)/db_bonds.cpp
+$(OBJDIR)/smartfit.o: smartfit.cpp include/db_scanner.hpp $(OBJDIR)/global.o
+	$(CXX) -o $(OBJDIR)/smartfit.o -c $(WINPWD)/smartfit.cpp
+$(OBJDIR)/pdbutils.o: pdbutils.cpp include/pdbutils.hpp $(OBJDIR)/global.o
+	$(CXX) -o $(OBJDIR)/pdbutils.o -c $(WINPWD)/pdbutils.cpp
+$(OBJDIR)/strutil.o: strutil.cpp include/strutil.h
+	$(CXX) -o $(OBJDIR)/strutil.o -c $(WINPWD)/strutil.cpp
+$(OBJDIR)/hessian_accept.o: hessian_accept.cpp include/hessian_accept.hpp
+	$(CXX) -o $(OBJDIR)/hessian_accept.o -c $(WINPWD)/hessian_accept.cpp
+
+
+$(DOCDIR)/global.tex: include/global.hpp
+	$(DOCGEN) include/global.hpp > $(DOCDIR)/global.tex
+
+clean:	.clean-programs
+	rm -f $(OBJDIR)/*.o 
+
+.clean-programs:
+	make -C programs clean -f Makefile.debug

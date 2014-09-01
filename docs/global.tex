@@ -1,0 +1,174 @@
+\documentclass[a4paper,10pt]{article}
+\usepackage[T1]{fontenc}
+\usepackage{isolatin1,german}
+\parindent0cm
+\parskip1.5ex
+\begin{document}
+{\ttfamily \raggedright \small
+using\ std::pair;\\
+using\ std::map;\\
+using\ std::vector;\\
+using\ std::string;\\
+using\ std::fstream;\\
+using\ std::cout;\\
+using\ std::cerr;\\
+using\ std::flush;\\
+using\ std::endl;\\
+using\ std::auto\underline\ ptr;\\
+using\ boost::format;\\
+using\ boost::numeric\underline\ cast;\\
+using\ boost::lexical\underline\ cast;\\
+using\ boost::bad\underline\ lexical\underline\ cast;\\
+using\ namespace\ boost::posix\underline\ time;\\
+\ \\
+\#define TPP\underline\ GMX\underline\ EXTERNAL\\
+\ \\
+\#define TPP\underline\ MAX\underline\ ATOM\underline\ NUM\ 200\\
+\#define tpp\underline\ index\ unsigned\ char\\
+\#define TPP\underline\ MAX\underline\ FREQ\underline\ NUM\ 600\\
+\ \\
+\#ifdef TPP\underline\ UNIT\underline\ TEST\\
+\ \\
+\ \#define BOOST\underline\ TEST\underline\ BUILD\underline\ INFO\ yes\\
+\ \#define BOOST\underline\ TEST\underline\ REPORT\underline\ LEVEL\ detailed\\
+\ \#define BOOST\underline\ TEST\underline\ REPORT\underline\ FORMAT\ HRF\\
+\ \\
+\ \ \ \ \#include\ <{}boost/test/unit\underline\ test.hpp>{}\\
+\ \ \ \ \#include\ <{}boost/bind.hpp>{}\\
+\ \ \ \ \#include\ <{}boost/test/framework.hpp>{}\\
+\ \ \ \ \#include\ <{}boost/test/unit\underline\ test\underline\ log.hpp>{}\\
+\ \ \ \ \#include\ <{}boost/test/results\underline\ collector.hpp>{}\\
+\ \ \ \ \#include\ <{}boost/test/results\underline\ reporter.hpp>{}\\
+\ \ \ \ \#include\ <{}boost/test/test\underline\ tools.hpp>{}\\
+\ \ \ \ \ \ \ using\ boost::unit\underline\ test::test\underline\ suite;\\
+\ \ \ \ \ \ \ using\ boost::bind;\\
+\ \ \ \ \ \ \ using\ boost::ref;\\
+\ \ \ \ \ \ \ namespace\ ut\ =\ boost::unit\underline\ test;\ \\
+\ \#define \underline\ BLOB\underline\ \ $\backslash$\\
+\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ perror("{}UNIT\underline\ TEST\ is\ turned\ on\ so\ you\ should\ make\ all\ the\ BLOBS..$\backslash$n"{});\ $\backslash$\\
+\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ assert(0);\\
+\ \ \ \ \ \ \ \\
+\#else\\
+\ \#include\ <{}cassert>{}\\
+\ \#define \underline\ BLOB\underline\ (x)\ cout\ <{}<{}\ "{}[\ UNDER\ CONSTRUCTION\ -{}\ "{}\ <{}<{}\ \#x << " ]"{}\ <{}<{}\ endl;\\
+\ \textsl{//\ overloading\ of\ BOOST\underline\ TEST\ operators}\\
+\ \#define BOOST\underline\ CHECK(x)\ if\ (!\ (\ x\ )\ )\ $\backslash$\\
+\ \ \ \ \ \ printf("{}CHECK\ failed\ at\ procedure\ in\ \%s\ at\ line\ \%d$\backslash$n\ -{}-{}>{}\ \%s"{},\ $\backslash$\\
+\ \ \ \ \ \ \ \ \ \ \ \ \ \ \underline\ \underline\ FILE\underline\ \underline\ ,\ \underline\ \underline\ LINE\underline\ \underline\ ,\ \#x);\\
+\ \#define BOOST\underline\ REQUIRE(x)\ assert\ (\ x\ );\\
+\ \#define BOOST\underline\ FAIL(x)\ perror(\#x); abort();\\
+\ \\
+\ \#ifdef ALLOW\underline\ WARNINGS\\
+\ \ \#define BOOST\underline\ WARN(x)\ perror(\#x);\\
+\ \#else\\
+\ \ \#define BOOST\underline\ WARN(x)\ ((void)0)\\
+\ \#endif\\
+\ \\
+\#endif\\
+\ \\
+\ \\
+\textsl{//\ atom\ and\ atom\underline\ array\ definition}\\
+\textsl{//\ typedef\ struct\ \{\ double\ x,y,z;\ \}\ tpp\underline\ point;}\\
+typedef\ ublas::bounded\underline\ vector<{}double,3>{}\ tpp\underline\ point;\\
+\ \\
+struct\ tpp\underline\ atom\ \{\\
+\ \ tpp\underline\ index\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ index;\\
+\ \ string\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ atom\underline\ type;\\
+\ \ string\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ atom\underline\ name;\\
+\ \ string\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ res\underline\ name;\\
+\ \ tpp\underline\ point\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ coord;\\
+\ \ tpp\underline\ index\ \ \ \ \ \ \ \ \ \ connects[4];\\
+\ \ unsigned\ char\ \ \ \ \ num\underline\ connects;\\
+\ \ double\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ charge;\\
+\ \ double\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ mass;\\
+\ \ tpp\underline\ index\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ c\underline\ gnr;\\
+\};\\
+\ \\
+typedef\ vector<{}tpp\underline\ atom>{}\ tpp\underline\ atom\underline\ array;\\
+\ \\
+\textsl{//\ I-{}O\ format}\\
+typedef\ enum\ \{\ TPP\underline\ IF\underline\ PDB=0,\ TPP\underline\ IF\underline\ GRO=1,\ TPP\underline\ IF\underline\ G96=2,\ \\
+\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ TPP\underline\ IF\underline\ GAMOPT=3,\ TPP\underline\ IF\underline\ GAMHESS=4,\ TPP\underline\ IF\underline\ GAMSP=5\ \}\ \\
+\ \ \ \ \ \ \ \ tpp\underline\ iformat;\\
+typedef\ enum\ \{\ TPP\underline\ OF\underline\ PDB=0,\ TPP\underline\ OF\underline\ GRO=2,\ TPP\underline\ OF\underline\ G96=3,\\
+\ \ \ \ \ \ \ \ \ \ \ \ \ \ TPP\underline\ OF\underline\ GAMIN=4\ \};\\
+\ \\
+\textsl{//\ internal\ coordinates}\\
+typedef\ enum\ \{TPP\underline\ IC\underline\ BON=1,\ TPP\underline\ IC\underline\ ANG=2,\ TPP\underline\ IC\underline\ DIH=3,\ TPP\underline\ IC\underline\ CHIR=4\}\ tpp\underline\ int\underline\ coord\underline\ type;\\
+\ \\
+typedef\ struct\ \{\ \\
+\ \ tpp\underline\ int\underline\ coord\underline\ type\ type;\\
+\ \ tpp\underline\ index\ i,j,k,l;\\
+\ \ string\ defname;\\
+\}\ tpp\underline\ int\underline\ coord;\\
+\ \\
+typedef\ vector<{}tpp\underline\ int\underline\ coord>{}\ tpp\underline\ internals\underline\ array;\\
+\ \\
+\textsl{//\ topology\ parameters\ definition}\\
+typedef\ enum\ \{\ TPP\underline\ TTYPE\underline\ BON=1,\ TPP\underline\ TTYPE\underline\ ANG=2,\ TPP\underline\ TTYPE\underline\ RBDIH=3,\ \\
+\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ TPP\underline\ TTYPE\underline\ IMPDIH=4,TPP\underline\ TTYPE\underline\ SYMDIH=5,\ TPP\underline\ TTYPE\underline\ PAIR=6,\\
+\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ TPP\underline\ TTYPE\underline\ EXCL=7\ \}\ tpp\underline\ ttype\underline\ type;\\
+\ \\
+typedef\ struct\ \{\\
+\ \ string\ defname;\\
+\ \ tpp\underline\ ttype\underline\ type\ \ type;\\
+\ \ tpp\underline\ index\ i,j,k,l;\ \ \\
+\ \ double\ c0,c1,c2,c3,c4,c5;\\
+\}\ tpp\underline\ top\underline\ coord;\\
+\ \\
+typedef\ vector<{}tpp\underline\ top\underline\ coord>{}\ tpp\underline\ top\underline\ array;\\
+\ \\
+\textsl{//\ internal\ topology\ definition}\\
+struct\ tpp\underline\ topology\ \{\\
+\ \ tpp\underline\ top\underline\ array\ parameters;\\
+\ \ tpp\underline\ atom\underline\ array\ atoms;\\
+\ \\
+\ \ unsigned\ char\ nrexcl;\\
+\ \ string\ \ \ \ \ ffinclude;\\
+\ \ string\ \ \ \ \ \ res\underline\ name;\\
+\};\\
+\ \\
+\textsl{//\ optimize\ constant\ list}\\
+typedef\ vector<{}double$\ast$>{}\ \ tpp\underline\ optimize\underline\ list;\\
+\ \\
+\textsl{//\ parameters\ for\ everything}\\
+typedef\ map<{}string,\ string>{}\ tpp\underline\ input\underline\ params;\\
+typedef\ pair<{}string,string>{}\ tpp\underline\ input\underline\ param;\\
+\textsl{//\ fast\ work\ with\ params}\\
+\#define PARAM\underline\ EXISTS(pars,x)\ \ \ \ (pars.find(x)\ ==\ pars.end())\\
+\#define PARAM\underline\ READ(pars,x)\ \ \ \ \ \ (PARAM\underline\ EXISTS(pars,x)\ ?\ ((pars.find(x))-{}>{}second)\ :\ "{}"{})\\
+\#define PARAM\underline\ ADD(pars,par,val)\ BOOST\underline\ CHECK(\ (pars.insert(tpp\underline\ input\underline\ param(par,val))).second\ )\\
+\#define PARAM\underline\ DEL(pars,par)\ \ \ \ \ BOOST\underline\ CHECK(PARAM\underline\ EXISTS(pars,par));\ pars.erase(\ pars.find(par)\ )\\
+\ \\
+\textsl{//\ -{}-{}\ for\ example\ for\ command\ line\ :)}\\
+extern\ tpp\underline\ input\underline\ params\ cmndline;\\
+\ \\
+class\ tpp\underline\ runtime\ \{\\
+\ \ private:\\
+\ \ \ \ FILE\ $\ast$cash;\\
+\ \ \ \ FILE\ $\ast$log;\\
+\ \ public:\\
+\ \ \ \ tpp\underline\ runtime(const\ char\ $\ast$,\ const\ char\ $\ast$);\ \textsl{//\ opening\ files\ log\ \&\ cash}\\
+\ \ \ \ void\ log\underline\ write(const\ char\ $\ast$);\ \textsl{//\ string\ writing\ to\ log}\\
+\ \ \ \ void\ log\underline\ write(string\ s)\ \{log\underline\ write(s.c\underline\ str());\}\\
+\ \ \ \ void\ cash\underline\ write(const\ char\ $\ast$,\ unsigned);\ \textsl{//\ binary\ writing\ to\ cash}\\
+\ \ \ \ \textasciitilde tpp\underline\ runtime();\\
+\};\\
+extern\ tpp\underline\ runtime\ runtime;\\
+\ \\
+class\ tpp\underline\ exception\ \{\\
+\ \ private:\\
+\ \ \ string\ mesg;\\
+\ \ \ tpp\underline\ input\underline\ params\ pars;\\
+\ \ public:\\
+\ \ \ tpp\underline\ exception():\ mesg("{}Undefined\ exception."{})\ \{;\}\\
+\ \ \ tpp\underline\ exception(const\ char\ $\ast$,\ tpp\underline\ input\underline\ params\ \&);\\
+\ \ \ tpp\underline\ exception(const\ char\ $\ast$s):\ mesg(s)\ \{;\}\\
+\};\\
+\ \\
+\ \\
+\ \\
+ }
+\normalfont\normalsize
+
+\end{document}
