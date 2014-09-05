@@ -3,7 +3,6 @@
 
 #define PROG_NAME "TPP-0.5 (testing version)"
 #define VERSION "0.5"
-#define BABEL_DIR "/usr/local/share/openbabel/2.2.0"
 
 // system
 #include <unistd.h>
@@ -125,9 +124,11 @@ typedef ublas::bounded_vector<double,3> t_point;
 
 struct t_atom {
   TPP_INDEX                index; // place in vector array
+  TPP_INDEX             oldindex;
   string               atom_type; 
   string              atom_type2;
   string               atom_name;
+  string               old_aname;
   unsigned char          ncharge; // nuclear charge
   string                res_name;
   string                 comment;
@@ -138,6 +139,7 @@ struct t_atom {
   double                  charge;
   double                    mass;
   TPP_INDEX                c_gnr;
+  string                  qmname;
 };
 
 typedef multi_index_container<
@@ -282,11 +284,15 @@ class t_exception {
    t_exception(const char *s): mesg(s) {;}
    virtual string operator [] (const char *s) const { return string(PARAM_READ(pars,s)); }
    virtual string operator [] (const string &s) const { return string(PARAM_READ(pars,s)); }
+
+   // rebuild all the files if you change pure-virtual function
    virtual void fix_log() const {
      std::ostringstream os;
      os << "TPP catched exception!\n";
      os << format("***** from %1% -> %2%\n") % PARAM_READ(pars, "classname") % PARAM_READ(pars, "procname");
      os << format("***** ===[ %1% ]===\n") % PARAM_READ(pars, "error");
+     if (PARAM_EXISTS(pars, "line"))
+         os << "***** parsing line: #" << PARAM_READ(pars, "line") << endl;
      os << "***** " << mesg << endl;
      runtime.log_write(os.str()); 
    }

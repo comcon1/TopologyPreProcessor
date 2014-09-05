@@ -10,28 +10,32 @@
  #undef WIN32
 #endif
 
+#define STRINGIZE(x) STRINGIZE_A(x)
+#define STRINGIZE_A(x) #x
+#define SPIRIT_HOME_() SPIRIT_HOME
+
 #include "global.hpp"
 #include <boost/type_traits.hpp>
-#include <boost/spirit/core.hpp>
-#include <boost/spirit/iterator/file_iterator.hpp>
-#include <boost/spirit/dynamic/stored_rule.hpp>
-#include <boost/spirit/actor/ref_value_actor.hpp>
-#include <boost/spirit/actor/assign_actor.hpp>
-#include <boost/spirit/actor/increment_actor.hpp>
-#include <boost/spirit/actor/push_back_actor.hpp>
-#include <boost/spirit/actor/insert_key_actor.hpp>
-#include <boost/spirit/actor/clear_actor.hpp>
-#include <boost/spirit/error_handling/exceptions.hpp>
-#include <boost/spirit/utility.hpp>
-#include <boost/spirit/utility/chset.hpp>
-#include <boost/spirit/utility/chset_operators.hpp>
+#include STRINGIZE(SPIRIT_HOME_()/core.hpp)
+#include STRINGIZE(SPIRIT_HOME_()/iterator/file_iterator.hpp)
+#include STRINGIZE(SPIRIT_HOME_()/dynamic/stored_rule.hpp)
+#include STRINGIZE(SPIRIT_HOME_()/actor/ref_value_actor.hpp)
+#include STRINGIZE(SPIRIT_HOME_()/actor/assign_actor.hpp)
+#include STRINGIZE(SPIRIT_HOME_()/actor/increment_actor.hpp)
+#include STRINGIZE(SPIRIT_HOME_()/actor/push_back_actor.hpp)
+#include STRINGIZE(SPIRIT_HOME_()/actor/insert_key_actor.hpp)
+#include STRINGIZE(SPIRIT_HOME_()/actor/clear_actor.hpp)
+#include STRINGIZE(SPIRIT_HOME_()/error_handling/exceptions.hpp)
+#include STRINGIZE(SPIRIT_HOME_()/utility.hpp)
+#include STRINGIZE(SPIRIT_HOME_()/utility/chset.hpp)
+#include STRINGIZE(SPIRIT_HOME_()/utility/chset_operators.hpp)
 #include <set>
 #include <boost/lexical_cast.hpp>
 
 
 using boost::lexical_cast;
 using boost::bad_lexical_cast;
-using namespace boost::spirit;
+using namespace boost::spirit::classic;
 
 namespace lex {
   using tpp::t_atom_array;

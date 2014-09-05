@@ -25,16 +25,20 @@ int main(int argc, char * argv[]) {
  desc.add_options()
 	 ("input,i",p_o::value<std::string>(),"Input filename (any format)")
 	 ("output,o",p_o::value<std::string>(),"Output filename (any format)")
+         ("hex,x","Hexadecimal numbering of main chain")
 	 ("verbose,v","Verbose mode")
+	 ("ignore-index,g","Ignore index")
 	 ("help,h", "Print this message")
  ;
  try {
     try { // блок вылавливания исключений boost::program_options
  	p_o::store(p_o::parse_command_line(argc, argv, desc), vars);
 	p_o::notify(vars);
-    if (vars.count("verbose") > 1) throw 1;
+    if ( (vars.count("verbose") > 1) || (vars.count("ignore-index") > 1) ) throw 1;
 
     PARAM_ADD(cmdline, "verbose_flag", vars.count("verbose") ? "on" : "off" );
+    PARAM_ADD(cmdline, "hex_flag",     vars.count("hex") ? "on" : "off" );
+    PARAM_ADD(cmdline, "ignore_index", vars.count("ignore-index") ? "on" : "off" );
     
 	if (vars.count("help") == 1) helpscreen();
 	if (vars.count("input") == 1) {
@@ -143,12 +147,12 @@ cout << format ("\
    tpp::t_topology TOP;
    tpp::load_struct (TOP, iform, PARAM_READ(cmdline, "input_file").c_str() );
    ublas::vector<unsigned> tail1 = tpp::generate_long_tail1(TOP.mol);
-   TOP.atoms = tpp::mol_renum(TOP.mol, TOP.atoms, tail1 );
+   TOP.atoms = tpp::mol_renum1(TOP.mol, TOP.atoms, tail1 );
    tpp::save_struct (TOP, oform, PARAM_READ(cmdline, "output_file").c_str() ); 
  } catch (tpp::t_exception e) {
-   cerr << "TPP_EXCEPTION FROM: " << e["procname"] << endl;
-   cerr << "With following error: " << e["error"] << endl;
-   cerr << "more info see in log-file." << endl;
+   cerr << "  TPP_EXCEPTION FROM: " << e["procname"] << endl;
+   cerr << "  With following error: " << e["error"] << endl;
+   cerr << "  more info see in log-file." << endl;
    return 2;
  }
  cout << "TPPRENUM finished normally!" << endl;
@@ -166,6 +170,9 @@ void helpscreen()
            THE PART OF TOPOLOGY PREPROCESSOR PROJECT                  \n\
         ---      (comcon1, zoidberg, piton)       ---                 \n\
   version %1$-3s, compiled at %2$-8s on GCC %3$s.\n\
+  BOOST version:  %4$-8s \n\
+  OpenBabel version: %5$-8s \n\
+  OpenBabel share data: %6$-8s \n\
 \n\
                                 TPPRENUM\n\
     PDB renumbering utility. The renumbering relise on the longest  \n\
@@ -175,13 +182,16 @@ void helpscreen()
 \n\
  USAGE: \n\
  tpprenum -i <input> -o <output> [-v]   \n\
-      -i  the name of input-file, in PDB or GRO/G96 format.           \n\
-      -o  the name of output-file, contained prepared structure.      \n\
-      -v  verbose mode, typing more information during the execution  \n\
+      -i  the name of (I)nput-file, in PDB or GRO/G96 format.           \n\
+      -o  the name of (O)utput-file, contained prepared structure.      \n\
+      -v  (V)erbose mode, typing more information during the execution\n\
+      -x  he(X)adecimal numbering of main (heavy-atom) chain          \n\
+      -g  i(G)nore index in PDB. Use sequental numeration instead.    \n\
       -h  print this message.                                         \n\
 \n\
 --------------------------------*****---------------------------------\n\
-") % VERSION % BUILD_DATE % __VERSION__ << endl;
+") % VERSION % BUILD_DATE % __VERSION__ % BOOST_LIB_VERSION 
+   % BABEL_VERSION % BABEL_DATADIR << endl;
  throw 0;
 }
 

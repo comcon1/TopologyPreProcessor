@@ -13,28 +13,30 @@ OBJDIR       = ../.o.d
 EXEDIR	     = ../bin
 
 all: $(EXEDIR)/tpprenum_d $(EXEDIR)/tppmktop_d 
-	# tppreadbonds_d
+
+# temporarily turned off
+# tppreadbonds_d
 
 $(EXEDIR)/tpprenum_d: $(OBJDIR)/tpprenum_d.o $(OBJDIR)/strutil.o $(OBJDIR)/global.o $(OBJDIR)/pdbutils.o $(OBJDIR)/topio.o ../include/global.hpp ../include/pdbutils.hpp ../include/topio.hpp
-	$(LD) -o tpprenum_d $(OBJDIR)/tpprenum_d.o $(OBJDIR)/global.o $(OBJDIR)/topio.o $(OBJDIR)/pdbutils.o $(OBJDIR)/strutil.o $(LIBS)
+	$(LD) -o $(EXEDIR)/tpprenum_d $(OBJDIR)/tpprenum_d.o $(OBJDIR)/global.o $(OBJDIR)/topio.o $(OBJDIR)/pdbutils.o $(OBJDIR)/strutil.o $(LIBS)
 
 $(OBJDIR)/tpprenum_d.o: tpprenum.cpp
 	$(CXX) -o $(OBJDIR)/tpprenum_d.o -c $(WINPWD)/tpprenum.cpp
 
 $(EXEDIR)/tppmktop_d: $(OBJDIR)/tppmktop_d.o $(OBJDIR)/global.o $(OBJDIR)/db_scanner.o $(OBJDIR)/smartfit.o $(OBJDIR)/db_bonds.o $(OBJDIR)/topio.o $(OBJDIR)/strutil.o ../include/global.hpp ../include/db_scanner.hpp ../include/topio.hpp
-	$(CXX) $(LDFLAGS) -o tppmktop_d $(OBJDIR)/tppmktop_d.o $(OBJDIR)/global.o $(OBJDIR)/db_scanner.o $(OBJDIR)/smartfit.o $(OBJDIR)/db_bonds.o $(OBJDIR)/topio.o $(OBJDIR)/strutil.o $(LIBS)
+	$(CXX) $(LDFLAGS) -o $(EXEDIR)/tppmktop_d $(OBJDIR)/tppmktop_d.o $(OBJDIR)/global.o $(OBJDIR)/db_scanner.o $(OBJDIR)/smartfit.o $(OBJDIR)/db_bonds.o $(OBJDIR)/topio.o $(OBJDIR)/strutil.o $(LIBS)
 
 $(OBJDIR)/tppmktop_d.o: tppmktop.cpp
 	$(CXX) -o $(OBJDIR)/tppmktop_d.o -c $(WINPWD)/tppmktop.cpp
 
 
 $(EXEDIR)/tppreadbonds_d: $(OBJDIR)/tppreadbonds_d.o $(OBJDIR)/calc.o $(OBJDIR)/hessian_accept.o $(OBJDIR)/global.o $(OBJDIR)/topio.o $(OBJDIR)/strutil.o ../include/global.hpp ../include/topio.hpp ../include/hessian_accept.hpp
-	$(CXX) $(LDFLAGS) -o tppreadbonds_d $(OBJDIR)/tppreadbonds_d.o $(OBJDIR)/calc.o $(OBJDIR)/hessian_accept.o $(OBJDIR)/global.o $(OBJDIR)/topio.o $(OBJDIR)/db_bonds.o $(OBJDIR)/smartfit.o $(OBJDIR)/strutil.o $(OBJDIR)/db_scanner.o $(LIBS) -llapack
+	$(CXX) $(LDFLAGS) -o $(EXEDIR)/tppreadbonds_d $(OBJDIR)/tppreadbonds_d.o $(OBJDIR)/calc.o $(OBJDIR)/hessian_accept.o $(OBJDIR)/global.o $(OBJDIR)/topio.o $(OBJDIR)/db_bonds.o $(OBJDIR)/smartfit.o $(OBJDIR)/strutil.o $(OBJDIR)/db_scanner.o $(LIBS) -llapack
 
 
 $(OBJDIR)/tppreadbonds_d.o: tppreadbonds.cpp
 	$(CXX) -o $(OBJDIR)/tppreadbonds_d.o -c $(WINPWD)/tppreadbonds.cpp
 
 clean: 
-	rm -f tpprenum_d.* tppmktop_d.* tppreadbonds_d.*
+	rm -f $(EXEDIR)/tpprenum_d $(EXEDIR)/tppmktop_d $(EXEDIR)/tppreadbonds_d $(OBJDIR)/tppmktop_d.o $(OBJDIR)/tppreadbonds_d.o $(OBJDIR)/tpprenum_d.o
 

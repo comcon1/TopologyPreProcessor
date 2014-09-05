@@ -28,5 +28,6 @@ namespace tpp {
   extern boost::numeric::ublas::vector<int> generate_long_tail(OBMol &) throw (t_exception);
   extern boost::numeric::ublas::vector<int> generate_long_tail1(OBMol &) throw (t_exception);
   extern t_atom_array mol_renum(OBMol &, t_atom_array &, boost::numeric::ublas::vector<int>) throw (t_exception);
+  extern t_atom_array mol_renum1(OBMol &, t_atom_array &, boost::numeric::ublas::vector<int>) throw (t_exception);
 }
 

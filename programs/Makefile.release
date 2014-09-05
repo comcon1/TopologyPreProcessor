@@ -30,5 +30,5 @@ install:
 	ln -s $(PWD)/tppmktop /usr/local/bin/tppmktop
 	ln -s $(PWD)/tppreadbonds /usr/local/bin/tppreadbonds
 clean: 
-	rm -f tpprenum tppmktop tppreadbonds tpprenum.o tppmktop.o tppreadbonds.o
+	rm -f ($BINDIR)tpprenum tppmktop tppreadbonds tpprenum.o tppmktop.o tppreadbonds.o
 

@@ -31,7 +31,7 @@ void t_runtime::cash_write(const char *s, unsigned c) {
 
 // finishing write
 t_runtime::~t_runtime() {
-  log_write(string("\nLog terminated at ") + lexical_cast<string>(second_clock::local_time()) + "\nBuy!");
+  log_write(string("\nLog terminated at ") + lexical_cast<string>(second_clock::local_time()) + "\nBye!");
   cash_write("cash_end",8);
   fclose(log);
   fclose(cash);
@@ -40,7 +40,7 @@ t_runtime::~t_runtime() {
 // exception main constructor
 t_exception::t_exception(const char *s, t_input_params &p): mesg(s), pars(p) {
       if (PARAM_EXISTS(pars,"fatal")) {
-        cerr << "TPP abnormally terminated at " << second_clock::local_time() << "\n";
+        cerr << "TPP was abnormally terminated at " << second_clock::local_time() << "\n";
         cerr << format("Position: %1% -> %2% \n") % PARAM_READ(pars, "classname") % PARAM_READ(pars, "procname");
         cerr << mesg << endl;
         cerr << "Saving log and cache files..";

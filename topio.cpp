@@ -6,13 +6,13 @@
 #include <boost/numeric/ublas/matrix_proxy.hpp>
 #define PHOENIX_LIMIT 5
 #include "lexical.hpp"
-#include <boost/spirit/attribute.hpp>
-#include <boost/spirit/phoenix/primitives.hpp>
-#include <boost/spirit/phoenix/operators.hpp>
-#include <boost/spirit/phoenix/functions.hpp>
-#include <boost/spirit/phoenix/binders.hpp>
-#include <boost/spirit/phoenix/casts.hpp>
-#include <boost/spirit/utility/regex.hpp>
+#include STRINGIZE(SPIRIT_HOME_()/attribute.hpp)
+#include STRINGIZE(SPIRIT_HOME_()/phoenix/primitives.hpp)
+#include STRINGIZE(SPIRIT_HOME_()/phoenix/operators.hpp)
+#include STRINGIZE(SPIRIT_HOME_()/phoenix/functions.hpp)
+#include STRINGIZE(SPIRIT_HOME_()/phoenix/binders.hpp)
+#include STRINGIZE(SPIRIT_HOME_()/phoenix/casts.hpp)
+#include STRINGIZE(SPIRIT_HOME_()/utility/regex.hpp)
 
 
 #define OPENBABEL
@@ -53,9 +53,9 @@ void mol_to_atoms(t_topology &tp) throw (t_exception) {
     res = tp.atoms.insert(cur0);
     if (!res.second) {
                t_input_params params;
-               PARAM_ADD(params, "procname", "tpp::load_struct");
-               PARAM_ADD(params, "error", "PDB parsing error");
-               throw t_exception("Repeat index or something else.", params);
+               PARAM_ADD(params, "procname", "tpp::mol_to_atoms");
+               PARAM_ADD(params, "error", "PDB parsing error. Repeated index.");
+               throw t_exception("..something to log..", params);
     }
   }
 }
@@ -321,7 +321,7 @@ extern void load_hessian(ublas::matrix<double>& mtx, const char *fname) throw (t
       (+blank_p >> uint_p[assign_a(num_x)] >> !(+blank_p >> uint_p) >> *blank_p >> eol_p)[&lex::echo::val_print] >>
       (+blank_p >> +alnum_p >> !(+blank_p >> +alnum_p) >> *blank_p >> eol_p)[&lex::echo::val_print] >>
       *(anychar_p - eol_p) >> eol_p >> // " x y z x y z" string
-      repeat_p(3,boost::spirit::more) 
+      repeat_p(3,boost::spirit::classic::more) 
       [
       +blank_p >> !( uint_p[assign_a(num_y)][var(y) = var(num_y)*3-3] >> +blank_p >> +alnum_p >> +blank_p )[&lex::echo::val_print]
                >> (ch_p('X') ^ 'Y' ^ 'Z')[increment_a(y)][var(x) = var(num_x)*3-3]
@@ -661,11 +661,12 @@ void load_struct(t_topology &tp, t_iformat ifm, const char *fname) throw (t_exce
      inf.open(fname, ios::in);
      BOOST_CHECK(inf.is_open());
      char *s0  = new char[300], *SEL = new char[7], *NAM = new char[5], *RES = new char[5], *qat = new char[2]; 
-     int  res, strc;
+     int  res, strc, incrementalIndex = 0;
      std::pair<t_atom_array::iterator, bool> at_it;
      t_atom cur0;
      float __x,__y,__z;
      strc = 0;
+     bool ignoreIndexFlag = (PARAM_READ(cmdline, "ignore_index") == "on");
      while (! inf.eof() ) {
          inf.getline(s0, 300);
          strc++;
@@ -675,8 +676,9 @@ void load_struct(t_topology &tp, t_iformat ifm, const char *fname) throw (t_exce
          res += sscanf(s0, "%6s", SEL);
 //         cerr << SEL << ".";
          if ( strcmp(SEL, "ATOM") && strcmp(SEL, "HETATM") ) continue;
-
-         res += sscanf(s0 + 6, "%5u", &(cur0.index));
+         
+         res += sscanf(s0 + 6, "%5u", &(cur0.oldindex));
+         cur0.index = ignoreIndexFlag ? 65535 : cur0.oldindex;
 //         cur0.atom_id = lexical_cast<unsigned>(strcpy(s0, 
          res += sscanf(s0 + 11, "%5s",  NAM);
          res += sscanf(s0 + 16, "%4s",  RES);
@@ -701,23 +703,32 @@ void load_struct(t_topology &tp, t_iformat ifm, const char *fname) throw (t_exce
          
 //         cerr << strc << ")";
          cur0.atom_name = string(NAM);
+         cur0.old_aname = string(NAM);
          cur0.res_name  = string(RES);
+         cur0.qmname    = string(qat);
          cur0.coord(0)  = numeric_cast<double>(__x);
          cur0.coord(1)  = numeric_cast<double>(__y);
          cur0.coord(2)  = numeric_cast<double>(__z);
          cur0.comment   = string("QMname: ") + qat;
 
-         runtime.log_write( (format("%s - %s:%d [%8.3f,%8.3f,%8.3f] %s \n") % cur0.res_name % cur0.atom_name % cur0.index % 
+         runtime.log_write( (format("%s - %s:%d [%8.3f,%8.3f,%8.3f] %s \n") % cur0.res_name % cur0.atom_name % cur0.oldindex % 
                cur0.coord(0) % cur0.coord(1) % cur0.coord(2) % cur0.comment).str() );
           at_it = tp.atoms.insert( cur0 );
 //         cerr << strc << "@";
+
          if (! at_it.second) {
-               runtime.log_write("ERROR: bad inserting..\n");
+               runtime.log_write("ERROR: bad insertingo..\n");
                t_input_params params;
                PARAM_ADD(params, "procname", "tpp::load_struct");
                PARAM_ADD(params, "error", "PDB parsing error");
                PARAM_ADD(params, "line", lexical_cast<string>(strc).c_str());
                throw t_exception("Repeat index or something else.", params);
+         }
+
+         if (ignoreIndexFlag) {
+             incrementalIndex++;
+             cur0.index = incrementalIndex;
+             tp.atoms.replace(at_it.first, cur0);
          }
 //         cerr << strc << "$";
          
@@ -787,9 +798,9 @@ void load_struct(t_topology &tp, t_iformat ifm, const char *fname) throw (t_exce
     case TPP_OF_PDB:
       out << format("TITLE  Written by TPP: %1$s (topoplogy for residue %2$-4s)\n") % tp.name % tp.res_name;
       for (t_atom_array::iterator it = tp.atoms.begin(); it != tp.atoms.end(); ++it) {
-        out << format("%1$-6s%2$5d %3$4s%4$4s %5$c%6$4d    %7$8.3f%8$8.3f%9$8.3f\n")
+        out << format("%1$-6s%2$5d %3$4s%4$4s %5$c%6$4d    %7$8.3f%8$8.3f%9$8.3f  0.00  0.00          %10$2s\n")
           % "ATOM" % (int)it->index % it->atom_name % tp.res_name % 'A' 
-          % (int)it->mol_id % it->coord(0) % it->coord(1) % it->coord(2);
+          % (int)it->mol_id % it->coord(0) % it->coord(1) % it->coord(2) % it->qmname;
       }
       out << "END\n";
       break;

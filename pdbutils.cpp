@@ -34,6 +34,23 @@ namespace tpp {
    return string("-");
  }
 
+ // main chain private numbering function
+ string mc_numerer(int id) throw (t_exception) {
+    char *rrr = new char[4];
+    if ( (id > 255) || ( (PARAM_READ(cmdline, "hex_flag") == "off") && (id > 99) ) ) {
+      t_input_params params;
+      PARAM_ADD(params, "procname", "tpp::mc_numerer");
+      PARAM_ADD(params, "error", string("Too many atoms to number. Try to turn HEX mode. ") );
+      throw t_exception("Bad connection atoms", params);
+    }
+    if (PARAM_READ(cmdline, "hex_flag") == "on") {
+      sprintf(rrr, "%X", id);
+    } else {
+      sprintf(rrr, "%d", id);
+    }
+    return string(rrr);
+ }
+
 BondMatrix::BondMatrix(const OBMol &src) throw (t_exception) {
  int dim = src.NumAtoms();
  mtx = zero_matrix <bool> (dim+1, dim+1);
@@ -64,6 +81,7 @@ bool BondMatrix::check() throw (t_exception) {
   rec_check(1);
   if (curset.size() != mtx.size1()-1) {
    ostringstream os;
+   os << format("Connected group contains %d atoms. Molecule contains %d atoms.") % curset.size() % (mtx.size1()-1) << endl;
    for (std::set<int>::iterator it = curset.begin(); it != curset.end(); ++it)
      os << (*it) << ",";
    os << " - This atoms are isolated" << endl;
@@ -86,15 +104,16 @@ void resize_matrix(T &mat, int x, int y) {
 
 
 void recurse_mol_scan(OBMol &mol, std::vector<unsigned> &tail,
-        unsigned cur, std::vector<unsigned> &maxtail) {
+        unsigned cur, std::vector<unsigned> &maxtail, std::set<unsigned> &excluded) {
     int id;
     FOR_NBORS_OF_ATOM(pA, &*(mol.GetAtom(cur)) ) {
         id = pA->GetIdx();
         if ( (pA->GetAtomicNum() == 1) ||
-             (std::count(tail.begin(), tail.end(), id))
+             (std::count(tail.begin(), tail.end(), id)) ||
+             (std::count(excluded.begin(), excluded.end(), id))
             ) continue;
         tail.push_back(pA->GetIdx());
-        recurse_mol_scan(mol, tail, id, maxtail);
+        recurse_mol_scan(mol, tail, id, maxtail, excluded);
     }
     if (tail.size() > maxtail.size()) {
         maxtail.clear();
@@ -106,41 +125,51 @@ void recurse_mol_scan(OBMol &mol, std::vector<unsigned> &tail,
 /*
  * GENERATE LONGTAIL COMCON1 ALGORYTHM
  */
-ublas::vector<int> generate_long_tail1(OBMol &mol) throw (t_exception) {
+ublas::vector<int> generate_long_tail1(OBMol &mol, std::set<unsigned> &excluded, int startpoint) throw (t_exception) {
     std::vector<unsigned> maxtail;
     std::vector<unsigned> curtail;
     int id = 0;
     // ��� ����� �� ���������
     BondMatrix bm(mol);
     
-    runtime.log_write("Starting Zoidberg-openbabel longtail alrogithm.\n");
-
-    // �������� ����� � ������ ������
-    FOR_ATOMS_OF_MOL(pA, mol) { // p
+    runtime.log_write("Starting c1/openbabel longtail alrogithm.\n");
+    
+    if (startpoint == -1) {
+      // start recursion from every heavy atom
+      FOR_ATOMS_OF_MOL(pA, mol) { // p
         if (pA->GetAtomicNum() == 1) continue;
         id = pA->GetIdx();
         curtail.clear();
         curtail.push_back(id);
-        recurse_mol_scan(mol, curtail, id, maxtail);
-    } // pA cycle over molecule
+        recurse_mol_scan(mol, curtail, id, maxtail, excluded);
+      } // pA cycle over molecule
+    } else {
+      recurse_mol_scan(mol, curtail, startpoint, maxtail, excluded);
+    }
 
-    // ��������� �����. �������� ��� ������� � ���������� ������.
+    // generate a vector of longtail
     ublas::vector<unsigned> tail_long(maxtail.size()+1);
     for (int i=1; i<=maxtail.size(); ++i)
         tail_long(i) = maxtail[i-1];
-    // �������
-    runtime.log_write("The longest tail is: \n");
-    {
+    // output section
+    runtime.log_write("Longest subchain is: \n");
+    { 
         std::ostringstream os;
-        os << subrange(tail_long, 1, tail_long.size()) << endl;
+        os << subrange(tail_long, 1, tail_long.size()) << std::flush;
         runtime.log_write(os.str());
-        if (PARAM_READ(cmdline, "verbose_flag") == "on") {
-          cout << "The longest tail is: " << endl;
-          cout << os.str() << endl;
+        if ( (PARAM_READ(cmdline, "verbose_flag") == "on") && (tail_long.size() > 1) ) {
+          cout << "At. subchain: " << os.str() << endl;
         }
     }
-    runtime.log_write("longtail algroithm finished its work.\n");
+    runtime.log_write("\nlongtail algroithm finished its work.\n");
     return tail_long;
+}
+
+
+// wrapper to simplier exported variant
+ublas::vector<int> generate_long_tail1(OBMol &mol) throw (t_exception) {
+  std::set<unsigned> emptyset;
+  return generate_long_tail1(mol, emptyset, -1);
 }
 
 /*
@@ -445,19 +474,19 @@ FOR_ATOMS_OF_MOL(pt, mol) {
   }
 }
 runtime.log_write("Checking bond matrix of molecule finished.\n");
-t_atom_array A;
+t_atom_array A; // final atom array with new names and numbers
 t_atom tat;
-ublas::vector<int> schain (1);
-std::set<int> count;
-// atom renumbering section
-int n = 0;
-int h = 0;
-for (int p=1; p < tail.size(); ++p) {
+std::set<int> count; // set of 
+ublas::vector<int> schain (1); 
+/* ATOM RENUMBERING SECTION */
+int n = 0; // total atom counter (new index)
+int h = 0; // hard atom counter
+for (int p=1; p < tail.size(); ++p) { // cycle over longtail head atoms
   OBAtom *pA = mol.GetAtom(tail(p));
   tat = * ( ar.find(tail(p)) );
   n++;
   h++;
-  tat.atom_name = an2str(pA->GetAtomicNum(), tat.atom_name) + lexical_cast<string>(h);
+  tat.atom_name = an2str(pA->GetAtomicNum(), tat.atom_name) + mc_numerer(h);
   tat.index = n;
   tat.coord(0) = pA->GetX();
   tat.coord(1) = pA->GetY();
@@ -465,23 +494,24 @@ for (int p=1; p < tail.size(); ++p) {
   tat.ncharge = pA->GetAtomicNum();
   BOOST_CHECK(A.insert(tat).second);
   BOOST_CHECK(count.insert(tail(p)).second);
-  int k = 0;
+  int k = 0; // hydrogen counter
   // arrange hydrogens
   FOR_NBORS_OF_ATOM(pQ, &*pA) {
-    if (pQ->GetAtomicNum() == 1) {
-      BOOST_CHECK(count.insert(pQ->GetIdx()).second);
-      n++;
-      k++;
-      tat.ncharge = pQ->GetAtomicNum();
-      tat.index = n;
-      tat.coord(0) = pQ->GetX();
-      tat.coord(1) = pQ->GetY();
-      tat.coord(2) = pQ->GetZ();
-      tat.atom_name = lexical_cast<string>(k)+"H"+lexical_cast<string>(h);
-      BOOST_CHECK(A.insert(tat).second);
-    }
+    if (pQ->GetAtomicNum() != 1) continue;
+    BOOST_CHECK(count.insert(pQ->GetIdx()).second);
+    n++; 
+    k++;
+    tat.ncharge = pQ->GetAtomicNum();
+    tat.index = n;
+    tat.coord(0) = pQ->GetX();
+    tat.coord(1) = pQ->GetY();
+    tat.coord(2) = pQ->GetZ();
+    tat.atom_name = lexical_cast<string>(k)+"H"+mc_numerer(h);
+    BOOST_CHECK(A.insert(tat).second);
   }
-  int stop = 0, m =1, sh = 0;
+  int stop = 0, 
+      m    = 1, 
+      sh   = 0;
   schain.resize(2);
   schain(1) = tail(p);
   while (!stop) {
@@ -506,7 +536,7 @@ for (int p=1; p < tail.size(); ++p) {
     }
   } // end while
   if (m != 1) {
-    // deleting 1st row of schain
+    // deleting 1st element of schain
     if (schain.size() > 2)
       subrange(schain,1,schain.size()-1) = subrange(schain,2,schain.size());
     schain.resize(schain.size()-1);
@@ -520,7 +550,7 @@ for (int p=1; p < tail.size(); ++p) {
       tat.coord(0) = mol.GetAtom(schain(q))->GetX();
       tat.coord(1) = mol.GetAtom(schain(q))->GetY();
       tat.coord(2) = mol.GetAtom(schain(q))->GetZ();
-      tat.atom_name = an2str(mol.GetAtom(schain(q))->GetAtomicNum(), tat.atom_name) + lexical_cast<string>(h);
+      tat.atom_name = an2str(mol.GetAtom(schain(q))->GetAtomicNum(), tat.atom_name) + mc_numerer(h);
       BOOST_CHECK(A.insert(tat).second);
       k=0;
       FOR_NBORS_OF_ATOM(pR, &*(mol.GetAtom(schain(q))) ) {
@@ -533,14 +563,14 @@ for (int p=1; p < tail.size(); ++p) {
           tat.coord(0) = pR->GetX();
           tat.coord(1) = pR->GetY();
           tat.coord(2) = pR->GetZ();
-          tat.atom_name = lexical_cast<string>(k) + "H" + lexical_cast<string>(h);
+          tat.atom_name = lexical_cast<string>(k) + "H" + mc_numerer(h);
           BOOST_CHECK(A.insert(tat).second);
         }
       } //end for r
     } // end for q
   } // end if m != 1
   schain.resize(1);
-} // end for p
+} // end for tail (p)
 
  // creating of secondary molecule complete!
  // ----------------------------------------
@@ -552,13 +582,132 @@ for (t_atom_array::iterator ait = A.begin(); ait != A.end(); ++ait) {
  os << "Table of converting numbers:\n";
  std::set<int>::iterator cit = count.begin();
  for (int ii=1; ii < count.size(); ii++) {
-     ++cit;
      os << format("%1$3d -> %2$3d\n") % ii % *cit;
+     ++cit;
  }
  os << "Zoidberg renumeration alogrythm finished its work.\n";
  runtime.log_write(os.str());
  }
  return A; 
 } // end pdb_renum)
+
+
+/* 
+ *
+ * COMCON1 RENUMERATION ALGORYTM 
+ *
+ */
+
+// recursion part of mol_renum1
+void __mol_renum1(OBMol &_mol, t_atom_array &_ar, ublas::vector<int> &_tail, std::set<unsigned> &_tailed, 
+    t_atom_array &_A, int &_n, int &_h) throw (t_exception) {
+
+ // append <tailed> array
+ for (int p=1; p < _tail.size(); ++p)
+   BOOST_CHECK(_tailed.insert(_tail(p)).second);
+ // cycle over current tail
+ for (int p=1; p < _tail.size(); ++p) { 
+   { // area of defining local variables
+    OBAtom *pA = _mol.GetAtom(_tail(p));
+    t_atom tat = * ( _ar.find(_tail(p)) );
+    _n++;
+    _h++;
+    tat.atom_name = an2str(pA->GetAtomicNum(), tat.atom_name) + mc_numerer(_h);
+    tat.index = _n;
+    tat.coord(0) = pA->GetX();
+    tat.coord(1) = pA->GetY();
+    tat.coord(2) = pA->GetZ();
+    tat.ncharge = pA->GetAtomicNum();
+    BOOST_CHECK(_A.insert(tat).second);
+    int k = 0; // hydrogen local counter
+    // arrange hydrogens
+    FOR_NBORS_OF_ATOM(pQ, &*pA) {
+      if (pQ->GetAtomicNum() != 1) continue;
+  //     BOOST_CHECK(count.insert(pQ->GetIdx()).second);
+      _n++; 
+      k++;
+      tat = * ( _ar.find(pQ->GetIdx()) );
+      tat.ncharge = pQ->GetAtomicNum();
+      tat.index = _n;
+      tat.coord(0) = pQ->GetX();
+      tat.coord(1) = pQ->GetY();
+      tat.coord(2) = pQ->GetZ();
+      tat.atom_name = lexical_cast<string>(k)+"H"+mc_numerer(_h);
+      BOOST_CHECK(_A.insert(tat).second);
+    }
+   } // end of local variables area
+   // start LONGTAIL from the point and drawn deep into recursion
+   while (true) {
+     ublas::vector<int> newtail = generate_long_tail1(_mol, _tailed, _tail(p));
+     if (newtail.size() == 1) break; 
+     __mol_renum1(_mol, _ar, newtail, _tailed, _A, _n, _h);
+   }
+ } // end cycle over longtail
+ 
+} // end of recursion function
+
+// main function
+t_atom_array mol_renum1(OBMol &mol, t_atom_array &ar, ublas::vector<int> tail) throw (t_exception) {
+
+ runtime.log_write("Starting C1 renumerator alrogithm.\n");
+ #ifdef TPP_UNIT_TEST
+ FOR_ATOMS_OF_MOL(pt, mol) {
+  cout << format(" %1$3d %2$4s %3$3d\n") %pt->GetIdx() % pt->GetType() % pt->GetAtomicNum();
+ }
+ cout << "================================" << endl;
+ #endif
+ BondMatrix bm(mol);
+ matrix <int> tmpmt(1,1);
+
+ // check molecule valence of some atoms
+ runtime.log_write("Checking bond matrix of molecule..\n");
+ FOR_ATOMS_OF_MOL(pt, mol) {
+   if (pt->GetValence() > 4) {
+     runtime.log_write(string("Atom ") + lexical_cast<string>(pt->GetIdx()) + " has high valence!!\n");
+     FOR_NBORS_OF_ATOM(b, &*pt ) {
+       runtime.log_write(string("--Neighbour #") + lexical_cast<string>(b->GetIdx()) + "\n");
+     }
+   } else if ( (pt->GetValence() > 1) && (pt->GetAtomicNum() == 1) ) {
+     runtime.log_write(string("Atom ") + lexical_cast<string>(pt->GetIdx()) + " is hydrogen with high valence!!\n");
+     FOR_NBORS_OF_ATOM(b, &*pt ) {
+       runtime.log_write(string("--Neighbour #") + lexical_cast<string>(b->GetIdx()) + "\n");
+     }
+   } else if ( (pt->GetValence() > 2) && (pt->GetAtomicNum() == 8) ) {
+     runtime.log_write(string("Atom ") + lexical_cast<string>(pt->GetIdx()) + " is oxygen with high valence!!\n");
+     FOR_NBORS_OF_ATOM(b, &*pt ) {
+       runtime.log_write(string("--Neighbour #") + lexical_cast<string>(b->GetIdx()) + "\n");
+     }
+   }
+ }
+ runtime.log_write("Checking bond matrix of molecule finished.\n");
+ 
+ /* ATOM RENUMBERING SECTION. preparing to recursion */
+ t_atom_array A; // final atom array with new names and numbers
+ std::set<unsigned> tailed; // set of atoms ALREADY in tails 
+ int n = 0; // total atom counter (new index)
+ int h = 0; // hard atom counter
+
+ // STARTING RECURSION
+ __mol_renum1(mol, ar, tail, tailed, A, n, h);
+   
+ { // output block
+   ostringstream os;
+   os << "New atom names and numbers:\n";
+   for (t_atom_array::iterator ait = A.begin(); ait != A.end(); ++ait) {
+     os << format(" %1$3d %2$4s %3$3d\n") % (int)ait->index % ait->atom_name % (int)ait->ncharge;
+   }
+   os << "Table of converting numbers:\n";
+   for (t_atom_array::iterator ait = A.begin(); ait != A.end(); ++ait) {
+     os << format("%1$3d -> %2$3d\n") % ait->oldindex % ait->index;
+   }
+   os << "Table of converting names:\n";
+   for (t_atom_array::iterator ait = A.begin(); ait != A.end(); ++ait) {
+     os << format("%1$s -> %2$s\n") % ait->old_aname % ait->atom_name;
+   }
+   os << "COMCON1 renumeration alogrythm finished its work.\n";
+   runtime.log_write(os.str());
+ } // end. output block
+ return A; 
+} // end mol_renum1
 
 }
