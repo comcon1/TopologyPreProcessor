@@ -1,4 +1,3 @@
-
 #include "pdbutils.hpp"
 #include "openbabel/obiter.h"
 #include "openbabel/atom.h"
