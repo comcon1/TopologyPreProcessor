@@ -803,6 +803,7 @@ void atom_definer::proceed() throw (t_exception) {
        if (PARAM_EXISTS(par,"maxdihedrals")) fill_dih();
        count_scores();
        smart_fit();
+       smart_cgnr();
       } catch(t_sql_exception e) { 
         e.fix_log(); 
         throw e;

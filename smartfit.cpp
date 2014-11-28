@@ -8,6 +8,14 @@ namespace tpp {
 
   using namespace OpenBabel;
 
+void atom_definer::smart_cgnr() throw (t_exception) {
+      for (t_atom_array::iterator it = tp.atoms.begin(); it != tp.atoms.end(); ++it) {
+          t_atom nat = *it;
+          nat.c_gnr = 0;
+          tp.atoms.replace(it,nat);
+      }
+}
+
 void atom_definer::smart_fit() throw (t_exception) {
       runtime.log_write("Starting curious SMART-fitting procedure.\n");
       mysqlpp::Query qu = con->query();
