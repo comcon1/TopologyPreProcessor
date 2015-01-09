@@ -564,7 +564,8 @@ void atom_definer::atom_align() throw (t_exception) {
     newa.comment = chk0->comment;
     tp.atoms.replace(newa_,newa);
 //    cout << name << endl;
-  } 
+  }
+  smart_cgnr();
 }
 
 // count scores for znuc, atoms, bonds and dihedrals
@@ -803,7 +804,6 @@ void atom_definer::proceed() throw (t_exception) {
        if (PARAM_EXISTS(par,"maxdihedrals")) fill_dih();
        count_scores();
        smart_fit();
-       smart_cgnr();
       } catch(t_sql_exception e) { 
         e.fix_log(); 
         throw e;
