@@ -609,6 +609,7 @@ void __mol_renum1(OBMol &_mol, t_atom_array &_ar, ublas::vector<int> &_tail, std
  for (int p=1; p < _tail.size(); ++p) { 
    { // area of defining local variables
     OBAtom *pA = _mol.GetAtom(_tail(p));
+    BOOST_CHECK ( _ar.count(_tail(p)) == 1);
     t_atom tat = * ( _ar.find(_tail(p)) );
     _n++;
     _h++;

@@ -81,20 +81,69 @@ void atom_definer::smart_cgnr() throw (t_exception) {
                   for(int i=0;i<maplist.size();++i) {
                       for (int j=0; j<maplist[i].size(); ++j) {
                           t_atom_array::iterator cur_it = tp.atoms.find((int) (maplist[i][j]));
+#ifdef CDB
                           cout << maplist[i][j] << " " << flush;
+#endif
                           BOOST_CHECK(cur_it != tp.atoms.end());
                           t_atom cur0 = *cur_it;
                           cur0.c_gnr = curCG; 
                           tp.atoms.replace(cur_it, cur0);
                       }
                       curCG++;
+#ifdef CDB
                       cout << endl;
+#endif
                   } 
 
                   cout << '.' << flush;
               }
           }
-          cout << endl;
+          { // independent block of CGR renumbering
+            cout << endl << "Renumbering CGNR according to human-readable style.." << flush;
+            int current_cgr = 1;
+            std::set<TPP_INDEX> done_atoms;
+            std::set<TPP_INDEX> _tempset;
+            for(t_atom_array::iterator it = tp.atoms.begin();
+                    it != tp.atoms.end(); ++it) {
+                if (done_atoms.count(it->index)) continue;
+                // for atom as a separate group
+                if (it->c_gnr == 0) {
+                    t_atom cur0 = *it;
+                    cur0.c_gnr = current_cgr;
+                    done_atoms.insert(cur0.index);
+                    tp.atoms.replace(it, cur0);
+                }
+                // for atom - part of a group
+                else {
+#ifdef CDB
+                    cerr << it->c_gnr << " " << tp.atoms.get<2>().count(it->c_gnr) << endl;
+#endif
+                    TPP_INDEX oldcgnr = it->c_gnr;
+                    _tempset.clear();
+                    for (t_atom_array::nth_index_iterator<2>::type cit = tp.atoms.get<2>().lower_bound(oldcgnr);
+                        cit != tp.atoms.get<2>().upper_bound(oldcgnr); ++cit) {
+                        if (done_atoms.count(cit->index)) continue;
+                        _tempset.insert(cit->index);
+                        // modifying c_gnr in a separate cycle !! (Index Policy
+                        // Needs: see multi_index documentation.. )
+                    }
+                    for (set<TPP_INDEX>::iterator ii = _tempset.begin(); ii != _tempset.end(); ++ii) {
+                        t_atom_array::iterator cit = tp.atoms.find(*ii);
+                        BOOST_CHECK( cit != tp.atoms.end() );
+                        t_atom cur0 = *cit;
+                        cur0.c_gnr = current_cgr;
+                        tp.atoms.replace(cit, cur0);
+#ifdef CDB
+                        cerr << ".";
+#endif
+                    }
+                    done_atoms.insert(_tempset.begin(), _tempset.end());
+                }
+                current_cgr += 1;
+            }
+            cout << "finished." << endl;
+          } // ending CGNR renumbering block
+
       } catch (t_exception &et) {
           cout << "-- CATCH AT SMART_CGNR! --" << endl;
           throw et;

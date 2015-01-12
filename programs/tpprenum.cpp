@@ -27,7 +27,7 @@ int main(int argc, char * argv[]) {
 	 ("output,o",p_o::value<std::string>(),"Output filename (any format)")
          ("hex,x","Hexadecimal numbering of main chain")
 	 ("verbose,v","Verbose mode")
-	 ("ignore-index,g","Ignore index")
+	 ("ignore-index,g","Don't ignore index")
 	 ("help,h", "Print this message")
  ;
  try {
@@ -38,8 +38,11 @@ int main(int argc, char * argv[]) {
 
     PARAM_ADD(cmdline, "verbose_flag", vars.count("verbose") ? "on" : "off" );
     PARAM_ADD(cmdline, "hex_flag",     vars.count("hex") ? "on" : "off" );
-    PARAM_ADD(cmdline, "ignore_index", vars.count("ignore-index") ? "on" : "off" );
+    PARAM_ADD(cmdline, "ignore_index", vars.count("ignore-index") ? "off" : "on" );
     
+        if (vars.count("ignore-index") == 1) {
+            cout << "Non-ignoring of indexes is a DANGEROUS MODE!" << endl;
+        }
 	if (vars.count("help") == 1) helpscreen();
 	if (vars.count("input") == 1) {
 		PARAM_ADD(cmdline, "input_file", vars["input"].as<std::string>() );

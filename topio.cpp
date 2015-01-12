@@ -716,8 +716,8 @@ void load_struct(t_topology &tp, t_iformat ifm, const char *fname) throw (t_exce
          cur0.coord(2)  = numeric_cast<double>(__z);
          cur0.comment   = string("QMname: ") + qat;
 
-         runtime.log_write( (format("%s - %s:%d [%8.3f,%8.3f,%8.3f] %s \n") % cur0.res_name % cur0.atom_name % cur0.oldindex % 
-               cur0.coord(0) % cur0.coord(1) % cur0.coord(2) % cur0.comment).str() );
+         runtime.log_write( (format("%s - %s: %d(%d) [%8.3f,%8.3f,%8.3f] %s \n") % cur0.res_name % cur0.atom_name 
+                     % cur0.oldindex % cur0.index % cur0.coord(0) % cur0.coord(1) % cur0.coord(2) % cur0.comment).str() );
           at_it = tp.atoms.insert( cur0 );
 //         cerr << strc << "@";
 
