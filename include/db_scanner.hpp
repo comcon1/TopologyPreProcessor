@@ -116,6 +116,7 @@ namespace tpp {
     void smart_fit() throw (t_exception);
     void count_scores() throw (t_exception);
     void print_scores(std::ostream &os);
+    void smart_cgnr() throw (t_exception);
 
    public:
 

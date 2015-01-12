@@ -2,11 +2,153 @@
 #include "openbabel/obiter.h"
 #include "openbabel/parsmart.h"
 
-#define CDB
+//#define CDB
 
 namespace tpp {
 
   using namespace OpenBabel;
+
+void atom_definer::smart_cgnr() throw (t_exception) {
+      // zero all charge groups
+      for (t_atom_array::iterator it = tp.atoms.begin(); it != tp.atoms.end(); ++it) {
+          t_atom nat = *it;
+          nat.c_gnr = 0;
+          tp.atoms.replace(it,nat);
+      }
+      // algo body
+      try {
+          runtime.log_write("Starting curious SMART-charge-group fitting.\n");
+          mysqlpp::Query qu = con->query();
+          qu << format("SELECT id,PAT,flag FROM chargegroups \
+                  WHERE ffield = %1$d and flag = 1") % this->ffid;
+          runtime.log_write("Loading CGNR patterns from DB..");
+          cout << "CHARGEGROUP patterns are loading. Please wait.." << flush;          
+          MYSQLPP_RESULT res;
+          res = qu.store();
+          if (!res) {
+              t_input_params params;
+              PARAM_ADD(params, "procname", "tpp::atom_definer::smart_cgnr");
+              PARAM_ADD(params, "error", "SQL query error");
+              PARAM_ADD(params, "sql_error", qu.error() );
+              throw t_sql_exception("SQL query failed!", params);
+          }
+          runtime.log_write("OK!\n");
+          cout << " finished.\n" <<      
+                  "Starting SMART-fit." << endl;
+
+          OBSmartsPattern pat;
+          mysqlpp::Row    row;
+          mysqlpp::Row::size_type co;
+          vector<vector<int> > maplist;
+          set<int> atoms_suite;
+          cout << ( format("Patterns checked: %1$4d.") % 0 ) << flush;
+          std::map<int, vector<string> > sized_patterns;
+          std::ostringstream os;
+          for (co=0; co < res.num_rows(); ++co) {
+              os.str(""); os.clear();
+              row = res.at(co);
+              pat.Init(row["PAT"]);
+              int pna = pat.NumAtoms();
+              os << format("[DB] Getting PATTERN: %1$s having %2$d atoms.\n") 
+                  % row["PAT"] % pna;
+              runtime.log_write(os.str());
+              if (sized_patterns.count(pna) == 0) 
+                  sized_patterns[pna] = vector<string>();
+              sized_patterns[pna].push_back(string(row["PAT"]));
+              cout << ( format("\b\b\b\b\b%1$4d.") % (int)co ) << flush;
+          }
+          // Applying patterns from small size to big size
+          TPP_INDEX curCG = 1;
+          for(std::map<int, vector<string> >::iterator it 
+                  = sized_patterns.begin(); it != sized_patterns.end(); 
+                  ++it) {
+              os.str(""); os.clear();
+              os << format("Aplying PATTERNS of size %1$d (%2$d total): \n") 
+                  % it->first % it->second.size();
+              runtime.log_write(os.str());
+              for(vector<string>::iterator ci = it->second.begin();
+                      ci != it->second.end(); ++ci) {
+                  os.str(""); os.clear();
+                  pat.Init(ci->c_str());
+                  pat.Match(tp.mol);
+                  maplist.clear();
+                  maplist = pat.GetUMapList();
+
+                  os << format("[OB] Pattern %1$s matches %2$d times.\n")
+                      % (*ci) % maplist.size();
+                  runtime.log_write(os.str());
+
+                  for(int i=0;i<maplist.size();++i) {
+                      for (int j=0; j<maplist[i].size(); ++j) {
+                          t_atom_array::iterator cur_it = tp.atoms.find((int) (maplist[i][j]));
+#ifdef CDB
+                          cout << maplist[i][j] << " " << flush;
+#endif
+                          BOOST_CHECK(cur_it != tp.atoms.end());
+                          t_atom cur0 = *cur_it;
+                          cur0.c_gnr = curCG; 
+                          tp.atoms.replace(cur_it, cur0);
+                      }
+                      curCG++;
+#ifdef CDB
+                      cout << endl;
+#endif
+                  } 
+
+                  cout << '.' << flush;
+              }
+          }
+          { // independent block of CGR renumbering
+            cout << endl << "Renumbering CGNR according to human-readable style.." << flush;
+            int current_cgr = 1;
+            std::set<TPP_INDEX> done_atoms;
+            std::set<TPP_INDEX> _tempset;
+            for(t_atom_array::iterator it = tp.atoms.begin();
+                    it != tp.atoms.end(); ++it) {
+                if (done_atoms.count(it->index)) continue;
+                // for atom as a separate group
+                if (it->c_gnr == 0) {
+                    t_atom cur0 = *it;
+                    cur0.c_gnr = current_cgr;
+                    done_atoms.insert(cur0.index);
+                    tp.atoms.replace(it, cur0);
+                }
+                // for atom - part of a group
+                else {
+#ifdef CDB
+                    cerr << it->c_gnr << " " << tp.atoms.get<2>().count(it->c_gnr) << endl;
+#endif
+                    TPP_INDEX oldcgnr = it->c_gnr;
+                    _tempset.clear();
+                    for (t_atom_array::nth_index_iterator<2>::type cit = tp.atoms.get<2>().lower_bound(oldcgnr);
+                        cit != tp.atoms.get<2>().upper_bound(oldcgnr); ++cit) {
+                        if (done_atoms.count(cit->index)) continue;
+                        _tempset.insert(cit->index);
+                        // modifying c_gnr in a separate cycle !! (Index Policy
+                        // Needs: see multi_index documentation.. )
+                    }
+                    for (set<TPP_INDEX>::iterator ii = _tempset.begin(); ii != _tempset.end(); ++ii) {
+                        t_atom_array::iterator cit = tp.atoms.find(*ii);
+                        BOOST_CHECK( cit != tp.atoms.end() );
+                        t_atom cur0 = *cit;
+                        cur0.c_gnr = current_cgr;
+                        tp.atoms.replace(cit, cur0);
+#ifdef CDB
+                        cerr << ".";
+#endif
+                    }
+                    done_atoms.insert(_tempset.begin(), _tempset.end());
+                }
+                current_cgr += 1;
+            }
+            cout << "finished." << endl;
+          } // ending CGNR renumbering block
+
+      } catch (t_exception &et) {
+          cout << "-- CATCH AT SMART_CGNR! --" << endl;
+          throw et;
+      }
+}
 
 void atom_definer::smart_fit() throw (t_exception) {
       runtime.log_write("Starting curious SMART-fitting procedure.\n");
@@ -43,6 +185,10 @@ WHERE  (not atom_patterns.group = 1) and (atoms.ffield = %1$d)") % this->ffid;
       for(co=0; co < res.num_rows(); ++co) {
         row = res.at(co);
         pat.Init(row["PAT"]);
+        std::ostringstream os;
+        os << format("[OB] Process PAT: %1$s having %2$d atoms.\n") 
+            % row["PAT"] % pat.NumAtoms();
+        runtime.log_write(os.str());
         pat.Match(tp.mol);
         maplist.clear();
         atoms_suite.clear();

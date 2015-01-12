@@ -551,9 +551,7 @@ void atom_definer::atom_align() throw (t_exception) {
     chk0 = atom_mapper.find(max); // iterator to best atom in atom_mapper
     BOOST_CHECK(chk0 != atom_mapper.end());
     name = chk0->type; // name of best atom
-//    cerr << max << "\t" << name << "\n";
     tp.mol.GetAtom(sit->first)->SetType(name);
-//    cerr << "111\n";
     t_atom_array::iterator newa_ = tp.atoms.find(sit->first);
     BOOST_CHECK(newa_ != tp.atoms.end() );
     t_atom newa = *newa_;
@@ -564,7 +562,8 @@ void atom_definer::atom_align() throw (t_exception) {
     newa.comment = chk0->comment;
     tp.atoms.replace(newa_,newa);
 //    cout << name << endl;
-  } 
+  }
+  smart_cgnr();
 }
 
 // count scores for znuc, atoms, bonds and dihedrals

@@ -77,7 +77,7 @@ void save_topology_rtp(t_topology &tp, const char *fname) throw (t_exception) {
   // atoms specification
   out << "\n[ atoms ]\n";
   for (t_atom_array::iterator it = tp.atoms.begin(); it != tp.atoms.end(); ++it) {
-    out << format("%1$-4s %2$-4s %3$6.3f %4$3d \n") %
+    out << format("  %1$-4s   %2$-4s   %3$6.3f   %4$3d \n") %
            it->atom_name.c_str() % it->atom_type.c_str() % it->charge %
            (int)(it->c_gnr);
   }
@@ -91,13 +91,13 @@ void save_topology_rtp(t_topology &tp, const char *fname) throw (t_exception) {
       for (t_top_array::nth_index_iterator<1>::type it0 = tp.elements.get<1>().lower_bound(it->defname);
            it0 != tp.elements.get<1>().upper_bound(it->defname); ++it0)
         if (it->f == -1) {
-          out << format("%1$4s %2$4s bndTPP_%3$s_%4$s \n") 
+          out << format(" %1$-4s   %2$-4s   bndTPP_%3$s_%4$s \n") 
                   % tp.atoms.find((int)it0->i)->atom_name.c_str()
                   % tp.atoms.find((int)it0->j)->atom_name.c_str()
                   % tp.atoms.find((int)it0->i)->atom_type2.c_str()
                   % tp.atoms.find((int)it0->j)->atom_type2.c_str();
         } else {
-          out << format("%1$4s %2$4s \n")
+          out << format(" %1$-4s   %2$-4s \n")
                   % tp.atoms.find((int)it0->i)->atom_name.c_str()
                   % tp.atoms.find((int)it0->j)->atom_name.c_str();
         }
@@ -702,8 +702,13 @@ void load_struct(t_topology &tp, t_iformat ifm, const char *fname) throw (t_exce
          }
          
 //         cerr << strc << ")";
-         cur0.atom_name = string(NAM);
          cur0.old_aname = string(NAM);
+         cur0.atom_name = string(NAM);
+         if (PARAM_EXISTS(cmdline, "rtpoutput_file")) {
+             // need to replace 1H2 to H21
+             if ((NAM[0] >= 48) && (NAM[0] <= 57))
+                 cur0.atom_name = cur0.old_aname.substr(1) + cur0.old_aname.substr(0,1);
+         }
          cur0.res_name  = string(RES);
          cur0.qmname    = string(qat);
          cur0.coord(0)  = numeric_cast<double>(__x);
@@ -711,8 +716,8 @@ void load_struct(t_topology &tp, t_iformat ifm, const char *fname) throw (t_exce
          cur0.coord(2)  = numeric_cast<double>(__z);
          cur0.comment   = string("QMname: ") + qat;
 
-         runtime.log_write( (format("%s - %s:%d [%8.3f,%8.3f,%8.3f] %s \n") % cur0.res_name % cur0.atom_name % cur0.oldindex % 
-               cur0.coord(0) % cur0.coord(1) % cur0.coord(2) % cur0.comment).str() );
+         runtime.log_write( (format("%s - %s: %d(%d) [%8.3f,%8.3f,%8.3f] %s \n") % cur0.res_name % cur0.atom_name 
+                     % cur0.oldindex % cur0.index % cur0.coord(0) % cur0.coord(1) % cur0.coord(2) % cur0.comment).str() );
           at_it = tp.atoms.insert( cur0 );
 //         cerr << strc << "@";
 

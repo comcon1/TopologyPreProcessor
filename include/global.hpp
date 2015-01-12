@@ -146,7 +146,8 @@ typedef multi_index_container<
          t_atom,
          indexed_by<
           ordered_unique<member<t_atom, TPP_INDEX, &t_atom::index> >, // key index (like array)
-          ordered_non_unique<member<t_atom, string, &t_atom::atom_name> > // key by name
+          ordered_non_unique<member<t_atom, string, &t_atom::atom_name> >, // key by name
+          ordered_non_unique<member<t_atom, TPP_INDEX, &t_atom::c_gnr> > // key by charge group
          >
         > t_atom_array;
 
