@@ -18,6 +18,8 @@ all: $(OBJDIR)/global.o $(OBJDIR)/calc.o $(OBJDIR)/topio.o $(OBJDIR)/pdbutils.o 
 	$(OBJDIR)/strutil.o $(OBJDIR)/hessian_accept.o $(OBJDIR)/smartfit.o \
 	$(OBJDIR)/db_scanner.o $(OBJDIR)/db_bonds.o .programs
 
+#xui
+
 .tests:
 	make -C tests
 
