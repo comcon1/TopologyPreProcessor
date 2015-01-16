@@ -1,8 +1,8 @@
 #ifndef TPP_GLOBAL_H
 #define TPP_GLOBAL_H
 
-#define PROG_NAME "TPP-0.5 (testing version)"
-#define VERSION "0.5"
+#define PROG_NAME "TPP-0.6 (testing version)"
+#define VERSION "0.6"
 
 // system
 #include <unistd.h>

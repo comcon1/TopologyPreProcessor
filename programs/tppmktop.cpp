@@ -226,7 +226,10 @@ void helpscreen()
 \n\
            THE PART OF TOPOLOGY PREPROCESSOR PROJECT                  \n\
         ---      (comcon1, zoidberg, piton)       ---                 \n\
-  version %1$-3s, compiled at %2$-8s on GCC %3$s.\n\
+  TPP version: %1$-3s, compiled at %2$-8s on GCC %3$s.\n\
+  BOOST version:  %4$-8s \n\
+  OpenBabel version: %5$-8s \n\
+  OpenBabel share data: %6$-8s \n\
 \n\
                                 TPPMKTOP\n\
    Utilite for checking your structure file to be suite for  next-step\n\
@@ -234,16 +237,26 @@ programs.  Also it adapts names and  position of atoms in file to make\n\
 following topology file more obvious.\n\
 \n\
  USAGE: \n\
- tppmktop -i <input> -o <output> -f <forcefield> [-l <lack>] [-vmn]\n\
+ tppmktop -i <inp> -o <out> -f <f.field> [-l <lack>] [other opt-s]\n\
 \n\
-      -i  the name of input-file, in PDB or GRO/G96 format.           \n\
-      -o  the name of output-file, contained prepared structure.      \n\
-      -f  the forcefield name (f.i. OPLS-AA)                          \n\
-      -v  verbose mode, typing more information during the execution  \n\
+      -i  the name of (I)nput-file, in PDB or GRO/G96 format.           \n\
+      -o  the name of (O)utput-file, contained prepared structure.      \n\
+      -f  the (F)orcefield name (f.i. OPLS-AA)                          \n\
+      -v  (V)erbose mode, typing more information during the execution\n\
+ [ special topopolgy generation settings ]\n\
+      -n  do (N)ot calculate force parameters. Write final ITP.\n\
+      -l  specify topology (L)ACK-file definition.\n\
+      -m  (M)aximize amount of bonded interactions.\n\
+ [ database options ] \n\
+      -s  MySQL (S)erver host name or IP\n\
+      -t  MySQL server (P)ort number\n\
+      -u  MySQL (U)ser\n\
+      -p  MySQL (P)assword\n\
       -h  print this message.                                         \n\
 \n\
 --------------------------------*****---------------------------------\n\
-") % VERSION % BUILD_DATE % __VERSION__ << endl;
+") % VERSION % BUILD_DATE % __VERSION__ % BOOST_LIB_VERSION 
+   % BABEL_VERSION % BABEL_DATADIR << endl;
  throw 0;
 }
 

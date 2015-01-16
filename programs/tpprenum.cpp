@@ -172,7 +172,7 @@ void helpscreen()
 \n\
            THE PART OF TOPOLOGY PREPROCESSOR PROJECT                  \n\
         ---      (comcon1, zoidberg, piton)       ---                 \n\
-  version %1$-3s, compiled at %2$-8s on GCC %3$s.\n\
+  TPP version: %1$-3s, compiled at %2$-8s on GCC %3$s.\n\
   BOOST version:  %4$-8s \n\
   OpenBabel version: %5$-8s \n\
   OpenBabel share data: %6$-8s \n\
@@ -189,7 +189,7 @@ void helpscreen()
       -o  the name of (O)utput-file, contained prepared structure.      \n\
       -v  (V)erbose mode, typing more information during the execution\n\
       -x  he(X)adecimal numbering of main (heavy-atom) chain          \n\
-      -g  i(G)nore index in PDB. Use sequental numeration instead.    \n\
+      -g  Do not i(G)nore index in PDB (vs sequental order).    \n\
       -h  print this message.                                         \n\
 \n\
 --------------------------------*****---------------------------------\n\
