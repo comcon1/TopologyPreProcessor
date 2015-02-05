@@ -200,17 +200,23 @@ cout << format ("\
    }
    cout << format("Please, correct your charges according to sum: %1$8.3f.\n") % sumcharge(TOP);
  }
-  catch (tpp::t_sql_exception e) {
+  catch (tpp::t_sql_exception &e) {
    e.fix_log();
    cerr << "TPP_SQL_EXCEPTION FROM: " << e["procname"] << endl;
    cerr << "more info see in log-file." << endl;
+   return 3;
+  }
+  catch (tpp::t_db_exception &e) {
+   e.fix_log();
+   cerr << "TPP_DB_EXCEPTION FROM: " << e["procname"] << endl;
+   cerr << "more info see in log-file." << endl;
    return 2;
   }
-  catch (tpp::t_exception e) {
+  catch (tpp::t_exception &e) {
    e.fix_log();
    cerr << "TPP_EXCEPTION FROM: " << e["procname"] << endl;
    cerr << "more info see in log-file." << endl;
-   return 2;
+   return 1;
  }
  
  cout << "TPPMKTOP finished normally!" << endl;

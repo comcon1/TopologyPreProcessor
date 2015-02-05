@@ -145,6 +145,23 @@ void save_topology_rtp(t_topology &tp, const char *fname) throw (t_exception) {
                 % tp.atoms.find((int)it0->l)->atom_type2.c_str();
       }
 
+  // impropers
+  flag = true;
+  for (t_top_map::nth_index<1>::type::iterator it = tp.parameters.get<1>().lower_bound(TPP_TTYPE_SPECIMP);
+      it != tp.parameters.get<1>().upper_bound(TPP_TTYPE_SPECIMP); ++it)
+      for (t_top_array::nth_index_iterator<1>::type it0 = tp.elements.get<1>().lower_bound(it->defname);
+        it0 != tp.elements.get<1>().upper_bound(it->defname); ++it0) {
+        if (flag) {
+          out << "\n[ impropers ]\n";
+          flag = false;
+        }
+         out << format("%1$4s %2$4s %3$4s %4$4s %5$s \n") 
+                % tp.atoms.find((int)it0->i)->atom_name.c_str()
+                % tp.atoms.find((int)it0->j)->atom_name.c_str()
+                % tp.atoms.find((int)it0->k)->atom_name.c_str()
+                % tp.atoms.find((int)it0->l)->atom_name.c_str()
+                % it->defname.c_str();
+      }
   out << "; topology successfully writed" << endl;
   out.close();
 }
@@ -220,7 +237,6 @@ void save_topology(t_topology &tp, const char *fname) throw (t_exception) {
   }
   // dihedrals
   if ( ( tp.parameters.get<1>().find(TPP_TTYPE_RBDIH) != tp.parameters.get<1>().end() ) ||
-       ( tp.parameters.get<1>().find(TPP_TTYPE_IMPDIH) != tp.parameters.get<1>().end() ) ||
        ( tp.parameters.get<1>().find(TPP_TTYPE_SYMDIH) != tp.parameters.get<1>().end() ) 
       ) {
     out << "\n[ dihedrals ]\n";
@@ -231,6 +247,16 @@ void save_topology(t_topology &tp, const char *fname) throw (t_exception) {
         if (ncf && (it->f != -1) )
           out << format("%1$3d %2$3d %3$3d %4$3d %5$2d\n") % (int)it0->i % (int)it0->j % (int)it0->k % (int)it0->l % it->f;
         else
+          out << format("%1$3d %2$3d %3$3d %4$3d %5$-15s\n") % (int)it0->i % (int)it0->j % (int)it0->k % (int)it0->l % it0->defname;
+  }
+  // impropers 
+  if ( tp.parameters.get<1>().find(TPP_TTYPE_SPECIMP) != tp.parameters.get<1>().end() ) {
+    out << "\n[ dihedrals ]\n";
+    for (t_top_map::nth_index_iterator<1>::type it = tp.parameters.get<1>().lower_bound(TPP_TTYPE_SPECIMP);
+         it != tp.parameters.get<1>().upper_bound(TPP_TTYPE_SPECIMP); ++it)
+      for (t_top_array::nth_index_iterator<1>::type it0 = tp.elements.get<1>().lower_bound(it->defname);
+           it0 != tp.elements.get<1>().upper_bound(it->defname); ++it0)
+        // impropers are always with defines (!)
           out << format("%1$3d %2$3d %3$3d %4$3d %5$-15s\n") % (int)it0->i % (int)it0->j % (int)it0->k % (int)it0->l % it0->defname;
   }
   // pairs

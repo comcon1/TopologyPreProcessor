@@ -6,7 +6,7 @@
 #include "boost/lambda/lambda.hpp"
 #include "boost/lambda/if.hpp"
 
-//#define CDB
+#define CDB
 
 namespace tpp {
   using namespace OpenBabel;
@@ -15,6 +15,13 @@ namespace tpp {
 bond_definer::bond_definer(t_input_params _par, t_topology &_tp) throw (t_exception): 
  tp(_tp), par(_par), con(new mysqlpp::Connection(false)){
    connect_db();
+   { // including single pair definition
+    t_top_coord tpc;
+    tpc.type = TPP_TTYPE_PAIR;
+    tpc.defname = "ONE_PAIR";
+    tpc.f = 1;
+    tp.parameters.insert(tpc);
+   } // end including single pair
 }
 
 bool bond_definer::connect_db() throw (t_exception) {
@@ -38,7 +45,7 @@ bool bond_definer::connect_db() throw (t_exception) {
       mysqlpp::Query qu = con->query();
       MYSQLPP_RESULT res;
       mysqlpp::Row    row;
-      qu << format("SELECT id FROM forcefield WHERE name='%1$s'") % ffname.c_str();
+      qu << format("SELECT id, generate_pairs FROM forcefield WHERE name='%1$s'") % ffname.c_str();
       res = qu.store();
       if (!res) {
         t_input_params params;
@@ -54,6 +61,7 @@ bool bond_definer::connect_db() throw (t_exception) {
         throw t_exception("Force field not found!", params);
       }
       ffid = res.at(0)["id"];
+      genpairs = (bool) (res.at(0)["generate_pairs"]);
       qu.reset();
 // molecule stuff ))
   string query;
@@ -241,22 +249,18 @@ WHERE (angles.ffield = %4$d) AND \
      tp.parameters.get<1>().erase(it);
 }
 
+void bond_definer::fill_special() throw (t_exception) {
+ // TODO: add special dihedrals according to SMARTS
+}
+
 void bond_definer::fill_dihedrals() throw (t_exception) {
   mysqlpp::Query qu = con->query();
   MYSQLPP_RESULT res;
   mysqlpp::Row    row;
   string query;
   int co = 0;
-  // including single pair definition
-  { 
-    t_top_coord tpc;
-    tpc.type = TPP_TTYPE_PAIR;
-    tpc.defname = "ONE_PAIR";
-    tpc.f = 1;
-    tp.parameters.insert(tpc);
-  }
-  // end including single pair
   FOR_TORSIONS_OF_MOL(it,tp.mol) {
+    // TODO: check if special dihedral doesn't match
     co++;
     qu.reset();
     string typ1 = namemap.find( tp.atoms.find((*it)[0]+1)->atom_type) ->second; 
@@ -372,15 +376,135 @@ WHERE (dihedrals.ffield = %5$d) AND \
 
 }
 
-void bond_definer::fill_special() throw (t_exception) {
+// use for clever choosing and posing improper dihedrals
+void bond_definer::fill_impropers() throw (t_exception,t_db_exception) {
+    runtime.log_write("Starting curious SMART-improper-dihedral fitting.\n");
+    mysqlpp::Query qu = con->query();
+    qu <<  format("SELECT ip.id, ip.PAT, ip.order, ia.name, ip.impid, \
+          ia.f, ia.c1, ia.c2, ia.c3, ia.c4, ia.c5, ia.c6 \
+        FROM improper_patterns as ip \
+        RIGHT JOIN impropers as ia ON ia.id = ip.impid \
+        WHERE ip.ffield = %1$d and ip.override = 0 ") % this->ffid;
+    runtime.log_write("Loading IMPROPER patterns from DB..");
+    cout << "IMPROPER patterns are loading. Please wait.." << flush;          
+    MYSQLPP_RESULT res;
+    res = qu.store();
+    if (!res) {
+      t_input_params params;
+      PARAM_ADD(params, "procname", "tpp::bond_definer::fill_impropers");
+      PARAM_ADD(params, "error", "SQL query error");
+      PARAM_ADD(params, "sql_error", qu.error() );
+      PARAM_ADD(params, "sql_query", qu.str() ); 
+      throw t_db_exception("SQL query failed!", params);
+    }
+    runtime.log_write("OK!\n");
+    cout << " finished.\n" <<      
+      "Starting SMART-fit." << endl;
+    cout << ( format("Patterns checked: %1$4d.") % 0 ) << flush;
+    std::ostringstream os;
+    mysqlpp::Row::size_type co;
+    mysqlpp::Row    row;
+    OBSmartsPattern pat;
+    vector<vector<int> > maplist;
+    for(co=0; co < res.num_rows(); ++co) {
+      os.str(""); os.clear();
+      row = res.at(co);
+      pat.Init(row["PAT"]);
+      os << format("[OB] Process PAT: %1$s having %2$d atoms.\n") 
+        % row["PAT"] % pat.NumAtoms();
+      runtime.log_write(os.str());
+      pat.Match(tp.mol);
+      BOOST_CHECK(pat.NumAtoms() == 4);
+      maplist.clear();
+      maplist = pat.GetUMapList();
+#ifdef CDB
+        cout << "============> " << row["PAT"] << "\n"
+        << "Matches: " << maplist.size() << endl;
+#endif
+      os << format("[OB] Pattern %1$s matches %2$d times.\n")
+          % row["PAT"] % maplist.size();
+      runtime.log_write(os.str());
+      // manipulating matches
+      for(int i=0;i<maplist.size();++i) {
+              int oo = (int) (row["order"]);
+              BOOST_CHECK(oo <= 4321 and oo >= 1234);
+              t_top_element tel;
+              BOOST_CHECK(oo % 10 <= 4); // 4312 -> 2
+              tel.l = maplist[i][ oo % 10 - 1 ];
+              oo = oo / 10;
+              BOOST_CHECK(oo % 10 <= 4); // 431 -> 1
+              tel.k = maplist[i][ oo % 10 - 1 ];
+              oo = oo / 10;
+              BOOST_CHECK(oo % 10 <= 4); // 43 -> 3
+              tel.j = maplist[i][ oo % 10 - 1 ];
+              oo = oo / 10;
+              BOOST_CHECK(oo <= 4); // 4 -> 4
+              tel.i = maplist[i][ oo - 1 ];
+              tel.defname = (string) row["name"];
+              BOOST_CHECK( 
+                  (tp.atoms.find(tel.i) != tp.atoms.end()) &&
+                  (tp.atoms.find(tel.j) != tp.atoms.end()) &&
+                  (tp.atoms.find(tel.k) != tp.atoms.end()) &&
+                  (tp.atoms.find(tel.l) != tp.atoms.end())
+                );
+#ifdef CDB
+              cout << format(" --- %1$d  %2$d  %3$d  %4$d ---") % tel.i % tel.j % tel.k % tel.l << endl;
+#endif
+              // element is adding unconditionally
+              tp.elements.push_back(tel);
+              // top-coord is added only once
+              if ( !tp.parameters.count(tel.defname) ) {
+                  t_top_coord tpc;
+                  tpc.type = TPP_TTYPE_SPECIMP;
+                  tpc.defname = tel.defname;
+                  tpc.f = (int) row["f"];
+                  tpc.c0 = (double) row["c1"];
+                  tpc.c1 = (double) row["c2"];
+                  tpc.c2 = (double) row["c3"];
+                  tpc.c3 = (double) row["c4"];
+                  tpc.c4 = (double) row["c5"];
+                  tpc.c5 = (double) row["c6"];
+                  tp.parameters.insert(tpc);
+              } // end if
+      } // end for (matches)
+#ifdef CDB
+          cout << endl;
+#endif
+      cout << ( format("\b\b\b\b\b%1$4d.") % (int)co ) << flush;
+    } // end for (rows) 
+
+    //TODO: remove impropers if dublicate for specials
+
+} // end fill_special
+
+void bond_definer::fill_pairs() throw (t_exception) {
+  if (genpairs) {
+    cout << "Generating 1-4 pairs for FF needs.." << flush;
+    FOR_TORSIONS_OF_MOL(it,tp.mol) {
+      t_top_element tel;
+      tel.defname = "ONE_PAIR";
+      BOOST_CHECK(tp.atoms.find((*it)[0]+1) != tp.atoms.end());
+      tel.i = tp.atoms.find((*it)[0]+1)->index; 
+      BOOST_CHECK(tp.atoms.find((*it)[1]+1) != tp.atoms.end());
+      tel.j = tp.atoms.find((*it)[1]+1)->index;
+      tp.elements.push_back(tel);
+    }
+    cout << "ok." << endl;
+  }
 }
+
 void bond_definer::bond_align() throw (t_exception) {
   try {
    fill_bonds();
    fill_angles();
+   fill_special();
    fill_dihedrals();
-  } catch (t_sql_exception e) { e.fix_log(); }
-    catch (t_exception e) { e.fix_log(); }
+   fill_impropers();
+   fill_pairs();
+  } 
+    catch (t_db_exception &e) { e.fix_log(); cout << "..something fails." << endl; }
+    catch (t_sql_exception &e) { e.fix_log(); cout << "..something fails." << endl; }
+    catch (t_exception &e) { e.fix_log();  cout << "..something fails." << endl; }
 }
 void bond_definer::log_needed_bonds() {
 }
