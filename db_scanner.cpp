@@ -757,11 +757,11 @@ mysqlpp::Query qu = con->query();
         PARAM_ADD(params, "sql_error", qu.error() );
         throw t_sql_exception("SQL query failed!", params);
       }
-      if (!res.at(0)) {
+      if (!res.num_rows()) {
         t_input_params params;
         PARAM_ADD(params, "procname", "tpp::atom_definer::connect_db");
         PARAM_ADD(params, "error", "Error in parameters");
-        throw t_exception("Force field not found!", params);
+        throw t_exception((string("Force field '")+ffname+string("' not found!")).c_str(), params);
       }
       ffid = res.at(0)["id"];
       tp.ffinclude = (res.at(0)["include"]).c_str();

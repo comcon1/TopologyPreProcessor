@@ -1,0 +1,120 @@
+; TPP - topology generator 
+; created by Erg Research Group
+; MSU, Biology Faculty, Department of Biophysics
+; ----------------------------------------------
+#include <ffoplsaa.itp>
+
+[ moleculetype ]
+  LIG 3
+
+; Force constant parameters
+#define dfTPP_bon_2     1 0.101  3.63e+05 ;1
+#define dfTPP_bon_7     1 0.145  2.82e+05 ;1
+#define dfTPP_bon_8     1 0.109  2.85e+05 ;1
+#define dfTPP_bon_12    1 0.153  2.24e+05 ;1
+#define dfTPP_ang_8     1 120.0  292.9 ;2
+#define dfTPP_ang_9     1 118.4  318.0 ;2
+#define dfTPP_ang_13    1 109.7  669.4 ;2
+#define dfTPP_ang_14    1 109.5  292.9 ;2
+#define dfTPP_ang_16    1 110.7  313.8 ;2
+#define dfTPP_ang_18    1 107.8  276.1 ;2
+#define dfTPP_ang_20    1 110.7  313.8 ;2
+#define dfTPP_dih_19    3  +0.0  +0.0  +0.0  +0.0  +0.0  +0.0 ;3
+#define dfTPP_dih_37    3  +1.0  +2.9  +0.0  -3.9  +0.0  +0.0 ;3
+#define dfTPP_dih_38    3  +0.6  +1.9  +0.0  -2.5  +0.0  +0.0 ;3
+
+[ atoms ]
+  1  opls_709   1  LIG   Cl1   1502587384  -0.628  35.453000 ;  Cl charges: JACS 117,2024 (95)
+  2  Pt_cpl0    1  LIG   Pt2   1502587384  0.500  198.080000 ; Pt complex (Mol Pharm 56:633)
+  3  opls_709   1  LIG   Cl3   1502587384  -0.628  35.453000 ;  Cl charges: JACS 117,2024 (95)
+  4  opls_237   1  LIG   N4    1502587384  -0.760  14.006700 ;  N: primary amide.  use alkane parameters.
+  5  opls_240   1  LIG   1H4   1502587384  0.380  1.008000 ;  H on N: primary amide
+  6  opls_240   1  LIG   2H4   1502587384  0.380  1.008000 ;  H on N: primary amide
+  7  opls_136   1  LIG   C5    1502587384  -0.120  12.011000 ;  alkane CH2 
+  8  opls_911   1  LIG   1H5   1502587384  0.060  1.008000 ;  H(C) for C bonded to N in amines, diamines (aziridine H2,H3)
+  9  opls_911   1  LIG   2H5   1502587384  0.060  1.008000 ;  H(C) for C bonded to N in amines, diamines (aziridine H2,H3)
+ 10  opls_136   1  LIG   C6    1502587384  -0.120  12.011000 ;  alkane CH2 
+ 11  opls_911   1  LIG   1H6   1502587384  0.060  1.008000 ;  H(C) for C bonded to N in amines, diamines (aziridine H2,H3)
+ 12  opls_911   1  LIG   2H6   1502587384  0.060  1.008000 ;  H(C) for C bonded to N in amines, diamines (aziridine H2,H3)
+ 13  opls_237   1  LIG   N7    1502587384  -0.760  14.006700 ;  N: primary amide.  use alkane parameters.
+ 14  opls_240   1  LIG   1H7   1502587384  0.380  1.008000 ;  H on N: primary amide
+ 15  opls_240   1  LIG   2H7   1502587384  0.380  1.008000 ;  H on N: primary amide
+
+[ bonds ]
+  3   2  dfTPP_bon_1    
+  1   2  dfTPP_bon_1    
+  2   4  dfTPP_bon_1    
+  2  13  dfTPP_bon_1    
+  5   4  dfTPP_bon_2    
+  4   6  dfTPP_bon_2    
+ 14  13  dfTPP_bon_2    
+ 13  15  dfTPP_bon_2    
+  4   7  dfTPP_bon_7    
+ 13  10  dfTPP_bon_7    
+ 11  10  dfTPP_bon_8    
+ 10  12  dfTPP_bon_8    
+  7   8  dfTPP_bon_8    
+  7   9  dfTPP_bon_8    
+ 10   7  dfTPP_bon_12   
+
+[ angles ]
+  1   2   3  dfTPP_ang_1    
+  3   2   4  dfTPP_ang_2    
+  3   2  13  dfTPP_ang_3    
+  1   2   4  dfTPP_ang_4    
+  1   2  13  dfTPP_ang_5    
+  4   2  13  dfTPP_ang_6    
+  2   4   5  dfTPP_ang_7    
+  5   4   6  dfTPP_ang_8    
+ 14  13  15  dfTPP_ang_8    
+  5   4   7  dfTPP_ang_9    
+  6   4   7  dfTPP_ang_9    
+ 10  13  14  dfTPP_ang_9    
+ 10  13  15  dfTPP_ang_9    
+  2   4   6  dfTPP_ang_10   
+  2   4   7  dfTPP_ang_11   
+  4   7  10  dfTPP_ang_13   
+  7  10  13  dfTPP_ang_13   
+  4   7   8  dfTPP_ang_14   
+  4   7   9  dfTPP_ang_14   
+ 11  10  13  dfTPP_ang_14   
+ 12  10  13  dfTPP_ang_14   
+  8   7  10  dfTPP_ang_16   
+  9   7  10  dfTPP_ang_16   
+  7  10  11  dfTPP_ang_16   
+  7  10  12  dfTPP_ang_16   
+  8   7   9  dfTPP_ang_18   
+ 11  10  12  dfTPP_ang_18   
+  2  13  14  dfTPP_ang_25   
+  2  13  10  dfTPP_ang_26   
+  2  13  15  dfTPP_ang_27   
+
+[ dihedrals ]
+  5   4   7  10 dfTPP_dih_19   
+  5   4   7   8 dfTPP_dih_19   
+  5   4   7   9 dfTPP_dih_19   
+  6   4   7  10 dfTPP_dih_19   
+  6   4   7   8 dfTPP_dih_19   
+  6   4   7   9 dfTPP_dih_19   
+ 14  13  10  11 dfTPP_dih_19   
+ 14  13  10   7 dfTPP_dih_19   
+ 14  13  10  12 dfTPP_dih_19   
+ 15  13  10  11 dfTPP_dih_19   
+ 15  13  10   7 dfTPP_dih_19   
+ 15  13  10  12 dfTPP_dih_19   
+  2   4   7  10 dfTPP_dih_22   
+  2   4   7   8 dfTPP_dih_22   
+  2   4   7   9 dfTPP_dih_22   
+  2  13  10  11 dfTPP_dih_22   
+  2  13  10   7 dfTPP_dih_22   
+  2  13  10  12 dfTPP_dih_22   
+ 13  10   7   4 dfTPP_dih_22   
+ 11  10   7   4 dfTPP_dih_37   
+ 13  10   7   8 dfTPP_dih_37   
+ 13  10   7   9 dfTPP_dih_37   
+ 12  10   7   4 dfTPP_dih_37   
+ 11  10   7   8 dfTPP_dih_38   
+ 11  10   7   9 dfTPP_dih_38   
+ 12  10   7   8 dfTPP_dih_38   
+ 12  10   7   9 dfTPP_dih_38   
+; topology successfully writed

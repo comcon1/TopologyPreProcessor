@@ -1,0 +1,137 @@
+
+Starting TPP-0.5 (testing version)
+Build at: 05-09-2014_17:11:58
+Log initiated at 2014-Sep-05 17:32:36
+Trying to read structure from 'onemol.pdb'.
+UNK - C11:5 [   3.551,   1.474,  -0.199] QMname: C 
+UNK - C02:6 [   4.873,   1.059,   0.029] QMname: C 
+UNK - C03:7 [   5.148,  -0.241,   0.458] QMname: C 
+UNK - C04:8 [   4.107,  -1.141,   0.663] QMname: C 
+UNK - C05:9 [   2.787,  -0.744,   0.441] QMname: C 
+UNK - C06:10 [   2.493,   0.560,   0.009] QMname: C 
+UNK - C07:11 [   3.256,   2.778,  -0.631] QMname: C 
+UNK - C08:12 [   1.171,   0.975,  -0.220] QMname: C 
+UNK - C09:13 [   0.895,   2.275,  -0.649] QMname: C 
+UNK - C10:14 [   1.937,   3.175,  -0.854] QMname: C 
+UNK - H12:15 [   4.057,   3.496,  -0.797] QMname: H 
+UNK - H13:16 [   1.724,   4.187,  -1.188] QMname: H 
+UNK - H14:17 [  -0.132,   2.583,  -0.822] QMname: H 
+UNK - H08:19 [   5.700,   1.748,  -0.126] QMname: H 
+UNK - H09:20 [   6.176,  -0.549,   0.630] QMname: H 
+UNK - H10:21 [   4.320,  -2.153,   0.996] QMname: H 
+UNK - H11:22 [   1.987,  -1.461,   0.607] QMname: H 
+UNK - C01:0 [  -0.000,  -0.000,   0.000] QMname: C 
+UNK - H01:1 [  -0.785,   0.244,  -0.653] QMname: H 
+UNK - H02:2 [   0.322,  -0.981,  -0.190] QMname: H 
+UNK - H03:3 [  -0.335,   0.073,   0.993] QMname: H 
+Successfully readed 21 atoms!
+Starting c1/openbabel longtail alrogithm.
+Longest subchain is: 
+[11](2,3,4,5,6,1,7,10,9,8,18)longtail algroithm finished its work.
+Starting C1 renumerator alrogithm.
+Checking bond matrix of molecule..
+Checking bond matrix of molecule finished.
+Starting c1/openbabel longtail alrogithm.
+Longest subchain is: 
+[0]()longtail algroithm finished its work.
+Starting c1/openbabel longtail alrogithm.
+Longest subchain is: 
+[0]()longtail algroithm finished its work.
+Starting c1/openbabel longtail alrogithm.
+Longest subchain is: 
+[0]()longtail algroithm finished its work.
+Starting c1/openbabel longtail alrogithm.
+Longest subchain is: 
+[0]()longtail algroithm finished its work.
+Starting c1/openbabel longtail alrogithm.
+Longest subchain is: 
+[0]()longtail algroithm finished its work.
+Starting c1/openbabel longtail alrogithm.
+Longest subchain is: 
+[0]()longtail algroithm finished its work.
+Starting c1/openbabel longtail alrogithm.
+Longest subchain is: 
+[0]()longtail algroithm finished its work.
+Starting c1/openbabel longtail alrogithm.
+Longest subchain is: 
+[0]()longtail algroithm finished its work.
+Starting c1/openbabel longtail alrogithm.
+Longest subchain is: 
+[0]()longtail algroithm finished its work.
+Starting c1/openbabel longtail alrogithm.
+Longest subchain is: 
+[0]()longtail algroithm finished its work.
+Starting c1/openbabel longtail alrogithm.
+Longest subchain is: 
+[0]()longtail algroithm finished its work.
+New atom names and numbers:
+   1   C1   6
+   2  1H1   1
+   3   C2   6
+   4  1H2   1
+   5   C3   6
+   6  1H3   1
+   7   C4   6
+   8  1H4   1
+   9   C5   6
+  10   C6   6
+  11   C7   6
+  12  1H7   1
+  13   C8   6
+  14  1H8   1
+  15   C9   6
+  16  1H9   1
+  17  C10   6
+  18  C11   6
+  19 1H11   1
+  20 2H11   1
+  21 3H11   1
+Table of converting numbers:
+  6 ->   1
+ 19 ->   2
+  7 ->   3
+ 20 ->   4
+  8 ->   5
+ 21 ->   6
+  9 ->   7
+ 22 ->   8
+ 10 ->   9
+  5 ->  10
+ 11 ->  11
+ 15 ->  12
+ 14 ->  13
+ 16 ->  14
+ 13 ->  15
+ 17 ->  16
+ 12 ->  17
+  0 ->  18
+  1 ->  19
+  2 ->  20
+  3 ->  21
+Table of converting names:
+C02 -> C1
+H08 -> 1H1
+C03 -> C2
+H09 -> 1H2
+C04 -> C3
+H10 -> 1H3
+C05 -> C4
+H11 -> 1H4
+C06 -> C5
+C11 -> C6
+C07 -> C7
+H12 -> 1H7
+C10 -> C8
+H13 -> 1H8
+C09 -> C9
+H14 -> 1H9
+C08 -> C10
+C01 -> C11
+H01 -> 1H11
+H02 -> 2H11
+H03 -> 3H11
+COMCON1 renumeration alogrythm finished its work.
+Trying to write structure into 'onemol_r.pdb'.
+
+Log terminated at 2014-Sep-05 17:32:36
+Bye!

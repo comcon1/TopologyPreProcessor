@@ -137,6 +137,7 @@ namespace tpp {
       t_input_params par;
       map<string, string> namemap; // map of uname -> name ))
       short ffid;
+      bool  genpairs;
       std::ofstream qalcfile;
 
       // methods
@@ -145,6 +146,8 @@ namespace tpp {
       void fill_angles() throw (t_exception);
       void fill_dihedrals() throw (t_exception);
       void fill_special() throw (t_exception);
+      void fill_impropers() throw (t_exception, t_db_exception);
+      void fill_pairs() throw (t_exception);
     public:
       bond_definer(t_input_params, t_topology &) throw (t_exception);
       ~bond_definer() {        

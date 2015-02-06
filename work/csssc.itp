@@ -1,0 +1,76 @@
+; TPP - topology generator 
+; created by Erg Research Group
+; MSU, Biology Faculty, Department of Biophysics
+; ----------------------------------------------
+#include <ffoplsaa.itp>
+
+[ moleculetype ]
+  LEU 3
+
+; Force constant parameters
+#define dfTPP_bon_1     1 0.109  2.85e+05 ;1
+#define dfTPP_bon_4     1 0.181  1.86e+05 ;1
+#define dfTPP_bon_5     1 0.204  1.39e+05 ;1
+#define dfTPP_ang_1     1 107.8  276.1 ;2
+#define dfTPP_ang_3     1 109.5  292.9 ;2
+#define dfTPP_ang_6     1 109.5  292.9 ;2
+#define dfTPP_ang_7     1 103.7  569.0 ;2
+#define dfTPP_dih_1     3  +1.2  +3.5  +0.0  -4.7  +0.0  +0.0 ;3
+#define dfTPP_dih_6     3  +1.2  +3.5  +0.0  -4.7  +0.0  +0.0 ;3
+
+[ atoms ]
+  1  opls_216   1  LEU   C1    -202610184  0.217  12.011000 ;  all-atom C: C, disulfides
+  2  opls_140   1  LEU   1H1   -202610184  0.060  1.008000 ;  alkane H.
+  3  opls_140   1  LEU   2H1   -202610184  0.060  1.008000 ;  alkane H.
+  4  opls_140   1  LEU   3H1   -202610184  0.060  1.008000 ;  alkane H.
+  5  opls_203   1  LEU   S2    -202610184  -0.217  32.060000 ;  all-atom S: disulfides
+  6  opls_203   1  LEU   S3    -202610184  -0.217  32.060000 ;  all-atom S: disulfides
+  7  opls_203   1  LEU   S4    -202610184  -0.217  32.060000 ;  all-atom S: disulfides
+  8  opls_203   1  LEU   S5    -202610184  -0.217  32.060000 ;  all-atom S: disulfides
+  9  opls_216   1  LEU   C6    -202610184  0.217  12.011000 ;  all-atom C: C, disulfides
+ 10  opls_140   1  LEU   1H6   -202610184  0.060  1.008000 ;  alkane H.
+ 11  opls_140   1  LEU   2H6   -202610184  0.060  1.008000 ;  alkane H.
+ 12  opls_140   1  LEU   3H6   -202610184  0.060  1.008000 ;  alkane H.
+
+[ bonds ]
+ 10   9  dfTPP_bon_1    
+ 11   9  dfTPP_bon_1    
+  9  12  dfTPP_bon_1    
+  2   1  dfTPP_bon_1    
+  3   1  dfTPP_bon_1    
+  1   4  dfTPP_bon_1    
+  9   8  dfTPP_bon_4    
+  1   5  dfTPP_bon_4    
+  8   7  dfTPP_bon_5    
+  7   6  dfTPP_bon_5    
+  6   5  dfTPP_bon_5    
+
+[ angles ]
+  2   1   3  dfTPP_ang_1    
+  2   1   4  dfTPP_ang_1    
+  3   1   4  dfTPP_ang_1    
+ 10   9  11  dfTPP_ang_1    
+ 10   9  12  dfTPP_ang_1    
+ 11   9  12  dfTPP_ang_1    
+  8   9  12  dfTPP_ang_3    
+  2   1   5  dfTPP_ang_3    
+  3   1   5  dfTPP_ang_3    
+  4   1   5  dfTPP_ang_3    
+  8   9  10  dfTPP_ang_3    
+  8   9  11  dfTPP_ang_3    
+  1   5   6  dfTPP_ang_7    
+  7   8   9  dfTPP_ang_7    
+  5   6   7  dfTPP_ang_8    
+  6   7   8  dfTPP_ang_9    
+
+[ dihedrals ]
+ 10   9   8   7 dfTPP_dih_1    
+ 11   9   8   7 dfTPP_dih_1    
+ 12   9   8   7 dfTPP_dih_1    
+  2   1   5   6 dfTPP_dih_1    
+  3   1   5   6 dfTPP_dih_1    
+  4   1   5   6 dfTPP_dih_1    
+  9   8   7   6 dfTPP_dih_4    
+  8   7   6   5 dfTPP_dih_4    
+  7   6   5   1 dfTPP_dih_4    
+; topology successfully writed

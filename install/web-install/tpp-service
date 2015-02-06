@@ -1,0 +1,24 @@
+#! /bin/sh
+# /etc/init.d/tpp-service
+#
+
+# Some things that run always
+touch /var/lock/tpp-service
+
+# Carry out specific functions when asked to by the system
+case "$1" in
+  start)
+    echo "Starting TPP service"
+    nohup su -c "/usr/local/bin/tpp-service.sh" www-data
+    ;;
+  stop)
+    echo "Stopping TPP serivce"
+    pkill tpp-service
+    ;;
+  *)
+    echo "Usage: /etc/init.d/blah {start|stop}"
+    exit 1
+    ;;
+esac
+
+exit 0

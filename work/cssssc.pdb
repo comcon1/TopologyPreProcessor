@@ -1,0 +1,14 @@
+TITLE  Written by TPP:  (topoplogy for residue LEU )
+ATOM      1   C1 LEU A   9      -0.000  -0.000   0.000
+ATOM      2  1H1 LEU A   9      -0.258  -0.745  -0.753
+ATOM      3  2H1 LEU A   9       0.758   0.674  -0.399
+ATOM      4  3H1 LEU A   9      -0.890   0.571   0.265
+ATOM      5   S2 LEU A   9       0.647  -0.834   1.483
+ATOM      6   S3 LEU A   9       1.120  -2.776   1.024
+ATOM      7   S4 LEU A   9       1.186  -3.002  -1.012
+ATOM      8   S5 LEU A   9      -0.410  -2.034  -1.860
+ATOM      9   C6 LEU A   9      -0.960  -2.947  -3.335
+ATOM     10  1H6 LEU A   9      -0.160  -2.956  -4.075
+ATOM     11  2H6 LEU A   9      -1.839  -2.460  -3.758
+ATOM     12  3H6 LEU A   9      -1.209  -3.971  -3.058
+END

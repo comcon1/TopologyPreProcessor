@@ -1,8 +1,8 @@
 #ifndef TPP_GLOBAL_H
 #define TPP_GLOBAL_H
 
-#define PROG_NAME "TPP-0.6 (testing version)"
-#define VERSION "0.6"
+#define PROG_NAME "TPP-0.6.1 (testing version)"
+#define VERSION "0.6.1"
 
 // system
 #include <unistd.h>
@@ -173,7 +173,7 @@ typedef vector<t_int_coord> t_internals_array;
 // topology parameters definition
 typedef enum { TPP_TTYPE_BON=1, TPP_TTYPE_ANG=2, TPP_TTYPE_RBDIH=3, 
                TPP_TTYPE_IMPDIH=4,TPP_TTYPE_SYMDIH=5, TPP_TTYPE_PAIR=6,
-               TPP_TTYPE_EXCL=7 } t_ttype_type;
+               TPP_TTYPE_EXCL=7, TPP_TTYPE_SPECIMP=8 } t_ttype_type;
 
 struct t_top_coord {
   string defname;
@@ -297,6 +297,25 @@ class t_exception {
          os << "***** parsing line: #" << PARAM_READ(pars, "line") << endl;
      os << "***** " << mesg << endl;
      runtime.log_write(os.str()); 
+   }
+};
+
+// TODO: rewrite via MYSQLPP::QUERY interface
+class t_db_exception: public t_exception {
+  public:
+   t_db_exception(const char *a, t_input_params &b): t_exception(a,b) {}
+   virtual void fix_log() const {
+     std::ostringstream os;
+     os << "TPP catched exception!\n";
+     os << format("***** from %1% -> %2%\n") % PARAM_READ(pars, "classname") % PARAM_READ(pars, "procname");
+     os << format("***** ===[ %1% ]===\n") % PARAM_READ(pars, "error");
+     if (PARAM_EXISTS(pars, "line"))
+         os << "***** parsing line: #" << PARAM_READ(pars, "line") << endl;
+     os << "***** SQL error: #" << PARAM_READ(pars, "sql_error") << endl;
+     os << "***** SQL query: #" << PARAM_READ(pars, "sql_query") << endl;
+     os << "***** " << mesg << endl;
+     runtime.log_write(os.str()); 
+
    }
 };
 
