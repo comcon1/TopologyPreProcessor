@@ -178,7 +178,7 @@ void save_topology(t_topology &tp, const char *fname) throw (t_exception) {
   // header
   out << format("\
 %1%\
-#include <%2%>\n\
+; Topology was prepared for use with the forcefield: <%2%>\n\
 \n\
 [ moleculetype ]\n\
  %3$4s %4$1d\n\
@@ -260,7 +260,7 @@ void save_topology(t_topology &tp, const char *fname) throw (t_exception) {
           out << format("%1$3d %2$3d %3$3d %4$3d %5$-15s\n") % (int)it0->i % (int)it0->j % (int)it0->k % (int)it0->l % it0->defname;
   }
   // pairs
-  if ( tp.parameters.get<1>().count(TPP_TTYPE_PAIR) > 1 ) {
+  if ( tp.parameters.get<1>().count(TPP_TTYPE_PAIR) > 0 ) {
     out << "\n[ pairs ]\n";
     for (t_top_map::nth_index_iterator<1>::type it = tp.parameters.get<1>().lower_bound(TPP_TTYPE_PAIR);
          it != tp.parameters.get<1>().upper_bound(TPP_TTYPE_PAIR); ++it)

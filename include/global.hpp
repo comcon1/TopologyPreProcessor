@@ -2,7 +2,7 @@
 #define TPP_GLOBAL_H
 
 #define PROG_NAME "TPP-0.6.1 (testing version)"
-#define VERSION "0.6.1"
+#define VERSION "0.6.2"
 
 // system
 #include <unistd.h>

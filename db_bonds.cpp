@@ -15,13 +15,6 @@ namespace tpp {
 bond_definer::bond_definer(t_input_params _par, t_topology &_tp) throw (t_exception): 
  tp(_tp), par(_par), con(new mysqlpp::Connection(false)){
    connect_db();
-   { // including single pair definition
-    t_top_coord tpc;
-    tpc.type = TPP_TTYPE_PAIR;
-    tpc.defname = "ONE_PAIR";
-    tpc.f = 1;
-    tp.parameters.insert(tpc);
-   } // end including single pair
 }
 
 bool bond_definer::connect_db() throw (t_exception) {
@@ -473,12 +466,21 @@ void bond_definer::fill_impropers() throw (t_exception,t_db_exception) {
       cout << ( format("\b\b\b\b\b%1$4d.") % (int)co ) << flush;
     } // end for (rows) 
 
+    cout << endl;
+
     //TODO: remove impropers if dublicate for specials
 
 } // end fill_special
 
 void bond_definer::fill_pairs() throw (t_exception) {
   if (genpairs) {
+    // including single pair definition
+        t_top_coord tpc;
+        tpc.type = TPP_TTYPE_PAIR;
+        tpc.defname = "ONE_PAIR";
+        tpc.f = 1;
+        tp.parameters.insert(tpc);
+    // generating pairs
     cout << "Generating 1-4 pairs for FF needs.." << flush;
     FOR_TORSIONS_OF_MOL(it,tp.mol) {
       t_top_element tel;
