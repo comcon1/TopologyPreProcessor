@@ -114,6 +114,12 @@ void recurse_mol_scan(OBMol &mol, std::vector<unsigned> &tail,
         tail.push_back(pA->GetIdx());
         recurse_mol_scan(mol, tail, id, maxtail, excluded);
     }
+// TODO: prefer tail which contains more carbon atoms
+#ifdef CDB
+    cout << "CDB:RMS: " << std::flush;
+    cout << tail;
+    cout << " --]] " << std::endl;
+#endif
     if (tail.size() > maxtail.size()) {
         maxtail.clear();
         maxtail.insert(maxtail.begin(), tail.begin(), tail.end());
@@ -128,7 +134,7 @@ ublas::vector<int> generate_long_tail1(OBMol &mol, std::set<unsigned> &excluded,
     std::vector<unsigned> maxtail;
     std::vector<unsigned> curtail;
     int id = 0;
-    // ��� ����� �� ���������
+    // TODO: i do not know it BM is really need here??
     BondMatrix bm(mol);
     
     runtime.log_write("Starting c1/openbabel longtail alrogithm.\n");
@@ -142,6 +148,7 @@ ublas::vector<int> generate_long_tail1(OBMol &mol, std::set<unsigned> &excluded,
         curtail.push_back(id);
         recurse_mol_scan(mol, curtail, id, maxtail, excluded);
       } // pA cycle over molecule
+
     } else {
       recurse_mol_scan(mol, curtail, startpoint, maxtail, excluded);
     }
@@ -150,6 +157,7 @@ ublas::vector<int> generate_long_tail1(OBMol &mol, std::set<unsigned> &excluded,
     ublas::vector<unsigned> tail_long(maxtail.size()+1);
     for (int i=1; i<=maxtail.size(); ++i)
         tail_long(i) = maxtail[i-1];
+
     // output section
     runtime.log_write("Longest subchain is: \n");
     { 
