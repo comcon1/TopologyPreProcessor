@@ -49,6 +49,7 @@ using std::map;
 using std::vector;
 using std::string;
 using std::fstream;
+using std::ostream;
 using std::cout;
 using std::cerr;
 using std::flush;
@@ -300,6 +301,19 @@ class t_exception {
 };
 
 } // end namespace tpp
+
+template<typename T>
+ostream& operator<< (ostream& out, const vector<T>& v) {
+    out << "[";
+    size_t last = v.size() - 1;
+    for(size_t i = 0; i < v.size(); ++i) {
+        out << v[i];
+        if (i != last) 
+            out << ", ";
+    }
+    out << "]";
+    return out;
+}
 
 
 #define MYSQLPP_RESULT mysqlpp::StoreQueryResult
