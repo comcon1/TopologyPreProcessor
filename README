@@ -1,0 +1,28 @@
+This is the startup project of TPPMKTOP utility for generating molecular
+dynamic topology directly from the chemical structure file.
+
+There are two working programs now:
+
+* TPPRENUM
+
+tpprenum renumerate molecule using the longest tail algorithm. Some branched
+molecules are numerated with *tpprenum* well. Highly connected molecules (such
+as graphene layer or fullerene) could not be renumbered by this algorythm.
+
+* TPPMKTOP
+
+This utility uses SMARTS patterns defined in the Database to attribute atoms in
+structure with corresponding correct atomtypes of the force field. The rest
+interactions (bonded and non-bonded) are generated further according to
+attributing atomtypes.
+
+TPPMKTOP/TPPRENUM are now located at the website:
+
+http://erg.biophys.msu.ru/tpp
+
+Please read the description here:
+
+http://erg.biophys.msu.ru/wordpress/archives/32
+
+and write email at == comconadin (at) gmail (dot) com == if you have questions
+about usage of tppmktop or collaboration, etc.
