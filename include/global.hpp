@@ -1,8 +1,11 @@
 #ifndef TPP_GLOBAL_H
 #define TPP_GLOBAL_H
 
-#define PROG_NAME "TPP-0.6.1 (testing version)"
-#define VERSION "0.6.2"
+#ifdef HAVE_CONFIG_H
+#include "../config.h"
+#else
+#error !! YOU SHOULD RUN CONFIGURE SCRIPT !!
+#endif
 
 // system
 #include <unistd.h>

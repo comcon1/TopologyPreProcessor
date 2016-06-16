@@ -193,7 +193,7 @@ void helpscreen()
       -h  print this message.                                         \n\
 \n\
 --------------------------------*****---------------------------------\n\
-") % VERSION % BUILD_DATE % __VERSION__ % BOOST_LIB_VERSION 
+") % PACKAGE_VERSION % CONFIGURE_CDATE % _VERSION % BOOST_LIB_VERSION 
    % BABEL_VERSION % BABEL_DATADIR << endl;
  throw 0;
 }
