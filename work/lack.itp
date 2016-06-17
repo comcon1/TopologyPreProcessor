@@ -1,5 +1,0 @@
-; TPP topology lack
-#define dfTPP_ang_8 1 0.00 0.00 0.00 ;2
-#define dfTPP_ang_9 1 0.00 0.00 0.00 ;2
-; Overwritted with pairs: 
-#define dfTPP_dih_4 3 0.00 0.00  0.00 0.00 0.00 ;4

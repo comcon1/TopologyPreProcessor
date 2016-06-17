@@ -1,16 +1,17 @@
 LIBS         = -lboost_program_options -lboost_unit_test_framework -lboost_test_exec_monitor -lopenbabel -lmysqlpp
-CXXINC       = -I../include -I/usr/include/openbabel-2.0 -I/usr/include/mysql++
+CXXINC       = -I../include -I/usr/include/openbabel-2.0 -I/usr/include/mysql++ -I.. -I../include -DHAVE_CONFIG_H
 CXXFLAGS     = -O0 -pipe -DTPP_UNIT_TEST \
  -DBUILD_DATE=\"`date +"%d-%m-%Y_%X"`\"  -DMYSQLPP_MYSQL_HEADERS_BURIED
 CC           = gcc
 CXX          = g++ $(CXXFLAGS) $(CXXINC)
 LD           = $(CXX)
-OBJDIR       = ../objects.test
 
-all: test_global topio_test test_align test_matrix
+all: test_matrix 
+	
+	#test_global topio_test test_align 
 
-test_matrix:  test_matrix.cpp $(OBJDIR)/global.o
-	$(LD) -o test_matrix test_matrix.cpp $(OBJDIR)/global.o $(LIBS) -llapack
+test_matrix:  test_matrix.cpp ../src/global.o
+	$(LD) -o test_matrix test_matrix.cpp ../src/global.o $(LIBS) -llapack
 
 test_global: $(OBJDIR)/global.o test_global.o test_calc.o $(OBJDIR)/calc.o
 	$(LD) -o test_global $(OBJDIR)/global.o $(OBJDIR)/calc.o test_global.o test_calc.o $(LIBS)

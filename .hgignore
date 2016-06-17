@@ -1,0 +1,21 @@
+syntax: glob
+
+src/programs/tppmktop
+src/programs/tpprenum
+src/programs/tppreadbonds
+src/programs/.dirstamp
+src/.deps
+src/Makefile
+work
+autom4te.cache
+config.h
+config.log
+config.status
+
+
+
+syntax: regexp
+
+^.*\.sw[po]$
+^.*\.o$
+
