@@ -2,12 +2,12 @@
 #define TPP_DBSCANNER_H
 
 #include "global.hpp"
-#include "mysql++.h"
+#include <mysql++/mysql++.h>
 #include <set>
 
 
 #define TPP_SMART_COEFF 100
-#define  TPP_ZNUC_COEFF 10000
+#define TPP_ZNUC_COEFF  10000
 #define TPP_BOND_COEFF  2
 #define TPP_ANGLE_COEFF 4
 #define TPP_DIHED_COEFF 8

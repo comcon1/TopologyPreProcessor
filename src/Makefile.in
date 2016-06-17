@@ -76,7 +76,9 @@ POST_INSTALL = :
 NORMAL_UNINSTALL = :
 PRE_UNINSTALL = :
 POST_UNINSTALL = :
-bin_PROGRAMS = programs/tpprenum$(EXEEXT)
+bin_PROGRAMS = programs/tpprenum$(EXEEXT) programs/tppmktop$(EXEEXT) \
+	$(am__EXEEXT_1)
+@GAMESSFEATURES_TRUE@am__append_1 = programs/tppreadbonds
 subdir = src
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
 	$(top_srcdir)/depcomp
@@ -88,13 +90,34 @@ mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = $(top_builddir)/config.h
 CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
+@GAMESSFEATURES_TRUE@am__EXEEXT_1 = programs/tppreadbonds$(EXEEXT)
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
+am_programs_tppmktop_OBJECTS = tppmktop.$(OBJEXT) global.$(OBJEXT) \
+	db_scanner.$(OBJEXT) smartfit.$(OBJEXT) db_bonds.$(OBJEXT) \
+	topio.$(OBJEXT) strutil.$(OBJEXT)
+programs_tppmktop_OBJECTS = $(am_programs_tppmktop_OBJECTS)
+programs_tppmktop_LDADD = $(LDADD)
+programs_tppmktop_LINK = $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) \
+	$(programs_tppmktop_LDFLAGS) $(LDFLAGS) -o $@
+am__dirstamp = $(am__leading_dot)dirstamp
+am__programs_tppreadbonds_SOURCES_DIST = programs/tppreadbonds.cpp \
+	topio.cpp hessian_accept.cpp calc.cpp global.cpp \
+	db_scanner.cpp strutil.cpp db_bonds.cpp smartfit.cpp
+@GAMESSFEATURES_TRUE@am_programs_tppreadbonds_OBJECTS =  \
+@GAMESSFEATURES_TRUE@	tppreadbonds.$(OBJEXT) topio.$(OBJEXT) \
+@GAMESSFEATURES_TRUE@	hessian_accept.$(OBJEXT) calc.$(OBJEXT) \
+@GAMESSFEATURES_TRUE@	global.$(OBJEXT) db_scanner.$(OBJEXT) \
+@GAMESSFEATURES_TRUE@	strutil.$(OBJEXT) db_bonds.$(OBJEXT) \
+@GAMESSFEATURES_TRUE@	smartfit.$(OBJEXT)
+programs_tppreadbonds_OBJECTS = $(am_programs_tppreadbonds_OBJECTS)
+programs_tppreadbonds_LDADD = $(LDADD)
+programs_tppreadbonds_LINK = $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) \
+	$(programs_tppreadbonds_LDFLAGS) $(LDFLAGS) -o $@
 am_programs_tpprenum_OBJECTS = tpprenum.$(OBJEXT) strutil.$(OBJEXT) \
 	topio.$(OBJEXT) global.$(OBJEXT) pdbutils.$(OBJEXT)
 programs_tpprenum_OBJECTS = $(am_programs_tpprenum_OBJECTS)
 programs_tpprenum_LDADD = $(LDADD)
-am__dirstamp = $(am__leading_dot)dirstamp
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -128,8 +151,11 @@ AM_V_CXXLD = $(am__v_CXXLD_@AM_V@)
 am__v_CXXLD_ = $(am__v_CXXLD_@AM_DEFAULT_V@)
 am__v_CXXLD_0 = @echo "  CXXLD   " $@;
 am__v_CXXLD_1 = 
-SOURCES = $(programs_tpprenum_SOURCES)
-DIST_SOURCES = $(programs_tpprenum_SOURCES)
+SOURCES = $(programs_tppmktop_SOURCES) \
+	$(programs_tppreadbonds_SOURCES) $(programs_tpprenum_SOURCES)
+DIST_SOURCES = $(programs_tppmktop_SOURCES) \
+	$(am__programs_tppreadbonds_SOURCES_DIST) \
+	$(programs_tpprenum_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -247,7 +273,11 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 AM_CPPFLAGS = -I../include
-programs_tpprenum_SOURCES = programs/tpprenum.cpp strutil.cpp topio.cpp global.cpp pdbutils.cpp
+@GAMESSFEATURES_TRUE@programs_tppreadbonds_SOURCES = programs/tppreadbonds.cpp topio.cpp hessian_accept.cpp calc.cpp global.cpp db_scanner.cpp strutil.cpp db_bonds.cpp smartfit.cpp 
+@GAMESSFEATURES_TRUE@programs_tppreadbonds_LDFLAGS = -llapack -lmysqlpp
+programs_tpprenum_SOURCES = programs/tpprenum.cpp strutil.cpp topio.cpp global.cpp pdbutils.cpp 
+programs_tppmktop_SOURCES = programs/tppmktop.cpp global.cpp db_scanner.cpp smartfit.cpp db_bonds.cpp topio.cpp strutil.cpp
+programs_tppmktop_LDFLAGS = -lmysqlpp
 all: all-am
 
 .SUFFIXES:
@@ -328,6 +358,14 @@ programs/$(am__dirstamp):
 	@$(MKDIR_P) programs
 	@: > programs/$(am__dirstamp)
 
+programs/tppmktop$(EXEEXT): $(programs_tppmktop_OBJECTS) $(programs_tppmktop_DEPENDENCIES) $(EXTRA_programs_tppmktop_DEPENDENCIES) programs/$(am__dirstamp)
+	@rm -f programs/tppmktop$(EXEEXT)
+	$(AM_V_CXXLD)$(programs_tppmktop_LINK) $(programs_tppmktop_OBJECTS) $(programs_tppmktop_LDADD) $(LIBS)
+
+programs/tppreadbonds$(EXEEXT): $(programs_tppreadbonds_OBJECTS) $(programs_tppreadbonds_DEPENDENCIES) $(EXTRA_programs_tppreadbonds_DEPENDENCIES) programs/$(am__dirstamp)
+	@rm -f programs/tppreadbonds$(EXEEXT)
+	$(AM_V_CXXLD)$(programs_tppreadbonds_LINK) $(programs_tppreadbonds_OBJECTS) $(programs_tppreadbonds_LDADD) $(LIBS)
+
 programs/tpprenum$(EXEEXT): $(programs_tpprenum_OBJECTS) $(programs_tpprenum_DEPENDENCIES) $(EXTRA_programs_tpprenum_DEPENDENCIES) programs/$(am__dirstamp)
 	@rm -f programs/tpprenum$(EXEEXT)
 	$(AM_V_CXXLD)$(CXXLINK) $(programs_tpprenum_OBJECTS) $(programs_tpprenum_LDADD) $(LIBS)
@@ -338,10 +376,17 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/calc.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/db_bonds.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/db_scanner.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/global.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hessian_accept.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pdbutils.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/smartfit.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/strutil.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/topio.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tppmktop.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tppreadbonds.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tpprenum.Po@am__quote@
 
 .cpp.o:
@@ -357,6 +402,34 @@ distclean-compile:
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXXCOMPILE) -c -o $@ `$(CYGPATH_W) '$<'`
+
+tppmktop.o: programs/tppmktop.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT tppmktop.o -MD -MP -MF $(DEPDIR)/tppmktop.Tpo -c -o tppmktop.o `test -f 'programs/tppmktop.cpp' || echo '$(srcdir)/'`programs/tppmktop.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/tppmktop.Tpo $(DEPDIR)/tppmktop.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='programs/tppmktop.cpp' object='tppmktop.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o tppmktop.o `test -f 'programs/tppmktop.cpp' || echo '$(srcdir)/'`programs/tppmktop.cpp
+
+tppmktop.obj: programs/tppmktop.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT tppmktop.obj -MD -MP -MF $(DEPDIR)/tppmktop.Tpo -c -o tppmktop.obj `if test -f 'programs/tppmktop.cpp'; then $(CYGPATH_W) 'programs/tppmktop.cpp'; else $(CYGPATH_W) '$(srcdir)/programs/tppmktop.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/tppmktop.Tpo $(DEPDIR)/tppmktop.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='programs/tppmktop.cpp' object='tppmktop.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o tppmktop.obj `if test -f 'programs/tppmktop.cpp'; then $(CYGPATH_W) 'programs/tppmktop.cpp'; else $(CYGPATH_W) '$(srcdir)/programs/tppmktop.cpp'; fi`
+
+tppreadbonds.o: programs/tppreadbonds.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT tppreadbonds.o -MD -MP -MF $(DEPDIR)/tppreadbonds.Tpo -c -o tppreadbonds.o `test -f 'programs/tppreadbonds.cpp' || echo '$(srcdir)/'`programs/tppreadbonds.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/tppreadbonds.Tpo $(DEPDIR)/tppreadbonds.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='programs/tppreadbonds.cpp' object='tppreadbonds.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o tppreadbonds.o `test -f 'programs/tppreadbonds.cpp' || echo '$(srcdir)/'`programs/tppreadbonds.cpp
+
+tppreadbonds.obj: programs/tppreadbonds.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT tppreadbonds.obj -MD -MP -MF $(DEPDIR)/tppreadbonds.Tpo -c -o tppreadbonds.obj `if test -f 'programs/tppreadbonds.cpp'; then $(CYGPATH_W) 'programs/tppreadbonds.cpp'; else $(CYGPATH_W) '$(srcdir)/programs/tppreadbonds.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/tppreadbonds.Tpo $(DEPDIR)/tppreadbonds.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='programs/tppreadbonds.cpp' object='tppreadbonds.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o tppreadbonds.obj `if test -f 'programs/tppreadbonds.cpp'; then $(CYGPATH_W) 'programs/tppreadbonds.cpp'; else $(CYGPATH_W) '$(srcdir)/programs/tppreadbonds.cpp'; fi`
 
 tpprenum.o: programs/tpprenum.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT tpprenum.o -MD -MP -MF $(DEPDIR)/tpprenum.Tpo -c -o tpprenum.o `test -f 'programs/tpprenum.cpp' || echo '$(srcdir)/'`programs/tpprenum.cpp

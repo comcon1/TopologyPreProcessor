@@ -2,15 +2,11 @@
 #include "db_scanner.hpp"
 #include "openbabel/obconversion.h"
 #include "openbabel/obiter.h"
-#include "boost/lambda/lambda.hpp"
-#include "boost/lambda/if.hpp"
 
 //#define CDB
 
 namespace tpp {
   using namespace OpenBabel;
-  using boost::lambda::var;
-  using boost::lambda::if_then;
 
   bool operator <(const spec2 & a, const spec2 &b) {
     return    (a.first() < b.first()) 

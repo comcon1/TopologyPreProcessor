@@ -11,8 +11,8 @@ t_runtime::t_runtime(const char *logn, const char *cashn) {
   cash = fopen(cashn,"a+b");
   BOOST_REQUIRE(cash);
   cash_write("cash_start",10);
-  log_write(string("\nStarting ") + PROG_NAME + "\n");
-  log_write(string("Build at: ") + BUILD_DATE + "\n");
+  log_write(string("\nStarting ") + PACKAGE_STRING + "\n");
+  log_write(string("Build at: ") + CONFIGURE_CDATE + "\n");
   log_write(string("Log initiated at ") + lexical_cast<string>(second_clock::local_time()).c_str() + "\n");
 }
 

@@ -41,7 +41,7 @@ int main(int argc, char * argv[]) {
 	 ("help,h", "Print this message")
  ;
  try {
-    try { // ���� ������������ ���������� boost::program_options
+    try { // parsing boost::program_options
  	p_o::store(p_o::parse_command_line(argc, argv, desc), vars);
 	p_o::notify(vars);
     
@@ -127,7 +127,7 @@ cout << format ("\
 *                                                                    *\n\
 *   Modified:     %2$-19s                                *\n\
 **********************************************************************\n\
-\n\n") % VERSION % BUILD_DATE;
+\n\n") % PACKAGE_VERSION % CONFIGURE_CDATE;
 } else {
   cout << format("Starting %1$s program.\n") % "TPPMKTOP";
 }
@@ -261,7 +261,7 @@ following topology file more obvious.\n\
       -h  print this message.                                         \n\
 \n\
 --------------------------------*****---------------------------------\n\
-") % VERSION % BUILD_DATE % __VERSION__ % BOOST_LIB_VERSION 
+") % PACKAGE_VERSION % CONFIGURE_CDATE % __VERSION__ % BOOST_LIB_VERSION 
    % BABEL_VERSION % BABEL_DATADIR << endl;
  throw 0;
 }

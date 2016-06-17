@@ -27,8 +27,11 @@ extern void save_struct(t_topology &, t_oformat, const char *) throw (t_exceptio
 
 extern void save_lack(t_topology &, const char *);
 
+#if ENABLE_GAMESS_FEATURES
 extern void load_hessian(ublas::matrix<double>&, const char *) throw (t_exception);
-// also serialization should be included
+#endif
+
+//TODO: also serialization should be included
 
 }
 #endif

@@ -44,7 +44,13 @@
 #include <openbabel/mol.h>
 // internal class for comparison of float/double/vector
 #include <floatcomp.h> 
+// spirit switch
 
+#if HAVE_BOOST_SPIRIT_CORE_HPP
+#define SPIRIT_HOME boost/spirit
+#elif HAVE_BOOST_SPIRIT_HOME_CLASSIC_CORE_HPP
+#define SPIRIT_HOME boost/spirit/home/classic
+#endif
 
 using std::string;
 using std::pair;
@@ -123,7 +129,6 @@ using boost::multi_index_container;
 using OpenBabel::OBMol;
 
 // atom and atom_array definition
-// typedef struct { double x,y,z; } tpp_point;
 typedef ublas::bounded_vector<double,3> t_point;
 
 struct t_atom {

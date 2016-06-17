@@ -19,7 +19,7 @@ using std::string;
 void helpscreen();
 
 int main(int argc, char * argv[]) {
- string progname("Execution rules for TPPRENUM "); progname += VERSION;
+ string progname("Execution rules for TPPRENUM "); progname += PACKAGE_VERSION;
  p_o::options_description desc(progname);
  p_o::variables_map vars;
  desc.add_options()
@@ -84,7 +84,7 @@ cout << format ("\
 *                                                                    *\n\
 *   Modified:     %2$-19s                                *\n\
 **********************************************************************\n\
-\n\n") % VERSION % BUILD_DATE;
+\n\n") % PACKAGE_VERSION % CONFIGURE_CDATE;
 } else {
   cout << format("Starting TPPRENUM-%1$s program.\n") % VERSION;
 }
@@ -193,7 +193,7 @@ void helpscreen()
       -h  print this message.                                         \n\
 \n\
 --------------------------------*****---------------------------------\n\
-") % PACKAGE_VERSION % CONFIGURE_CDATE % _VERSION % BOOST_LIB_VERSION 
+") % PACKAGE_VERSION % CONFIGURE_CDATE % __VERSION__ % BOOST_LIB_VERSION 
    % BABEL_VERSION % BABEL_DATADIR << endl;
  throw 0;
 }

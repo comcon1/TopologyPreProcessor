@@ -20,7 +20,7 @@ using std::string;
 void helpscreen();
 
 int main(int argc, char * argv[]) {
- string progname =  string("Execution rules for TPPREADBONDS ") + VERSION;
+ string progname =  string("Execution rules for TPPREADBONDS ") + PACKAGE_VERSION;
  p_o::options_description desc(progname);
  p_o::variables_map vars;
  desc.add_options()
@@ -85,9 +85,9 @@ cout << format ("\
 *                                                                    *\n\
 *   Modified:     %2$-19s                                *\n\
 **********************************************************************\n\
-\n\n") % VERSION % BUILD_DATE;
+\n\n") % PACKAGE_VERSION % CONFIGURE_CDATE;
 } else {
-  cout << format("Starting TPPREADBONDS-%1$s program.\n") % VERSION;
+  cout << format("Starting TPPREADBONDS-%1$s program.\n") % PACKAGE_VERSION;
 }
 
  // program body, using modules
@@ -140,6 +140,6 @@ void helpscreen()
                             TPPREADBOND\n\
 \n\
 --------------------------------*****---------------------------------\n\
-") % VERSION % BUILD_DATE % __VERSION__ << endl;
+") % PACKAGE_VERSION % CONFIGURE_CDATE % __VERSION__ << endl;
  throw 0;
 }

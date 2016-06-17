@@ -1,8 +1,7 @@
-//--------------------------------------------------------------
-// ПРОСТРАНСТВО ИМЕН LEX содержит классы CAST-инга, PARSE-инга 
-// параметрического файла переопределены некоторые классы для 
-// boost::spirit::actor
-//--------------------------------------------------------------
+/*
+ * LEX namespace includes cast and parse classes for parametric files read.
+ * Also it has some useful overrides of classes of boost::spirit::actor.
+*/
 #ifndef LEXICAL_SPIRIT_H
 #define LEXICAL_SPIRIT_H
 

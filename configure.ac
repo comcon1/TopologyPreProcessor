@@ -38,7 +38,7 @@ AC_CHECK_HEADER([/usr/include/mysql/mysql.h],
 )
 
 # Check for MySQL++
-AC_CHECK_LIB([mysqlpp], [main],,
+AC_CHECK_LIB([mysqlpp], [main],[],
              [AC_MSG_ERROR([Can not link to libmysqlpp!])] )
 AC_CHECK_HEADER([mysql++/mysql++.h],,
                 [AC_MSG_ERROR([Mysql++ headers are required! Install mysqlpp-dev!])],
@@ -59,7 +59,7 @@ mysqlpp::Connection con (false);
 AC_CHECK_LIB([openbabel], [main],,
              [AC_MSG_ERROR([Can not link to libopenbabel!])]
 )
-AC_CHECK_HEADERS([openbabel/parsmart.h openbabel/obiter.h openbabel/obconversion.h],,
+AC_CHECK_HEADERS([openbabel/parsmart.h openbabel/obiter.h openbabel/obconversion.h openbabel/mol.h],,
                 [AC_MSG_ERROR([OpenBabel headers are required! Install libopenbabel-dev!])]
 )
 
@@ -85,8 +85,46 @@ fi
 AC_CHECK_HEADERS([boost/lexical_cast.hpp boost/cast.hpp boost/date_time/posix_time/posix_time.hpp boost/format.hpp],,
                  [AC_MSG_ERROR([BOOST headers are incomplete!])])
 
+AC_CHECK_HEADERS([boost/spirit/core.hpp])
+AC_CHECK_HEADERS([boost/spirit/home/classic/core.hpp])
 
-#if test ${}
+if test x$HAVE_BOOST_SPIRIT_CORE_HPP = x0; then
+  if test x$HAVE_BOOST_SPIRIT_HOME_CLASSIC_CORE_HPP = x0; then
+      AC_MSG_ERROR([Unknown version of BOOST::SPIRIT!])
+  fi
+fi
+
+# Check for BOOST ublas headers
+AC_CHECK_HEADERS([boost/numeric/ublas/vector.hpp boost/numeric/ublas/matrix_proxy.hpp boost/numeric/ublas/matrix.hpp boost/numeric/ublas/io.hpp],,
+                 [AC_MSG_ERROR([BOOST numeric ublas headers are required!])])
+
+# activate GAMESS features (as HESSIAN load)
+AC_ARG_ENABLE([gamess-features],
+     [  --enable-gamess-features    Turn on GAMESS features <experimental>],
+     [case "${enableval}" in
+       yes) gamessfe=1 ;;
+       no)  gamessfe=0 ;;
+       *) AC_MSG_ERROR([bad value ${enableval} for --enable-gamess-features]) ;;
+     esac],[gamessfe=0])
+
+AC_DEFINE_UNQUOTED([ENABLE_GAMESS_FEATURES],[$gamessfe],[Turn on GAMESS features.])
+AM_CONDITIONAL([GAMESSFEATURES], [test x$gamessfe = x1])
+
+if test x$gamessfe = x1; then
+echo "Checking for requirements for GAMESS FEATURES"
+
+AC_CHECK_HEADERS([boost/numeric/bindings/lapack/gesv.hpp boost/numeric/bindings/lapack/gesvd.hpp boost/numeric/bindings/traits/ublas_matrix.hpp],,
+                 [AC_MSG_ERROR([BOOST numeric bindings are required for GAMESS FEATURES!])])
+
+AC_CHECK_LIB([lapack], [sgesvd_],[true],
+             [AC_MSG_ERROR([Lapack SVD should work for GAMESS FEATURES!])]
+)
+fi
+
+# Override LIBS to make program-specific linking in AM
+LIBS="-lopenbabel -lboost_program_options"
+
+# FIXME: unit test with ENABLE option
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_CHECK_HEADER_STDBOOL

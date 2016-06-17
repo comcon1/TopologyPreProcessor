@@ -3,6 +3,9 @@
 /* Date of last confiugration. */
 #undef CONFIGURE_CDATE
 
+/* Turn on GAMESS features. */
+#undef ENABLE_GAMESS_FEATURES
+
 /* Define to 1 if you have the <boost/cast.hpp> header file. */
 #undef HAVE_BOOST_CAST_HPP
 
@@ -15,6 +18,33 @@
 
 /* Define to 1 if you have the <boost/lexical_cast.hpp> header file. */
 #undef HAVE_BOOST_LEXICAL_CAST_HPP
+
+/* Define to 1 if you have the <boost/numeric/bindings/lapack/gesvd.hpp>
+   header file. */
+#undef HAVE_BOOST_NUMERIC_BINDINGS_LAPACK_GESVD_HPP
+
+/* Define to 1 if you have the <boost/numeric/bindings/lapack/gesv.hpp> header
+   file. */
+#undef HAVE_BOOST_NUMERIC_BINDINGS_LAPACK_GESV_HPP
+
+/* Define to 1 if you have the
+   <boost/numeric/bindings/traits/ublas_matrix.hpp> header file. */
+#undef HAVE_BOOST_NUMERIC_BINDINGS_TRAITS_UBLAS_MATRIX_HPP
+
+/* Define to 1 if you have the <boost/numeric/ublas/io.hpp> header file. */
+#undef HAVE_BOOST_NUMERIC_UBLAS_IO_HPP
+
+/* Define to 1 if you have the <boost/numeric/ublas/matrix.hpp> header file.
+   */
+#undef HAVE_BOOST_NUMERIC_UBLAS_MATRIX_HPP
+
+/* Define to 1 if you have the <boost/numeric/ublas/matrix_proxy.hpp> header
+   file. */
+#undef HAVE_BOOST_NUMERIC_UBLAS_MATRIX_PROXY_HPP
+
+/* Define to 1 if you have the <boost/numeric/ublas/vector.hpp> header file.
+   */
+#undef HAVE_BOOST_NUMERIC_UBLAS_VECTOR_HPP
 
 /* Define to 1 if you have the <boost/program_options/errors.hpp> header file.
    */
@@ -31,6 +61,13 @@
 /* Define to 1 if you have the <boost/program_options/variables_map.hpp>
    header file. */
 #undef HAVE_BOOST_PROGRAM_OPTIONS_VARIABLES_MAP_HPP
+
+/* Define to 1 if you have the <boost/spirit/core.hpp> header file. */
+#undef HAVE_BOOST_SPIRIT_CORE_HPP
+
+/* Define to 1 if you have the <boost/spirit/home/classic/core.hpp> header
+   file. */
+#undef HAVE_BOOST_SPIRIT_HOME_CLASSIC_CORE_HPP
 
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
@@ -54,6 +91,9 @@
 
 /* Define to 1 if you have the <memory.h> header file. */
 #undef HAVE_MEMORY_H
+
+/* Define to 1 if you have the <openbabel/mol.h> header file. */
+#undef HAVE_OPENBABEL_MOL_H
 
 /* Define to 1 if you have the <openbabel/obconversion.h> header file. */
 #undef HAVE_OPENBABEL_OBCONVERSION_H

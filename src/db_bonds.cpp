@@ -3,8 +3,6 @@
 #include "db_scanner.hpp"
 #include "openbabel/obconversion.h"
 #include "openbabel/obiter.h"
-#include "boost/lambda/lambda.hpp"
-#include "boost/lambda/if.hpp"
 
 //#define CDB
 
@@ -472,6 +470,9 @@ void bond_definer::fill_impropers() throw (t_exception,t_db_exception) {
 
 } // end fill_special
 
+/*
+ * Function makes special pairs and common 1-4 pairs - ALSO.
+ */
 void bond_definer::fill_pairs() throw (t_exception) {
   if (genpairs) {
     // including single pair definition
@@ -488,7 +489,7 @@ void bond_definer::fill_pairs() throw (t_exception) {
       BOOST_CHECK(tp.atoms.find((*it)[0]+1) != tp.atoms.end());
       tel.i = tp.atoms.find((*it)[0]+1)->index; 
       BOOST_CHECK(tp.atoms.find((*it)[1]+1) != tp.atoms.end());
-      tel.j = tp.atoms.find((*it)[1]+1)->index;
+      tel.j = tp.atoms.find((*it)[3]+1)->index;
       tp.elements.push_back(tel);
     }
     cout << "ok." << endl;

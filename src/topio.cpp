@@ -3,7 +3,6 @@
 #include "openbabel/obiter.h"
 #include "strutil.h"
 #include <cctype>
-#include <boost/numeric/ublas/matrix_proxy.hpp>
 #define PHOENIX_LIMIT 5
 #include "lexical.hpp"
 #include STRINGIZE(SPIRIT_HOME_()/attribute.hpp)
@@ -14,6 +13,10 @@
 #include STRINGIZE(SPIRIT_HOME_()/phoenix/casts.hpp)
 #include STRINGIZE(SPIRIT_HOME_()/utility/regex.hpp)
 
+
+#if ENABLE_GAMESS_FEATURES
+#include <boost/numeric/ublas/matrix_proxy.hpp>
+#endif
 
 #define OPENBABEL
 #define BOOST_SPIRIT_DEBUG
@@ -318,6 +321,7 @@ void print(T a) {
   cout << a;
 }
 
+#if ENABLE_GAMESS_FEATURES
 typedef ublas::matrix<double> umd;
 static member_function_ptr<umd::reference, umd,  umd::size_type, umd::size_type, umd::const_reference> 
  ins_elem = &umd::insert_element;
@@ -396,6 +400,7 @@ Error in parsing file '%1%' catched:  \n\
  runtime.log_write(os.str());
  return;
 }
+#endif // CONDITIONAL COMPILE: ENABLE_GAMESS_FEATURES
 
 // loading topology parameters from lack-file
 extern void load_lack(t_topology &tp, const char *fname) throw (t_exception) {
