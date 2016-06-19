@@ -1,4 +1,5 @@
 AM_CPPFLAGS = -I../include
+AM_CXXFLAGS = -std=c++11
 bin_PROGRAMS = programs/tpprenum programs/tppmktop
 if GAMESSFEATURES
 bin_PROGRAMS += programs/tppreadbonds
@@ -6,5 +7,5 @@ programs_tppreadbonds_SOURCES = programs/tppreadbonds.cpp topio.cpp hessian_acce
 programs_tppreadbonds_LDFLAGS = -llapack -lmysqlpp
 endif
 programs_tpprenum_SOURCES = programs/tpprenum.cpp strutil.cpp topio.cpp global.cpp pdbutils.cpp 
-programs_tppmktop_SOURCES = programs/tppmktop.cpp global.cpp db_scanner.cpp smartfit.cpp db_bonds.cpp topio.cpp strutil.cpp
+programs_tppmktop_SOURCES = programs/tppmktop.cpp global.cpp db_scanner.cpp smartfit.cpp db_bonds.cpp topio.cpp strutil.cpp tppnames.cpp
 programs_tppmktop_LDFLAGS = -lmysqlpp

@@ -1,6 +1,7 @@
 #include "mysql.h"
 #include "boost/multi_index_container.hpp"
 #include "db_scanner.hpp"
+#include "tppnames.hpp"
 #include "openbabel/obconversion.h"
 #include "openbabel/obiter.h"
 
@@ -102,7 +103,7 @@ void bond_definer::fill_bonds() throw (t_exception) {
     string typ1 = namemap.find( tp.atoms.find(it->GetBeginAtomIdx())->atom_type )->second;
     string typ2 = namemap.find( tp.atoms.find(it->GetEndAtomIdx())->atom_type) ->second; 
     qu << format("\
-SELECT f,c1,c2 \
+SELECT id,f,c1,c2 \
 FROM bonds \
 WHERE (bonds.ffield = %3$d) AND \
   ( (bonds.i = '%1$s' and bonds.j = '%2$s') OR \
@@ -127,14 +128,16 @@ WHERE (bonds.ffield = %3$d) AND \
     }
      t_top_coord   tpc;
      t_top_element tel;
-     tel.defname = string("dfTPP_bon_") + lexical_cast<string>(co); 
      tel.i = it->GetBeginAtomIdx();
      tel.j = it->GetEndAtomIdx();
-     tpc.defname = tel.defname;
      tpc.type = TPP_TTYPE_BON;
+     // FIXME: need to process exception when num_rows > 1
      tpc.f =  (res.num_rows() > 0) ? res.at(0)["f"]  : -1;
      tpc.c0 = (res.num_rows() > 0) ? res.at(0)["c1"] : 0.00;
      tpc.c1 = (res.num_rows() > 0) ? res.at(0)["c2"] : 0.00;
+     tpc.dbid = (res.num_rows() > 0) ? res.at(0)["id"] : -1;
+     tel.defname = ttc_name_generator(tpc).set_btypes({typ1,typ2}).getName(); 
+     tpc.defname = tel.defname;
      tp.elements.push_back(tel);
      tp.parameters.insert(tpc);
   } // end FOR_BONDS_OF_MOL
@@ -146,10 +149,14 @@ WHERE (bonds.ffield = %3$d) AND \
    if ( tp.elements.get<1>().find(it->defname) != tp.elements.get<1>().end() ) {
     for (t_top_map::nth_index<1>::type::iterator it0 = tp.parameters.get<1>().lower_bound(TPP_TTYPE_BON);
         it0 != tp.parameters.get<1>().upper_bound(TPP_TTYPE_BON); ++it0) 
-      // if defines are equal ;-)
+      // if defines are equal numerically
+/*
       if ( (it0 != it) && (it0->c0 == it->c0) && (it0->c1 == it->c1) && (it0->f == it->f) &&
            (tp.elements.get<1>().find(it0->defname) != tp.elements.get<1>().end() ) 
-        ) { 
+        ) */
+      // if defines are equal in DB
+      if ( (it0 != it) && (it0->dbid == it->dbid) && 
+           (tp.elements.get<1>().find(it0->defname) != tp.elements.get<1>().end()) ) { 
         string lastdef = it0->defname;
         t_top_array::nth_index<1>::type::iterator fnd = tp.elements.get<1>().find(it0->defname);
         t_top_element emod = *fnd;
@@ -178,7 +185,7 @@ void bond_definer::fill_angles() throw (t_exception) {
     string typ1 = namemap.find( tp.atoms.find((*it)[1]+1)->atom_type) ->second; 
     string typ3 = namemap.find( tp.atoms.find((*it)[2]+1)->atom_type) ->second; 
     qu << format("\
-SELECT f,c1,c2 \
+SELECT id,f,c1,c2 \
 FROM angles \
 WHERE (angles.ffield = %4$d) AND \
   ( (angles.i = '%1$s' and angles.j = '%2$s' and angles.k = '%3$s') OR \
@@ -203,15 +210,16 @@ WHERE (angles.ffield = %4$d) AND \
     }
      t_top_coord   tpc;
      t_top_element tel;
-     tel.defname = string("dfTPP_ang_") + lexical_cast<string>(co); 
      tel.i = (*it)[1]+1;
      tel.j = (*it)[0]+1;
      tel.k = (*it)[2]+1;
-     tpc.defname = tel.defname;
      tpc.type = TPP_TTYPE_ANG;
      tpc.f =  (res.num_rows() > 0) ? res.at(0)["f"] : -1;
      tpc.c0 = (res.num_rows() > 0) ? res.at(0)["c1"] : 0.00;
      tpc.c1 = (res.num_rows() > 0) ? res.at(0)["c2"] : 0.00;
+     tpc.dbid = (res.num_rows() > 0) ? res.at(0)["id"] : -1;
+     tel.defname = ttc_name_generator(tpc).set_btypes({typ1,typ2,typ3}).getName(); 
+     tpc.defname = tel.defname;
      tp.elements.push_back(tel);
      tp.parameters.insert(tpc);
   } // end FOR_BONDS_OF_MOL
@@ -223,9 +231,12 @@ WHERE (angles.ffield = %4$d) AND \
     for (t_top_map::nth_index<1>::type::iterator it0 = tp.parameters.get<1>().lower_bound(TPP_TTYPE_ANG);
         it0 != tp.parameters.get<1>().upper_bound(TPP_TTYPE_ANG); ++it0) 
       // if defines are equal ;-)
-      if ( (it0 != it) && (it0->c0 == it->c0) && (it0->c1 == it->c1) && (it0->f == it->f) &&
-           (tp.elements.get<1>().find(it0->defname) !=  tp.elements.get<1>().end() ) && ( it->f != -1) 
-         ) { 
+      //if ( (it0 != it) && (it0->c0 == it->c0) && (it0->c1 == it->c1) && (it0->f == it->f) &&
+      //     (tp.elements.get<1>().find(it0->defname) !=  tp.elements.get<1>().end() ) && ( it->f != -1) 
+      //   ) {
+      //  now see only at dbid 
+      if ( (it0 != it) && (it0->dbid == it->dbid) && 
+           (tp.elements.get<1>().find(it0->defname) != tp.elements.get<1>().end()) ) { 
         t_top_array::nth_index<1>::type::iterator fnd = tp.elements.get<1>().find(it0->defname);
         t_top_element emod = *fnd;
         emod.defname = it->defname;
@@ -259,7 +270,7 @@ void bond_definer::fill_dihedrals() throw (t_exception) {
     string typ3 = namemap.find( tp.atoms.find((*it)[2]+1)->atom_type) ->second; 
     string typ4 = namemap.find( tp.atoms.find((*it)[3]+1)->atom_type) ->second; 
     qu << format("\
-SELECT f,c1,c2,c3,c4,c5,c6 \
+SELECT id,f,c1,c2,c3,c4,c5,c6 \
 FROM dihedrals \
 WHERE (dihedrals.ffield = %5$d) AND \
   ( (dihedrals.i IN ('%1$s','X') and dihedrals.j IN ('%2$s','X') and dihedrals.k IN ('%3$s','X') and dihedrals.l IN ('%4$s','X') ) OR \
@@ -289,53 +300,54 @@ WHERE (dihedrals.ffield = %5$d) AND \
     }
      t_top_coord   tpc;
      t_top_element tel;
-     tel.defname = string("dfTPP_dih_") + lexical_cast<string>(co); 
      tel.i = (*it)[0]+1;
      tel.j = (*it)[1]+1;
      tel.k = (*it)[2]+1;
      tel.l = (*it)[3]+1;
-     tpc.defname = tel.defname;
      if (res.num_rows() > 0) {
-     tpc.f = (int)res.at(0)["f"];
-     switch (tpc.f) {
-       case 3: 
-         tpc.type = TPP_TTYPE_RBDIH;
-         tpc.c0 = (double)res.at(0)["c1"];
-         tpc.c1 = (double)res.at(0)["c2"];
-         tpc.c2 = (double)res.at(0)["c3"];
-         tpc.c3 = (double)res.at(0)["c4"];
-         tpc.c4 = (double)res.at(0)["c5"];
-         tpc.c5 = (double)res.at(0)["c6"];
-         break;
-       case 2:
-         tpc.type = TPP_TTYPE_IMPDIH;
-         tpc.c0 = (double)res.at(0)["c1"];
-         tpc.c1 = (double)res.at(0)["c2"];
-         tpc.c2 = (double)res.at(0)["c3"];
-         tpc.c3 = 0;
-         tpc.c4 = 0;
-         tpc.c5 = 0;
-         break;
-       case 1:
-         tpc.type = TPP_TTYPE_SYMDIH;
-         tpc.c0 = (double)res.at(0)["c1"];
-         tpc.c1 = (double)res.at(0)["c2"];
-         tpc.c2 = (double)res.at(0)["c3"];
-         tpc.c3 = 0;
-         tpc.c4 = 0;
-         tpc.c5 = 0;
-         break;
-       default: BOOST_ERROR("Wrong dihedral type");
-     };
-  }
-     else {
+        tpc.f = (int)res.at(0)["f"];
+        tpc.dbid = (int)res.at(0)["id"];
+        switch (tpc.f) {
+          case 3: 
+            tpc.type = TPP_TTYPE_RBDIH;
+            tpc.c0 = (double)res.at(0)["c1"];
+            tpc.c1 = (double)res.at(0)["c2"];
+            tpc.c2 = (double)res.at(0)["c3"];
+            tpc.c3 = (double)res.at(0)["c4"];
+            tpc.c4 = (double)res.at(0)["c5"];
+            tpc.c5 = (double)res.at(0)["c6"];
+            break;
+          case 2:
+            tpc.type = TPP_TTYPE_IMPDIH;
+            tpc.c0 = (double)res.at(0)["c1"];
+            tpc.c1 = (double)res.at(0)["c2"];
+            tpc.c2 = (double)res.at(0)["c3"];
+            tpc.c3 = 0;
+            tpc.c4 = 0;
+            tpc.c5 = 0;
+            break;
+          case 1:
+            tpc.type = TPP_TTYPE_SYMDIH;
+            tpc.c0 = (double)res.at(0)["c1"];
+            tpc.c1 = (double)res.at(0)["c2"];
+            tpc.c2 = (double)res.at(0)["c3"];
+            tpc.c3 = 0;
+            tpc.c4 = 0;
+            tpc.c5 = 0;
+            break;
+          default: BOOST_ERROR("Wrong dihedral type");
+        };
+     } else {
        tpc.f = -1;
+       tpc.dbid = -1;
        tpc.c0 = 0.00;
        tpc.c1 = 0.00;
        tpc.c2 = 0.00;
        tpc.c3 = 0.00;
        tpc.c4 = 0.00;
      }
+     tel.defname = ttc_name_generator(tpc).set_btypes({typ1,typ2,typ3,typ4}).getName(); 
+     tpc.defname = tel.defname;
      tp.elements.push_back(tel);
      tp.parameters.insert(tpc);
   } // end FOR_BONDS_OF_MOL
@@ -347,11 +359,13 @@ WHERE (dihedrals.ffield = %5$d) AND \
     for (t_top_map::nth_index<1>::type::iterator it0 = tp.parameters.get<1>().lower_bound(TPP_TTYPE_RBDIH);
         it0 != tp.parameters.get<1>().upper_bound(TPP_TTYPE_SYMDIH); ++it0) 
       // if defines are equal ;-)
-      if ( (it0 != it) && (it0->c0 == it->c0) && (it0->c1 == it->c1) && 
-           (it0->c2 == it->c2) && (it0->c3 == it->c3) && (it0->c4 == it->c4) &&
-           (it0->c5 == it->c5) && (it0->f == it->f) && 
-           (tp.elements.get<1>().find(it0->defname) != tp.elements.get<1>().end())
-          ) { 
+      // if ( (it0 != it) && (it0->c0 == it->c0) && (it0->c1 == it->c1) && 
+      //     (it0->c2 == it->c2) && (it0->c3 == it->c3) && (it0->c4 == it->c4) &&
+      //     (it0->c5 == it->c5) && (it0->f == it->f) && 
+      //     (tp.elements.get<1>().find(it0->defname) != tp.elements.get<1>().end())
+      //    ) { 
+      if ( (it0 != it) && (it0->dbid == it->dbid) && 
+           (tp.elements.get<1>().find(it0->defname) != tp.elements.get<1>().end()) ) { 
         t_top_array::nth_index<1>::type::iterator fnd = tp.elements.get<1>().find(it0->defname);
         t_top_element emod = *fnd;
         emod.defname = it->defname;

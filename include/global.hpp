@@ -184,6 +184,7 @@ typedef enum { TPP_TTYPE_BON=1, TPP_TTYPE_ANG=2, TPP_TTYPE_RBDIH=3,
                TPP_TTYPE_EXCL=7, TPP_TTYPE_SPECIMP=8 } t_ttype_type;
 
 struct t_top_coord {
+  long int dbid;
   string defname;
   t_ttype_type  type;
   short f; // f = -1 (means parameter lack)
