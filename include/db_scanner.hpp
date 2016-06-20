@@ -61,7 +61,9 @@ namespace tpp {
       int second() const { return (i<l) ? j : k; }
       int  third() const { return (i<l) ? k : j; }
       int fourth() const { return (i<l) ? l : i; } 
-      spec4(int a, int b, int c, int d): i(a), j(b), k(c), l(d) { BOOST_CHECK((a-b)*(a-c)*(a-d)*(b-c)*(b-d)*(c-d) != 0); }
+      spec4(int a, int b, int c, int d): i(a), j(b), k(c), l(d) { 
+        BOOST_CHECK((a-b)*(a-c)*(a-d)*(b-c)*(b-d)*(c-d) != 0); 
+      }
   };
 
   class spec4_ {
@@ -81,24 +83,52 @@ namespace tpp {
 
   class t_sql_exception : public t_exception {
     public:
-    virtual void fix_log() const {
-      std::ostringstream os; 
-      os << "TPP catched exception!\n";
-      os << format("***** from %1% -> %2%\n") % PARAM_READ(pars, "classname") % PARAM_READ(pars, "procname");
-      os << "***** " << mesg << endl;
-      os << "***** MYSQL: " << PARAM_READ(pars, "sql_error") << endl;
-      runtime.log_write(os.str());
-    }
-    t_sql_exception(const char *s, t_input_params &p) { mesg = s; pars = p; }
+    virtual void fix_log() const; 
+    t_sql_exception(const char *s, t_input_params &p): t_exception(s, p) { ; }
+  };
+
+  class db_base {
+    protected:
+      mysqlpp::Connection *con;
+      t_input_params par;
+      virtual bool connect_db() throw (t_exception);
+    public:
+      // need parameters 'host','user','dbname','password','port','ffname'
+      db_base(t_input_params p) throw (t_exception);
+      virtual ~db_base() { delete con; }
   };
  
-  class atom_definer {
+  /*
+   * Class that accept information about DB and FF.
+   */
+  class db_info: public db_base {
+
+    protected:
+      virtual bool connect_db() throw (t_exception);
+      int ffid;
+      string ffname;
+      string ffdesc;
+      string ffinclude;
+      string ffrev;
+
+      void getFFdata();
+      void getDBdata();
+
+    public:
+      db_info(t_input_params) throw (t_exception);
+      int get_ffid() { return ffid; }
+      string get_ffinclude() { return ffinclude; }
+      string get_ffrev() { return ffrev; }
+      string get_statistics();
+
+  };
+
+  /*
+   * Class that proceed atom type definition.
+   */
+  class atom_definer: public db_base {
    private:
-    // super)
-    t_input_params par;
     t_topology &tp;
-    // mysql variables
-    mysqlpp::Connection *con;
 
     map<int, map<int, int> > scores;
     map<int, set<int> > nb_suite;       // suite on znuc
@@ -107,7 +137,6 @@ namespace tpp {
     map<spec4, set<spec4_> > dih_suite;
 
     short  ffid; // id of current forcefield
-    bool connect_db() throw (t_exception);
     void fill_nb() throw (t_exception);
     void fill_bon() throw (t_exception);
     void fill_ang() throw (t_exception);
@@ -118,30 +147,28 @@ namespace tpp {
     void print_scores(std::ostream &os);
     void smart_cgnr() throw (t_exception);
 
+   protected:
+    virtual bool connect_db() throw (t_exception);
+
    public:
 
     atom_definer(t_input_params, t_topology &) throw (t_exception);
-    // need parameters 'host','user','dbname','password','port','ffname'
-    ~atom_definer() 
-      { delete con; }
     void log_scores();
     void proceed() throw (t_exception);
     void atom_align() throw (t_exception);
   };
 
-  class bond_definer {
+  class bond_definer: public db_base {
     private:
       t_internals_array bonds;
-      mysqlpp::Connection *con;
       t_topology &tp;
-      t_input_params par;
       map<string, string> namemap; // map of uname -> name ))
       short ffid;
       bool  genpairs;
       std::ofstream qalcfile;
 
       // methods
-      bool connect_db() throw (t_exception);
+      virtual bool connect_db() throw (t_exception);
       void fill_bonds() throw (t_exception);
       void fill_angles() throw (t_exception);
       void fill_dihedrals() throw (t_exception);
@@ -150,13 +177,11 @@ namespace tpp {
       void fill_pairs() throw (t_exception);
     public:
       bond_definer(t_input_params, t_topology &) throw (t_exception);
-      ~bond_definer() {        
-        delete con;
-        qalcfile.close();
-      }
+      virtual ~bond_definer(); 
       void bond_align() throw (t_exception);
       void log_needed_bonds();
   };
+
 }
 
 #endif

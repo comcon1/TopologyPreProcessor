@@ -5,11 +5,20 @@
 
 namespace tpp {
 
-static const char * top_comment = 
-"; TPP - topology generator \n"
+static const char * top_comment =
+"; ----------------------------------------------\n" 
+"; TPP - topology generator version " PACKAGE_VERSION " \n"
 "; created by Erg Research Group\n"
 "; MSU, Biology Faculty, Department of Biophysics\n"
-"; ----------------------------------------------\n";
+"; ----------------------------------------------\n"
+"; ATTENTION! Do not forget to use the proper version\n"
+"; of the force field fork (not less than revision). \n"
+"; Watch for corresponding force field at: \n"
+";            bitbucket.com/comcon1\n"
+"; ----------------------------------------------\n"
+"; Please ascertain that the topology is valid. We \n"
+"; do not guarantee that. If you find that something\n"
+"; is wrong, please report us to " PACKAGE_BUGREPORT "\n";
 
 extern void save_topology(t_topology &, const char *) throw (t_exception);
 

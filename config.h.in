@@ -3,6 +3,9 @@
 /* Date of last confiugration. */
 #undef CONFIGURE_CDATE
 
+/* Number of Database version the code is designed for. */
+#undef DB_MAGICNUMBER
+
 /* Turn on GAMESS features. */
 #undef ENABLE_GAMESS_FEATURES
 

@@ -7,12 +7,17 @@ AM_INIT_AUTOMAKE([])
 AC_CONFIG_SRCDIR([src/global.cpp])
 AC_CONFIG_HEADERS([config.h])
 
+
 # Checks for programs.
 AC_PROG_CXX
 AC_PROG_CC
 AC_PROG_MAKE_SET
 
 AC_LANG([C++])
+
+echo
+echo '>> Checking for common requirements of TPPMKTOP'
+echo
 
 # Checks for BOOST::PROGRAM_OPTIONS
 AC_CHECK_LIB([boost_program_options], [main],,
@@ -111,14 +116,16 @@ AC_DEFINE_UNQUOTED([ENABLE_GAMESS_FEATURES],[$gamessfe],[Turn on GAMESS features
 AM_CONDITIONAL([GAMESSFEATURES], [test x$gamessfe = x1])
 
 if test x$gamessfe = x1; then
-echo "Checking for requirements for GAMESS FEATURES"
 
-AC_CHECK_HEADERS([boost/numeric/bindings/lapack/gesv.hpp boost/numeric/bindings/lapack/gesvd.hpp boost/numeric/bindings/traits/ublas_matrix.hpp],,
-                 [AC_MSG_ERROR([BOOST numeric bindings are required for GAMESS FEATURES!])])
+  echo
+  echo '>> Checking for requirements for GAMESS FEATURES '
+  echo
+  AC_CHECK_HEADERS([boost/numeric/bindings/lapack/gesv.hpp boost/numeric/bindings/lapack/gesvd.hpp boost/numeric/bindings/traits/ublas_matrix.hpp],,
+                  [AC_MSG_ERROR([BOOST numeric bindings are required for GAMESS FEATURES!])])
 
-AC_CHECK_LIB([lapack], [sgesvd_],[true],
-             [AC_MSG_ERROR([Lapack SVD should work for GAMESS FEATURES!])]
-)
+  AC_CHECK_LIB([lapack], [sgesvd_],[true],
+              [AC_MSG_ERROR([Lapack SVD should work for GAMESS FEATURES!])]
+  )
 fi
 
 # Override LIBS to make program-specific linking in AM
@@ -139,6 +146,13 @@ AC_CHECK_FUNCS([pow sqrt])
 tmpvar=`LANG="C" date`
 AC_DEFINE_UNQUOTED([CONFIGURE_CDATE],["$tmpvar"],[Date of last confiugration.])
 #CONFIGURE_CDATE=`LANG="C" date`
+
+DB_MN="0001a"
+AC_DEFINE_UNQUOTED([DB_MAGICNUMBER],["$DB_MN"],
+                   [Number of Database version the code is designed for.])
+echo
+AC_MSG_RESULT([>> DataBase must have magic number (version) $DB_MN])
+echo
 
 AC_CONFIG_FILES([
   Makefile

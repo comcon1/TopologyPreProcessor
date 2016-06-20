@@ -10,29 +10,23 @@
 namespace tpp {
   using namespace OpenBabel;
 
-// common place procedures...
-bond_definer::bond_definer(t_input_params _par, t_topology &_tp) throw (t_exception): 
- tp(_tp), par(_par), con(new mysqlpp::Connection(false)){
-   connect_db();
-}
+  // common place procedures...
+  bond_definer::bond_definer(t_input_params _par, t_topology &_tp) throw (t_exception): 
+    db_base(_par), tp(_tp) {
+      connect_db();
+  }
+
+  bond_definer::~bond_definer() {        
+    qalcfile.close();
+  }
+
 
 bool bond_definer::connect_db() throw (t_exception) {
+     db_base::connect_db();
+
      string ffname = PARAM_READ(par,"ffname");
      int cat, cbon, cang, cdih, cnb;
-     con->connect(
-         PARAM_READ(par,"dbname").c_str(),
-         (PARAM_READ(par,"host")+string(":")+PARAM_READ(par,"port")).c_str(),
-         PARAM_READ(par,"user").c_str(),
-         PARAM_READ(par,"password").c_str()
-         );
-     // connection established
-     if (!con->connected()) {
-        t_input_params params;
-        PARAM_ADD(params, "procname", "tpp::bond_definer::connect_db");
-        PARAM_ADD(params, "error", "SQL connection error");
-        PARAM_ADD(params, "sql_error", "Cann't connect to DB!" );
-        throw t_sql_exception("SQL connection failed!", params);
-     }
+
      // get ffid
       mysqlpp::Query qu = con->query();
       MYSQLPP_RESULT res;
@@ -55,37 +49,38 @@ bool bond_definer::connect_db() throw (t_exception) {
       ffid = res.at(0)["id"];
       genpairs = (bool) (res.at(0)["generate_pairs"]);
       qu.reset();
-// molecule stuff ))
-  string query;
-  FOR_ATOMS_OF_MOL(it,tp.mol) {
-    t_atom_array::iterator pa = tp.atoms.find(it->GetIdx());
-    namemap.insert(pair<string, string>(
-          pa->atom_type, string("") )
-        );
-  }
-  query = string("('quququq'");
-  for (map<string,string>::iterator ii = namemap.begin(); ii != namemap.end(); ++ii) {
-    query += ( string(",'") + ii->first + "'" );
-  }
-  query = string("SELECT `uname`,`name` FROM `atoms` WHERE `ffield` = ") + lexical_cast<string>(ffid) 
-      + " and `uname` IN " + query + ")";
-// mysql stuff
-  qu << query;
-  res = qu.store();
-  if (!res) {
-     t_input_params params;
-     PARAM_ADD(params, "procname", "tpp::bond_definer::connect_db");
-     PARAM_ADD(params, "error", "SQL query error");
-     PARAM_ADD(params, "sql_error", qu.error() );
-     throw t_sql_exception("SQL query failed!", params);
-   }
+      
+      // molecule stuff ))
+      string query;
+      FOR_ATOMS_OF_MOL(it,tp.mol) {
+        t_atom_array::iterator pa = tp.atoms.find(it->GetIdx());
+        namemap.insert(pair<string, string>(
+              pa->atom_type, string("") )
+            );
+      }
+      query = string("('quququq'");
+      for (map<string,string>::iterator ii = namemap.begin(); ii != namemap.end(); ++ii) {
+        query += ( string(",'") + ii->first + "'" );
+      }
+      query = string("SELECT `uname`,`name` FROM `atoms` WHERE `ffield` = ") + lexical_cast<string>(ffid) 
+          + " and `uname` IN " + query + ")";
+      // mysql stuff
+      qu << query;
+      res = qu.store();
+      if (!res) {
+        t_input_params params;
+        PARAM_ADD(params, "procname", "tpp::bond_definer::connect_db");
+        PARAM_ADD(params, "error", "SQL query error");
+        PARAM_ADD(params, "sql_error", qu.error() );
+        throw t_sql_exception("SQL query failed!", params);
+      }
 
-  for(mysqlpp::Row::size_type co = 0; co < res.num_rows(); ++co) {
-    row = res.at(co);
-    BOOST_CHECK(namemap.find(string(row["uname"].c_str())) != namemap.end() );
-    namemap.find(string(row["uname"].c_str()))->second = row["name"].c_str();
-  }
-     return true;
+      for(mysqlpp::Row::size_type co = 0; co < res.num_rows(); ++co) {
+        row = res.at(co);
+        BOOST_CHECK(namemap.find(string(row["uname"].c_str())) != namemap.end() );
+        namemap.find(string(row["uname"].c_str()))->second = row["name"].c_str();
+      }
+      return true;
 }
 
 // special functions))
@@ -510,21 +505,22 @@ void bond_definer::fill_pairs() throw (t_exception) {
   }
 }
 
-void bond_definer::bond_align() throw (t_exception) {
-  try {
-   fill_bonds();
-   fill_angles();
-   fill_special();
-   fill_dihedrals();
-   fill_impropers();
-   fill_pairs();
-  } 
+  void bond_definer::bond_align() throw (t_exception) {
+    try {
+      fill_bonds();
+      fill_angles();
+      fill_special();
+      fill_dihedrals();
+      fill_impropers();
+      fill_pairs();
+    } 
     catch (t_db_exception &e) { e.fix_log(); cout << "..something fails." << endl; }
     catch (t_sql_exception &e) { e.fix_log(); cout << "..something fails." << endl; }
     catch (t_exception &e) { e.fix_log();  cout << "..something fails." << endl; }
-}
-void bond_definer::log_needed_bonds() {
-}
+  }
+
+  void bond_definer::log_needed_bonds() {
+  }
 
 }
 

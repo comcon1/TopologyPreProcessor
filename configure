@@ -2818,6 +2818,7 @@ am__tar='$${TAR-tar} chof - "$$tardir"' am__untar='$${TAR-tar} xf -'
 ac_config_headers="$ac_config_headers config.h"
 
 
+
 # Checks for programs.
 ac_ext=cpp
 ac_cpp='$CXXCPP $CPPFLAGS'
@@ -4223,6 +4224,10 @@ ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ex
 ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
 
 
+echo
+echo '>> Checking for common requirements of TPPMKTOP'
+echo
+
 # Checks for BOOST::PROGRAM_OPTIONS
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for main in -lboost_program_options" >&5
@@ -4990,9 +4995,11 @@ fi
 
 
 if test x$gamessfe = x1; then
-echo "Checking for requirements for GAMESS FEATURES"
 
-for ac_header in boost/numeric/bindings/lapack/gesv.hpp boost/numeric/bindings/lapack/gesvd.hpp boost/numeric/bindings/traits/ublas_matrix.hpp
+  echo
+  echo '>> Checking for requirements for GAMESS FEATURES '
+  echo
+  for ac_header in boost/numeric/bindings/lapack/gesv.hpp boost/numeric/bindings/lapack/gesvd.hpp boost/numeric/bindings/traits/ublas_matrix.hpp
 do :
   as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
 ac_fn_cxx_check_header_mongrel "$LINENO" "$ac_header" "$as_ac_Header" "$ac_includes_default"
@@ -5008,7 +5015,7 @@ fi
 done
 
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for sgesvd_ in -llapack" >&5
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for sgesvd_ in -llapack" >&5
 $as_echo_n "checking for sgesvd_ in -llapack... " >&6; }
 if ${ac_cv_lib_lapack_sgesvd_+:} false; then :
   $as_echo_n "(cached) " >&6
@@ -5323,6 +5330,17 @@ cat >>confdefs.h <<_ACEOF
 _ACEOF
 
 #CONFIGURE_CDATE=`LANG="C" date`
+
+DB_MN="0001a"
+
+cat >>confdefs.h <<_ACEOF
+#define DB_MAGICNUMBER "$DB_MN"
+_ACEOF
+
+echo
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: >> DataBase must have magic number (version) $DB_MN" >&5
+$as_echo ">> DataBase must have magic number (version) $DB_MN" >&6; }
+echo
 
 ac_config_files="$ac_config_files Makefile src/Makefile"
 

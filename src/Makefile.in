@@ -94,8 +94,9 @@ CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
 am_programs_tppmktop_OBJECTS = tppmktop.$(OBJEXT) global.$(OBJEXT) \
-	db_scanner.$(OBJEXT) smartfit.$(OBJEXT) db_bonds.$(OBJEXT) \
-	topio.$(OBJEXT) strutil.$(OBJEXT) tppnames.$(OBJEXT)
+	db_scanner.$(OBJEXT) dbinfo.$(OBJEXT) smartfit.$(OBJEXT) \
+	db_bonds.$(OBJEXT) topio.$(OBJEXT) strutil.$(OBJEXT) \
+	tppnames.$(OBJEXT)
 programs_tppmktop_OBJECTS = $(am_programs_tppmktop_OBJECTS)
 programs_tppmktop_LDADD = $(LDADD)
 programs_tppmktop_LINK = $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) \
@@ -103,13 +104,14 @@ programs_tppmktop_LINK = $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) \
 am__dirstamp = $(am__leading_dot)dirstamp
 am__programs_tppreadbonds_SOURCES_DIST = programs/tppreadbonds.cpp \
 	topio.cpp hessian_accept.cpp calc.cpp global.cpp \
-	db_scanner.cpp strutil.cpp db_bonds.cpp smartfit.cpp
+	db_scanner.cpp dbinfo.cpp strutil.cpp db_bonds.cpp \
+	smartfit.cpp
 @GAMESSFEATURES_TRUE@am_programs_tppreadbonds_OBJECTS =  \
 @GAMESSFEATURES_TRUE@	tppreadbonds.$(OBJEXT) topio.$(OBJEXT) \
 @GAMESSFEATURES_TRUE@	hessian_accept.$(OBJEXT) calc.$(OBJEXT) \
 @GAMESSFEATURES_TRUE@	global.$(OBJEXT) db_scanner.$(OBJEXT) \
-@GAMESSFEATURES_TRUE@	strutil.$(OBJEXT) db_bonds.$(OBJEXT) \
-@GAMESSFEATURES_TRUE@	smartfit.$(OBJEXT)
+@GAMESSFEATURES_TRUE@	dbinfo.$(OBJEXT) strutil.$(OBJEXT) \
+@GAMESSFEATURES_TRUE@	db_bonds.$(OBJEXT) smartfit.$(OBJEXT)
 programs_tppreadbonds_OBJECTS = $(am_programs_tppreadbonds_OBJECTS)
 programs_tppreadbonds_LDADD = $(LDADD)
 programs_tppreadbonds_LINK = $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) \
@@ -274,10 +276,10 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 AM_CPPFLAGS = -I../include
 AM_CXXFLAGS = -std=c++11
-@GAMESSFEATURES_TRUE@programs_tppreadbonds_SOURCES = programs/tppreadbonds.cpp topio.cpp hessian_accept.cpp calc.cpp global.cpp db_scanner.cpp strutil.cpp db_bonds.cpp smartfit.cpp 
+@GAMESSFEATURES_TRUE@programs_tppreadbonds_SOURCES = programs/tppreadbonds.cpp topio.cpp hessian_accept.cpp calc.cpp global.cpp db_scanner.cpp dbinfo.cpp strutil.cpp db_bonds.cpp smartfit.cpp 
 @GAMESSFEATURES_TRUE@programs_tppreadbonds_LDFLAGS = -llapack -lmysqlpp
 programs_tpprenum_SOURCES = programs/tpprenum.cpp strutil.cpp topio.cpp global.cpp pdbutils.cpp 
-programs_tppmktop_SOURCES = programs/tppmktop.cpp global.cpp db_scanner.cpp smartfit.cpp db_bonds.cpp topio.cpp strutil.cpp tppnames.cpp
+programs_tppmktop_SOURCES = programs/tppmktop.cpp global.cpp db_scanner.cpp dbinfo.cpp smartfit.cpp db_bonds.cpp topio.cpp strutil.cpp tppnames.cpp
 programs_tppmktop_LDFLAGS = -lmysqlpp
 all: all-am
 
@@ -380,6 +382,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/calc.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/db_bonds.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/db_scanner.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dbinfo.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/global.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hessian_accept.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pdbutils.Po@am__quote@

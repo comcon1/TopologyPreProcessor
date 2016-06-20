@@ -218,15 +218,16 @@ typedef multi_index_container< /* TOPOLOGY CONTAINER */
 // internal topology definition
 class t_topology {
   public:
-  t_top_map parameters;
-  t_top_array elements;
-  t_atom_array atoms;
-  OBMol          mol;
+  t_top_map  parameters;
+  t_top_array  elements;
+  t_atom_array    atoms;
+  OBMol             mol;
 
   unsigned short nrexcl;
-  string     ffinclude;
-  string      res_name;
-  string          name;
+  string      ffinclude;
+  string         ffinfo;
+  string       res_name;
+  string           name;
 
   /* serialization support */
 

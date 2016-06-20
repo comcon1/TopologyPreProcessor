@@ -715,89 +715,36 @@ void atom_definer::log_scores() {
   cout << "Scores for atom types are written to LOG." << endl;
 }
 
-  /*================CONSTRUCTOR====================*/
- atom_definer::atom_definer(t_input_params p_, t_topology &tp_) throw (t_exception): 
-      tp(tp_), par(p_), con(new mysqlpp::Connection(false)) {
-    connect_db();
-}
-
+ /*
+  * Standard constructor with DB connection
+  */
+ atom_definer::atom_definer(t_input_params p_, t_topology &tp_) throw (t_exception): db_base(p_), tp(tp_) {
+   connect_db();
+   this->ffid = boost::lexical_cast<int>(PARAM_READ(this->par, "ffid"));
+ }
+ 
+ /*
+  * Initial DB queries.
+  */
  bool atom_definer::connect_db() throw (t_exception) {
-     string ffname = PARAM_READ(par,"ffname");
-     int cat, cbon, cang, cdih, cnb;
-     
-     con->connect(
-         PARAM_READ(par,"dbname").c_str(),
-         (PARAM_READ(par,"host")+string(":")+PARAM_READ(par,"port")).c_str(),
-         PARAM_READ(par,"user").c_str(),
-         PARAM_READ(par,"password").c_str()
-         );
+     db_base::connect_db();
 
-     // connection established
-     if (!con->connected()) {
-        t_input_params params;
-        PARAM_ADD(params, "procname", "tpp::atom_definer::connect_db");
-        PARAM_ADD(params, "error", "SQL connection error");
-        PARAM_ADD(params, "sql_error", con->error() );
-        throw t_sql_exception("SQL connection failed!", params);
-     }
-     // get ffid
-mysqlpp::Query qu = con->query();
-      MYSQLPP_RESULT res;
-      mysqlpp::Row    row;
-      qu << format("SELECT `id`,`include`,`desc` FROM `forcefield` WHERE name='%1$s'") % ffname.c_str();
-      res = qu.store();
-      if (!res) {
-        t_input_params params;
-        PARAM_ADD(params, "procname", "tpp::atom_definer::connect_db");
-        PARAM_ADD(params, "error", "SQL query error");
-        PARAM_ADD(params, "sql_error", qu.error() );
-        throw t_sql_exception("SQL query failed!", params);
-      }
-      if (!res.num_rows()) {
-        t_input_params params;
-        PARAM_ADD(params, "procname", "tpp::atom_definer::connect_db");
-        PARAM_ADD(params, "error", "Error in parameters");
-        throw t_exception((string("Force field '")+ffname+string("' not found!")).c_str(), params);
-      }
-      ffid = res.at(0)["id"];
-      tp.ffinclude = (res.at(0)["include"]).c_str();
-      string desc = (res.at(0)["desc"]).c_str();
-      qu.reset();
-      qu << format("\
-SELECT\n\
- (SELECT COUNT(*) FROM atoms WHERE ffield = %1$d) as count_atoms,\n\
- (SELECT COUNT(*) FROM bonds WHERE ffield = %1$d) as count_bonds,\n\
- (SELECT COUNT(*) FROM angles WHERE ffield = %1$d) as count_angles,\n\
- (SELECT COUNT(*) FROM dihedrals WHERE ffield = %1$d) as count_dihedrals,\n\
- (SELECT COUNT(*) as CF FROM nonbonded WHERE ffield = %1$d) as count_nonbond;") % this->ffid;
-      res = qu.store();
-      if ( (!res) || (!res.at(0)) ) {
-        t_input_params params;
-        PARAM_ADD(params, "procname", "tpp::atom_definer::connect_db");
-        PARAM_ADD(params, "error", "SQL query error");
-        PARAM_ADD(params, "sql_error", qu.error() );
-        throw t_sql_exception("SQL query failed!", params);
-      }
-      cout << format("\
-Forcefield %1$s was found in database.\n\
-Description: %7$s.\n\
-Total statistics:\n\
-%2$5d atoms,     %3$5d bonds, %4$5d angles,\n\
-%5$5d dihedrals, %6$5d nonbonded parameters.\n")
-        % ffname.c_str() % res.at(0)["count_atoms"] % res.at(0)["count_bonds"]
-        % res.at(0)["count_angles"] % res.at(0)["count_dihedrals"] % res.at(0)["count_nonbond"]
-        % desc;
+     ; // what do we need ?
+
      return true;
     } // connect_db
 
-void atom_definer::proceed() throw (t_exception) {
+    /*
+    * Main class method caller.
+    */
+    void atom_definer::proceed() throw (t_exception) {
       try {
-       fill_nb();
-       if (PARAM_EXISTS(par,"maxbonds"))     fill_bon();
-       if (PARAM_EXISTS(par,"maxangles"))    fill_ang();
-       if (PARAM_EXISTS(par,"maxdihedrals")) fill_dih();
-       count_scores();
-       smart_fit();
+        fill_nb();
+        if (PARAM_EXISTS(par,"maxbonds"))     fill_bon();
+        if (PARAM_EXISTS(par,"maxangles"))    fill_ang();
+        if (PARAM_EXISTS(par,"maxdihedrals")) fill_dih();
+        count_scores();
+        smart_fit();
       } catch(t_sql_exception e) { 
         e.fix_log(); 
         throw e;

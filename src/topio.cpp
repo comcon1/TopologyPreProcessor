@@ -181,26 +181,28 @@ void save_topology(t_topology &tp, const char *fname) throw (t_exception) {
   // header
   out << format("\
 %1%\
-; Topology was prepared for use with the forcefield: <%2%>\n\
+; ----------------------------------------------\n\
+; Topology was prepared for use with the force field:\n\
+;         %2%\n\
 \n\
 [ moleculetype ]\n\
  %3$4s %4$1d\n\
 \n\
-; Force constant parameters\n") % top_comment % tp.ffinclude.c_str() % tp.res_name % (int)(tp.nrexcl);
+; Force constant parameters\n") % top_comment % tp.ffinfo % tp.res_name % (int)(tp.nrexcl);
   // force constants parameters '#define's
   for (t_top_map::nth_index_iterator<1>::type it = tp.parameters.get<1>().begin(); 
         it != tp.parameters.get<1>().upper_bound(TPP_TTYPE_SYMDIH); ++it) {
     if ( (it->f != -1) ^  ncf ) {
       switch (it->type) {
-       case TPP_TTYPE_BON:   out << format("#define %1$-15s %2$1d %3$5.3f %4$9.2e ;1\n") 
+       case TPP_TTYPE_BON:   out << format("#define %1$-25s %2$1d %3$8.3f %4$9.2e ;1\n") 
                               % it->defname % it->f % it->c0 % it->c1; break;
-       case TPP_TTYPE_ANG:   out << format("#define %1$-15s %2$1d %3$5.1f %4$6.1f ;2\n")
+       case TPP_TTYPE_ANG:   out << format("#define %1$-25s %2$1d %3$6.1f %4$8.1f    ;2\n")
                              % it->defname % it->f % it->c0 % it->c1; break;
-       case TPP_TTYPE_RBDIH: out << format("#define %1$-15s 3 %2$+5.1f %3$+5.1f %4$+5.1f %5$+5.1f %6$+5.1f %7$+5.1f ;3\n")
+       case TPP_TTYPE_RBDIH: out << format("#define %1$-25s 3 %2$+5.1f %3$+5.1f %4$+5.1f %5$+5.1f %6$+5.1f %7$+5.1f ;3\n")
                              % it->defname % it->c0 % it->c1 % it->c2 % it->c3 % it->c4 % it->c5; break;
-       case TPP_TTYPE_IMPDIH:out << format("#define %1$-15s 2 %2$5.1f %3$6.1f ;4\n")
+       case TPP_TTYPE_IMPDIH:out << format("#define %1$-25s 2 %2$5.1f %3$6.1f ;4\n")
                              % it->defname % it->c0 % it->c1; break;
-       case TPP_TTYPE_SYMDIH:out << format("#define %1$-15s 1 %2$5.1f %3$6.1f %4$1d ;5\n")
+       case TPP_TTYPE_SYMDIH:out << format("#define %1$-25s 1 %2$5.1f %3$6.1f %4$1d ;5\n")
                              % it->defname % it->c0 % it->c1 % numeric_cast<unsigned>(it->c2);
       };
     }
@@ -209,9 +211,9 @@ void save_topology(t_topology &tp, const char *fname) throw (t_exception) {
   // atoms specification
   out << "\n[ atoms ]\n";
   for (t_atom_array::iterator it = tp.atoms.begin(); it != tp.atoms.end(); ++it) {
-    out << format("%1$3d  %2$-10s 1  %3$-4s  %4$-4s  %5$2d  %6$5.3f  %7$8.6f ; %8$s\n") %
+    out << format("%1$3d  %2$-10s 1  %3$-4s  %4$-4s  %5$2d  %6$+6.3f  %7$10.6f ; [%8$3s] %9$s\n") %
            (int)(it->index) % it->atom_type.c_str() % tp.res_name.c_str() % it->atom_name.c_str() % 
-           (int)(it->c_gnr) % it->charge % it->mass % it->comment;
+           (int)(it->c_gnr) % it->charge % it->mass % it->atom_type2.c_str() % it->comment;
   }
   out << flush;
   // bonds
@@ -248,9 +250,9 @@ void save_topology(t_topology &tp, const char *fname) throw (t_exception) {
       for (t_top_array::nth_index_iterator<1>::type it0 = tp.elements.get<1>().lower_bound(it->defname);
            it0 != tp.elements.get<1>().upper_bound(it->defname); ++it0)
         if (ncf && (it->f != -1) )
-          out << format("%1$3d %2$3d %3$3d %4$3d %5$2d\n") % (int)it0->i % (int)it0->j % (int)it0->k % (int)it0->l % it->f;
+          out << format("%1$3d %2$3d %3$3d %4$3d  %5$2d\n") % (int)it0->i % (int)it0->j % (int)it0->k % (int)it0->l % it->f;
         else
-          out << format("%1$3d %2$3d %3$3d %4$3d %5$-15s\n") % (int)it0->i % (int)it0->j % (int)it0->k % (int)it0->l % it0->defname;
+          out << format("%1$3d %2$3d %3$3d %4$3d  %5$-15s\n") % (int)it0->i % (int)it0->j % (int)it0->k % (int)it0->l % it0->defname;
   }
   // impropers 
   if ( tp.parameters.get<1>().find(TPP_TTYPE_SPECIMP) != tp.parameters.get<1>().end() ) {
@@ -260,7 +262,7 @@ void save_topology(t_topology &tp, const char *fname) throw (t_exception) {
       for (t_top_array::nth_index_iterator<1>::type it0 = tp.elements.get<1>().lower_bound(it->defname);
            it0 != tp.elements.get<1>().upper_bound(it->defname); ++it0)
         // impropers are always with defines (!)
-          out << format("%1$3d %2$3d %3$3d %4$3d %5$-15s\n") % (int)it0->i % (int)it0->j % (int)it0->k % (int)it0->l % it0->defname;
+          out << format("%1$3d %2$3d %3$3d %4$3d  %5$-15s\n") % (int)it0->i % (int)it0->j % (int)it0->k % (int)it0->l % it0->defname;
   }
   // pairs
   if ( tp.parameters.get<1>().count(TPP_TTYPE_PAIR) > 0 ) {
@@ -270,9 +272,9 @@ void save_topology(t_topology &tp, const char *fname) throw (t_exception) {
       for (t_top_array::nth_index_iterator<1>::type it0 = tp.elements.get<1>().lower_bound(it->defname);
            it0 != tp.elements.get<1>().upper_bound(it->defname); ++it0) {
         if (it0->defname == "ONE_PAIR") 
-          out << format("%1$3d %2$3d %3$1d\n") % (int)it0->i % (int)it0->j % it->f;
+          out << format("%1$3d %2$3d  %3$1d\n") % (int)it0->i % (int)it0->j % it->f;
         else
-          out << format("%1$3d %2$3d %3$1d %4$10.5f %5$10.5f\n") % (int)it0->i % (int)it0->j % it->f % it->c0 % it->c1;
+          out << format("%1$3d %2$3d  %3$1d %4$10.5f %5$10.5f\n") % (int)it0->i % (int)it0->j % it->f % it->c0 % it->c1;
       }
   }
   // exclusion
