@@ -1,3 +1,4 @@
+AUTOMAKE_OPTIONS = subdir-objects
 AM_CPPFLAGS = -I../include
 AM_CXXFLAGS = -std=c++11
 bin_PROGRAMS = programs/tpprenum programs/tppmktop
