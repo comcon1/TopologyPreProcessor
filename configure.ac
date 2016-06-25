@@ -61,6 +61,9 @@ mysqlpp::Connection con (false);
 
 
 # checking for openbabel functions
+PKG_CHECK_MODULES([OPENBABEL], [openbabel-2.0],
+		  [CPPFLAGS="$CPPFLAGS $OPENBABEL_CFLAGS"])
+
 AC_CHECK_LIB([openbabel], [main],,
              [AC_MSG_ERROR([Can not link to libopenbabel!])]
 )
