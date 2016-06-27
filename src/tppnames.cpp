@@ -11,7 +11,8 @@ namespace tpp {
       case TPP_TTYPE_RBDIH:
       case TPP_TTYPE_IMPDIH:
       case TPP_TTYPE_SYMDIH:  a = getDihedralName(); break;
-      default: assert(0);
+      //TODO: find this _unknown_ behavior
+      default: a = "unknown";
     }
     return a;
   }
