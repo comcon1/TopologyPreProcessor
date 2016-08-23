@@ -131,6 +131,29 @@ if test x$gamessfe = x1; then
   )
 fi
 
+# activate TEST features
+AC_ARG_ENABLE([selftest-features],
+     [  --enable-selftest-features  Turn on self test features (write access to DB is required)],
+     [case "${enableval}" in
+       yes) selftestfe=1 ;;
+       no)  selftestfe=0 ;;
+       *) AC_MSG_ERROR([bad value ${enableval} for --enable-selftest-features]) ;;
+     esac],[selftestfe=0])
+
+AC_DEFINE_UNQUOTED([ENABLE_SELFTEST_FEATURES],[$selftestfe],[Turn on self test features.])
+AM_CONDITIONAL([SELFTESTFEATURES], [test x$selftestfe = x1])
+
+if test x$selftestfe = x1; then
+
+  echo
+  echo '>> Checking for requirements for SELFTEST FEATURES '
+  echo
+
+  AC_MSG_RESULT([>> No specific tests are required yet.])
+
+fi
+
+
 # Override LIBS to make program-specific linking in AM
 LIBS="-lopenbabel -lboost_program_options"
 
