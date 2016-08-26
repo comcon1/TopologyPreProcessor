@@ -170,7 +170,7 @@ int main(int argc, char * argv[]) {
     TOP.res_name = PARAM_READ(cmdline, "input_file").substr(0,3);
     TOP.nrexcl = 3;
     // ;-)
-    tpp::load_struct (TOP, iform, PARAM_READ(cmdline, "input_file").c_str() );
+    tpp::load_struct_fname (TOP, iform, PARAM_READ(cmdline, "input_file").c_str() );
     // customization of 2-nd level parameters
     tpp::t_input_params par0;
     PARAM_ADD(par0, "host", PARAM_READ(cmdline, "sqlserver") );

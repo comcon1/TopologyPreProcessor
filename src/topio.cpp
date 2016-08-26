@@ -242,6 +242,7 @@ void save_topology(t_topology &tp, const char *fname) throw (t_exception) {
   }
   // dihedrals
   if ( ( tp.parameters.get<1>().find(TPP_TTYPE_RBDIH) != tp.parameters.get<1>().end() ) ||
+      //TODO: incorporate IMPDIH here?
        ( tp.parameters.get<1>().find(TPP_TTYPE_SYMDIH) != tp.parameters.get<1>().end() ) 
       ) {
     out << "\n[ dihedrals ]\n";
@@ -263,6 +264,7 @@ void save_topology(t_topology &tp, const char *fname) throw (t_exception) {
            it0 != tp.elements.get<1>().upper_bound(it->defname); ++it0)
         // impropers are always with defines (!)
           out << format("%1$3d %2$3d %3$3d %4$3d  %5$-15s\n") % (int)it0->i % (int)it0->j % (int)it0->k % (int)it0->l % it0->defname;
+        //TODO: default improper type should be incorporated
   }
   // pairs
   if ( tp.parameters.get<1>().count(TPP_TTYPE_PAIR) > 0 ) {
@@ -639,12 +641,8 @@ void check_topology(t_topology &tp) throw (t_exception) {
   ;
 }
 
-/*
- * LOADING STRUCTURE FROM DIFFERENT FILE FORMATS
- * */
-void load_struct(t_topology &tp, t_iformat ifm, const char *fname) throw (t_exception) {
- try {
-  // test if file exists
+void load_struct_fname(t_topology &tp, t_iformat ifm, const char *fname) throw (t_exception) {
+   // test if file exists
   runtime.log_write(string("Trying to read structure from '")+fname+"'.\n");
   fstream inf(fname, ios::in);
   if (!inf.is_open()) { 
@@ -654,8 +652,21 @@ void load_struct(t_topology &tp, t_iformat ifm, const char *fname) throw (t_exce
     PARAM_ADD(params, "procname", "tpp::load_struct");
     PARAM_ADD(params, "error", "invalid filename");
     PARAM_ADD(params, "filename", fname);
-    throw t_exception("Can't open specified file for read.", params);
+    t_exception e("Can't open specified file for read.", params);
+    e.fix_log();
+    throw e;
   }
+  // loading from stream
+
+  load_struct_stream(tp, ifm, &inf);
+  inf.close();
+}
+
+/*
+ * LOADING STRUCTURE FROM DIFFERENT FILE FORMATS
+ * */
+void load_struct_stream(t_topology &tp, t_iformat ifm, std::istream *inf) throw (t_exception) {
+ try {
   // test if tp variable contains structure
   if (!tp.atoms.empty()) {
     runtime.log_write("Replacing your current structure.\n");
@@ -664,7 +675,7 @@ void load_struct(t_topology &tp, t_iformat ifm, const char *fname) throw (t_exce
 
 // Reading molecule in OpenBabel format
 // -----------------------------------
-  OBConversion conv(&inf);
+  OBConversion conv(inf);
   switch (ifm) {
     case TPP_IF_PDB: conv.SetInFormat("PDB"); break;
     case TPP_IF_GRO: conv.SetInFormat("GRO"); break;
@@ -675,6 +686,7 @@ void load_struct(t_topology &tp, t_iformat ifm, const char *fname) throw (t_exce
     default: BOOST_FAIL(0);
   }
   // reading from file with OpenBabel function
+  runtime.log_write("Reading by OpenBabel..");
   OBMol mol;
   if ( (!conv.Read(&mol)) || (!mol.NumAtoms()) ) {
                t_input_params params;
@@ -682,17 +694,14 @@ void load_struct(t_topology &tp, t_iformat ifm, const char *fname) throw (t_exce
                PARAM_ADD(params, "error", "OpenBabel: parsing error");
                throw t_exception("Can't read file format.", params);
   }
+  runtime.log_write("OK.\n");
 
   tp.mol = mol;
-  inf.close();
  
 // Reading molecule in t_atom_array format
 // ---------------------------------------
   switch(ifm) {
     case TPP_IF_PDB: {
-     inf.clear();
-     inf.open(fname, ios::in);
-     BOOST_CHECK(inf.is_open());
      char *s0  = new char[300], *SEL = new char[7], *NAM = new char[5], *RES = new char[5], *qat = new char[2]; 
      int  res, strc, incrementalIndex = 0;
      std::pair<t_atom_array::iterator, bool> at_it;
@@ -700,8 +709,10 @@ void load_struct(t_topology &tp, t_iformat ifm, const char *fname) throw (t_exce
      float __x,__y,__z;
      strc = 0;
      bool ignoreIndexFlag = (PARAM_READ(cmdline, "ignore_index") == "on");
-     while (! inf.eof() ) {
-         inf.getline(s0, 300);
+     inf->clear();
+     inf->seekg(0);
+     while (! inf->eof() ) {
+         inf->getline(s0, 300);
          strc++;
 //         cerr << strc << "|";
 
@@ -773,7 +784,6 @@ void load_struct(t_topology &tp, t_iformat ifm, const char *fname) throw (t_exce
      } // end-while
      delete[] s0; delete[] SEL; delete[] NAM; delete[] RES;
      /* FINISH PARSIGN PDB */
-     inf.close();
       } // end-case PDB
       break;
     case TPP_IF_G96:   mol_to_atoms(tp); // #TODO 1 
