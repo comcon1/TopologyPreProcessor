@@ -6,7 +6,7 @@
 #include <set>
 
 
-#define TPP_SMART_COEFF 100
+#define TPP_SMART_COEFF 10
 #define TPP_ZNUC_COEFF  10000
 #define TPP_BOND_COEFF  2
 #define TPP_ANGLE_COEFF 4
@@ -130,20 +130,52 @@ namespace tpp {
    private:
     t_topology &tp;
 
+    /*
+     * atom ID -> 
+     *          { atomtype ID -> score }
+     */
     map<int, map<int, int> > scores;
-    map<int, set<int> > nb_suite;       // suite on znuc
+
+    /*
+     * Function fill *scores* map according to `atom_patterns`
+     * table of the database.
+     */
+    void smart_fit() throw (t_exception);
+    
+    /*
+     * ID -> {atomtype ID}
+     */ 
+    map<int, set<int> > nb_suite;
+
+    /*
+     * Function matches atomtypes according only to atomic number.
+     * Result is filling *nb_suite* map.
+     */
+    void fill_nb() throw (t_exception);
+    
+    /*
+     * Summarize scores from different x_suite maps.
+     * Weight coefficients of every property in atomtype definition are applied
+     * here. Coef-s are defined at the top of this header in TPP_XXX defines.
+     */
+    void count_scores() throw (t_exception);
+
+    /*
+     * << WHAT IS THIS ?? >>
+     * To spread scores found for bonded type (name-type) to all nb types
+     * (uname) that corresponds to this bonded type. 
+     * Makes sense only if fill_bon/ang/dih are used.
+     */
+    void spread_atomid() throw (t_exception);
+
     map<spec2, set<spec2_> > bon_suite;
     map<spec3, set<spec3_> > ang_suite;
     map<spec4, set<spec4_> > dih_suite;
 
     short  ffid; // id of current forcefield
-    void fill_nb() throw (t_exception);
     void fill_bon() throw (t_exception);
     void fill_ang() throw (t_exception);
     void fill_dih() throw (t_exception);
-    void spread_atomid() throw (t_exception);
-    void smart_fit() throw (t_exception);
-    void count_scores() throw (t_exception);
     void print_scores(std::ostream &os);
     void smart_cgnr() throw (t_exception);
 
