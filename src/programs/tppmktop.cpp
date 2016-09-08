@@ -196,6 +196,7 @@ int main(int argc, char * argv[]) {
     // starting program body
     tpp::atom_definer AD(par0, TOP);
     AD.proceed();
+    AD.log_scores();
     AD.atom_align();
     tpp::bond_definer BD(par0, TOP);
     BD.bond_align();
