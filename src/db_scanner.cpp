@@ -55,6 +55,7 @@ namespace tpp {
   }
 
     void atom_definer::fill_nb() throw (t_exception) {
+      cout << "Comparing atom by elements.." << endl;
       mysqlpp::Query qu = con->query();
       MYSQLPP_RESULT res;
       mysqlpp::Row    row;
@@ -98,6 +99,7 @@ GROUP BY name") % anum % ffid;
 /* ============BONDS====================*/
 void atom_definer::fill_bon() throw (t_exception) {
 
+      cout << "Comparing atom by bonds.." << endl;
       mysqlpp::Query qu = con->query();
       MYSQLPP_RESULT  res;
       mysqlpp::Row    row;
@@ -213,6 +215,7 @@ AND ( SELECT MIN( znuc ) FROM atoms WHERE atoms.name = bonds.j AND atoms.ffield 
   /*=================ANGLES=========================*/
  void atom_definer::fill_ang() throw (t_exception) {
 
+      cout << "Comparing atom by angles.." << endl;
       mysqlpp::Query qu = con->query();
       MYSQLPP_RESULT res;
       mysqlpp::Row    row;
@@ -329,6 +332,7 @@ WHERE angles.ffield = %1$d\n\
   /*================DIHEDRALS=======================*/
  void atom_definer::fill_dih() throw (t_exception) {
 
+      cout << "Comparing atom by dihedrals.." << endl;
       mysqlpp::Query qu = con->query();
       MYSQLPP_RESULT res;
       mysqlpp::Row    row;
@@ -455,7 +459,7 @@ void atom_definer::spread_atomid() throw (t_exception) {
       map<int, map<int,int> >::iterator score_it;
       map<int,int>::iterator score_subit;
       mysqlpp::Row::size_type co;
-typedef multi_index_container<
+      typedef multi_index_container<
         pair<int,string>,
         indexed_by<
           ordered_unique<member<pair<int,string>, int, &pair<int,string>::first> >,
@@ -475,7 +479,8 @@ typedef multi_index_container<
         set<string> nameset;
         map<int,int> tmpmap;
         string curname;
-        for(score_subit = score_it->second.begin(); score_subit != score_it->second.end(); ++score_subit) {
+        for(score_subit = score_it->second.begin(); score_subit != score_it->second.end(); 
+            ++score_subit) {
           curname = mappy.find(score_subit->first)->second;
           if ( nameset.find(curname) != nameset.end() ) continue;
           nameset.insert(curname);
@@ -521,7 +526,7 @@ void atom_definer::atom_align() throw (t_exception) {
   qu << "SELECT id, uname, name, charge, mass, comment FROM atoms WHERE ffield = " << this->ffid;
   res = qu.store();
   BOOST_CHECK(res);
-  cout << "Filling map.." << endl;
+  cout << "Filling map ..." << flush;
   for (co = 0; co < res.num_rows(); ++co)  {
     row = res.at(co);
     tempstruct_t t0;
@@ -535,6 +540,7 @@ void atom_definer::atom_align() throw (t_exception) {
   }
   BOOST_CHECK(co > 1);
   qu.reset();
+  cout << "done." << endl;
   // finding atoms with maximum scores
   cout << "Applying scores..." << endl;
   t_atom_mapper::iterator chk0;
@@ -568,6 +574,7 @@ void atom_definer::count_scores() throw (t_exception) {
    map<int,int> tmpit;
    scores.clear();
    cout << "Calculating scores for every atom.." << flush;
+
    // init scores, znuc scores apply
    for (map<int, set<int> >::iterator it = nb_suite.begin(); it != nb_suite.end(); ++it) {
      tmp.clear();
@@ -575,135 +582,140 @@ void atom_definer::count_scores() throw (t_exception) {
        tmp.insert(pair<int,int>(*jit, TPP_ZNUC_COEFF));
      scores.insert(pair<int, map<int, int> >(it->first, tmp));
    }
+
    if (PARAM_EXISTS(par, "maxbonds")) {
-   // bond scores apply
-   for (map<spec2, set<spec2_> >::iterator it = bon_suite.begin(); it != bon_suite.end(); ++it) {
+    // bond scores apply
+    for (map<spec2, set<spec2_> >::iterator it = bon_suite.begin(); it != bon_suite.end(); ++it) {
 #ifdef CDB
-     cout << "!!!!!!" << it->first.first() << ":" << it->first.second() << endl;
+      cout << "!!!!!!" << it->first.first() << ":" << it->first.second() << endl;
 #endif
-     map<int, map<int,int> >::iterator scit1 = scores.find(it->first.first()),
-        scit2 = scores.find(it->first.second());
-     BOOST_CHECK( (scit1 != scores.end()) && (scit2 != scores.end()));
-     tmp = scit1->second;  // map of 1st atom 
-     tmp1 = scit2->second; // map of 2nd atom
-     for (set<spec2_>::iterator jit = it->second.begin(); jit != it->second.end(); ++jit) {
+      map<int, map<int,int> >::iterator scit1 = scores.find(it->first.first()),
+          scit2 = scores.find(it->first.second());
+      BOOST_CHECK( (scit1 != scores.end()) && (scit2 != scores.end()));
+      tmp = scit1->second;  // map of 1st atom 
+      tmp1 = scit2->second; // map of 2nd atom
+      for (set<spec2_>::iterator jit = it->second.begin(); jit != it->second.end(); ++jit) {
 #ifdef CDB
-      cout << "===========" << jit->first() << ":" << jit->second() << endl;
+        cout << "===========" << jit->first() << ":" << jit->second() << endl;
 #endif
-      BOOST_CHECK(tmp.find(jit->first()) != tmp.end());
-      int old = (tmp.find(jit->first()))->second; // old score
-      tmp.erase(jit->first()); // erase from map 
-      tmp.insert(pair<int,int>(jit->first(), old+TPP_BOND_COEFF)); // replace new value into map
-      BOOST_CHECK(tmp1.find(jit->second()) != tmp1.end());
-      old = (tmp1.find(jit->second()))->second;
-      tmp1.erase(jit->second());
-      tmp1.insert(pair<int,int>(jit->second(), old+TPP_BOND_COEFF));
-     }
-     scores.erase(it->first.first());
-     scores.erase(it->first.second());
-     scores.insert(pair<int, map<int,int> >( it->first.first(),  tmp));
-     scores.insert(pair<int, map<int,int> >(it->first.second(), tmp1));
-     //insert
-   }
-   }
+        BOOST_CHECK(tmp.find(jit->first()) != tmp.end());
+        int old = (tmp.find(jit->first()))->second; // old score
+        tmp.erase(jit->first()); // erase from map 
+        tmp.insert(pair<int,int>(jit->first(), old+TPP_BOND_COEFF)); // replace new value into map
+        BOOST_CHECK(tmp1.find(jit->second()) != tmp1.end());
+        old = (tmp1.find(jit->second()))->second;
+        tmp1.erase(jit->second());
+        tmp1.insert(pair<int,int>(jit->second(), old+TPP_BOND_COEFF));
+      }
+      scores.erase(it->first.first());
+      scores.erase(it->first.second());
+      scores.insert(pair<int, map<int,int> >( it->first.first(),  tmp));
+      scores.insert(pair<int, map<int,int> >(it->first.second(), tmp1));
+    }
+   } // endif maxbond
+
    if (PARAM_EXISTS(par, "maxangles")) {
-   // angle scores apply
-   for (map<spec3, set<spec3_> >::iterator it = ang_suite.begin(); it != ang_suite.end(); ++it) {
+    // angle scores apply
+    for (map<spec3, set<spec3_> >::iterator it = ang_suite.begin(); it != ang_suite.end(); ++it) {
 #ifdef CDB
-     cout << "!!!!!!" << it->first.first() << ":" << it->first.second() << ":" << it->first.third() << endl;
+      cout << "!!!!!!" << it->first.first() << ":" << it->first.second() << ":" << it->first.third() << endl;
 #endif
-     map<int, map<int,int> >::iterator scit1 = scores.find(it->first.first()),
-        scit2 = scores.find(it->first.second()),
-        scit3 = scores.find(it->first.third());
-     BOOST_CHECK( (scit1 != scores.end()) && (scit2 != scores.end()) && (scit3 != scores.end()) );
-     tmp = scit1->second;  // map of 1st atom 
-     tmp1 = scit2->second; // map of 2nd atom
-     tmp2 = scit3->second; // map of 3rd atom
-     for (set<spec3_>::iterator jit = it->second.begin(); jit != it->second.end(); ++jit) {
+      map<int, map<int,int> >::iterator scit1 = scores.find(it->first.first()),
+          scit2 = scores.find(it->first.second()),
+          scit3 = scores.find(it->first.third());
+      BOOST_CHECK( (scit1 != scores.end()) && (scit2 != scores.end()) && (scit3 != scores.end()) );
+      tmp = scit1->second;  // map of 1st atom 
+      tmp1 = scit2->second; // map of 2nd atom
+      tmp2 = scit3->second; // map of 3rd atom
+      for (set<spec3_>::iterator jit = it->second.begin(); jit != it->second.end(); ++jit) {
 #ifdef CDB
-      cout << "===========" << jit->first() << ":" << jit->second() << ":" << jit->third() << endl;
+        cout << "===========" << jit->first() << ":" << jit->second() << ":" << jit->third() << endl;
 #endif
-      BOOST_CHECK(tmp.find(jit->first()) != tmp.end());
-      int old = (tmp.find(jit->first()))->second; // old score
-      tmp.erase(jit->first()); // erase from map 
-      tmp.insert(pair<int,int>(jit->first(), old+TPP_ANGLE_COEFF)); // replace new value into map
-      BOOST_CHECK(tmp1.find(jit->second()) != tmp1.end());
-      old = (tmp1.find(jit->second()))->second;
-      tmp1.erase(jit->second());
-      tmp1.insert(pair<int,int>(jit->second(), old+TPP_ANGLE_COEFF));
-      BOOST_CHECK(tmp2.find(jit->third()) != tmp2.end());
-      old = (tmp2.find(jit->third()))->second;
-      tmp2.erase(jit->third());
-      tmp2.insert(pair<int,int>(jit->third(), old+TPP_ANGLE_COEFF));
-     }
-     scores.erase(it->first.first());
-     scores.erase(it->first.second());
-     scores.erase(it->first.third());
-     scores.insert(pair<int, map<int,int> >( it->first.first(),  tmp));
-     scores.insert(pair<int, map<int,int> >(it->first.second(), tmp1));
-     scores.insert(pair<int, map<int,int> >(it->first.third(), tmp2));
-     //insert
-   }
-   }
+        BOOST_CHECK(tmp.find(jit->first()) != tmp.end());
+        int old = (tmp.find(jit->first()))->second; // old score
+        tmp.erase(jit->first()); // erase from map 
+        tmp.insert(pair<int,int>(jit->first(), old+TPP_ANGLE_COEFF)); // replace new value into map
+        BOOST_CHECK(tmp1.find(jit->second()) != tmp1.end());
+        old = (tmp1.find(jit->second()))->second;
+        tmp1.erase(jit->second());
+        tmp1.insert(pair<int,int>(jit->second(), old+TPP_ANGLE_COEFF));
+        BOOST_CHECK(tmp2.find(jit->third()) != tmp2.end());
+        old = (tmp2.find(jit->third()))->second;
+        tmp2.erase(jit->third());
+        tmp2.insert(pair<int,int>(jit->third(), old+TPP_ANGLE_COEFF));
+      }
+      scores.erase(it->first.first());
+      scores.erase(it->first.second());
+      scores.erase(it->first.third());
+      scores.insert(pair<int, map<int,int> >( it->first.first(),  tmp));
+      scores.insert(pair<int, map<int,int> >(it->first.second(), tmp1));
+      scores.insert(pair<int, map<int,int> >(it->first.third(), tmp2));
+      //insert
+    }
+   } // endif angles
+
    if (PARAM_EXISTS(par, "maxdihedrals")) {
-   // dihedral scores apply
-   for (map<spec4, set<spec4_> >::iterator it = dih_suite.begin(); it != dih_suite.end(); ++it) {
+    // dihedral scores apply
+    for (map<spec4, set<spec4_> >::iterator it = dih_suite.begin(); it != dih_suite.end(); ++it) {
 #ifdef CDB
-     cout << "!!!!!!" << it->first.first() << ":" << it->first.second() << ":" << it->first.third() << endl;
+      cout << "!!!!!!" << it->first.first() << ":" << it->first.second() << ":" << it->first.third() << endl;
 #endif
-     map<int, map<int,int> >::iterator scit1 = scores.find(it->first.first()),
-        scit2 = scores.find(it->first.second()),
-        scit3 = scores.find(it->first.third()),
-        scit4 = scores.find(it->first.fourth());
-     BOOST_CHECK(    (scit1 != scores.end()) && (scit2 != scores.end()) 
-                  && (scit3 != scores.end()) && (scit4 != scores.end()) );
-     tmp = scit1->second;  // map of 1st atom 
-     tmp1 = scit2->second; // map of 2nd atom
-     tmp2 = scit3->second; // map of 3rd atom
-     tmp3 = scit4->second; // map of 3rd atom
-     for (set<spec4_>::iterator jit = it->second.begin(); jit != it->second.end(); ++jit) {
+      map<int, map<int,int> >::iterator scit1 = scores.find(it->first.first()),
+          scit2 = scores.find(it->first.second()),
+          scit3 = scores.find(it->first.third()),
+          scit4 = scores.find(it->first.fourth());
+      BOOST_CHECK(    (scit1 != scores.end()) && (scit2 != scores.end()) 
+                    && (scit3 != scores.end()) && (scit4 != scores.end()) );
+      tmp = scit1->second;  // map of 1st atom 
+      tmp1 = scit2->second; // map of 2nd atom
+      tmp2 = scit3->second; // map of 3rd atom
+      tmp3 = scit4->second; // map of 3rd atom
+      for (set<spec4_>::iterator jit = it->second.begin(); jit != it->second.end(); ++jit) {
 #ifdef CDB
-      cout << "===========" << jit->first() << ":" << jit->second() << ":" << jit->third() << endl;
+        cout << "===========" << jit->first() << ":" << jit->second() << ":" << jit->third() << endl;
 #endif
-      BOOST_CHECK(tmp.find(jit->first()) != tmp.end());
-      int old = (tmp.find(jit->first()))->second; // old score
-      tmp.erase(jit->first()); // erase from map 
-      tmp.insert(pair<int,int>(jit->first(), old+TPP_DIHED_COEFF)); // replace new value into map
-      BOOST_CHECK(tmp1.find(jit->second()) != tmp1.end());
-      old = (tmp1.find(jit->second()))->second;
-      tmp1.erase(jit->second());
-      tmp1.insert(pair<int,int>(jit->second(), old+TPP_DIHED_COEFF));
-      BOOST_CHECK(tmp2.find(jit->third()) != tmp2.end());
-      old = (tmp2.find(jit->third()))->second;
-      tmp2.erase(jit->third());
-      tmp2.insert(pair<int,int>(jit->third(), old+TPP_DIHED_COEFF));
-      BOOST_CHECK(tmp3.find(jit->fourth()) != tmp3.end());
-      old = (tmp3.find(jit->fourth()))->second;
-      tmp3.erase(jit->fourth());
-      tmp3.insert(pair<int,int>(jit->fourth(), old+TPP_DIHED_COEFF));
-     }
-     scores.erase(it->first.first());
-     scores.erase(it->first.second());
-     scores.erase(it->first.third());
-     scores.erase(it->first.fourth());
-     scores.insert(pair<int, map<int,int> >( it->first.first(),  tmp));
-     scores.insert(pair<int, map<int,int> >(it->first.second(), tmp1));
-     scores.insert(pair<int, map<int,int> >(it->first.third(), tmp2));
-     scores.insert(pair<int, map<int,int> >(it->first.fourth(), tmp3));
-     //insert
-   }
+        BOOST_CHECK(tmp.find(jit->first()) != tmp.end());
+        int old = (tmp.find(jit->first()))->second; // old score
+        tmp.erase(jit->first()); // erase from map 
+        tmp.insert(pair<int,int>(jit->first(), old+TPP_DIHED_COEFF)); // replace new value into map
+        BOOST_CHECK(tmp1.find(jit->second()) != tmp1.end());
+        old = (tmp1.find(jit->second()))->second;
+        tmp1.erase(jit->second());
+        tmp1.insert(pair<int,int>(jit->second(), old+TPP_DIHED_COEFF));
+        BOOST_CHECK(tmp2.find(jit->third()) != tmp2.end());
+        old = (tmp2.find(jit->third()))->second;
+        tmp2.erase(jit->third());
+        tmp2.insert(pair<int,int>(jit->third(), old+TPP_DIHED_COEFF));
+        BOOST_CHECK(tmp3.find(jit->fourth()) != tmp3.end());
+        old = (tmp3.find(jit->fourth()))->second;
+        tmp3.erase(jit->fourth());
+        tmp3.insert(pair<int,int>(jit->fourth(), old+TPP_DIHED_COEFF));
+      }
+      scores.erase(it->first.first());
+      scores.erase(it->first.second());
+      scores.erase(it->first.third());
+      scores.erase(it->first.fourth());
+      scores.insert(pair<int, map<int,int> >( it->first.first(),  tmp));
+      scores.insert(pair<int, map<int,int> >(it->first.second(), tmp1));
+      scores.insert(pair<int, map<int,int> >(it->first.third(), tmp2));
+      scores.insert(pair<int, map<int,int> >(it->first.fourth(), tmp3));
+      //insert
+    }
    // refresh scores on the whole set
-   }
+   } // endif dihedrals
+
    spread_atomid();
    cout << " finished!" << endl;
 }
+
+
 void atom_definer::print_scores(std::ostream &os) {
    // PRINT SCORES
    os << endl;
    for (map<int, map<int,int> >::iterator it = scores.begin(); it != scores.end(); ++it) {
      os << "FOR ATOM: " << it->first << endl;
      for (map<int,int>::iterator jit = it->second.begin(); jit != it->second.end(); ++jit)
-       os << "--- atom # " << jit->first << " :  " << jit->second << " pt\n";
+       os << format("--- atom # %1$5d: %2$5d pt\n") % jit->first % jit->second;
    }
    os << endl;
 }
@@ -732,24 +744,24 @@ void atom_definer::log_scores() {
      ; // what do we need ?
 
      return true;
-    } // connect_db
+ } // connect_db
 
-    /*
-    * Main class method caller.
-    */
-    void atom_definer::proceed() throw (t_exception) {
-      try {
-        fill_nb();
-        if (PARAM_EXISTS(par,"maxbonds"))     fill_bon();
-        if (PARAM_EXISTS(par,"maxangles"))    fill_ang();
-        if (PARAM_EXISTS(par,"maxdihedrals")) fill_dih();
-        count_scores();
-        smart_fit();
-      } catch(t_sql_exception e) { 
-        e.fix_log(); 
-        throw e;
-      }
-    }
+ /*
+ * Main class method caller.
+ */
+ void atom_definer::proceed() throw (t_exception) {
+   try {
+     fill_nb();
+     if (PARAM_EXISTS(par,"maxbonds"))     fill_bon();
+     if (PARAM_EXISTS(par,"maxangles"))    fill_ang();
+     if (PARAM_EXISTS(par,"maxdihedrals")) fill_dih();
+     count_scores();
+     smart_fit();
+   } catch(t_sql_exception e) { 
+     e.fix_log(); 
+     throw e;
+   }
+ }
 
 } // tpp namespace
 
