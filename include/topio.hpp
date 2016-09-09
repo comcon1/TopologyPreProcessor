@@ -30,7 +30,8 @@ extern void load_lack(t_topology &, const char *) throw (t_exception);
 
 extern void check_topology(t_topology &) throw (t_exception);
 
-extern void load_struct(t_topology &, t_iformat, const char *) throw (t_exception);
+extern void load_struct_stream(t_topology &, t_iformat, std::istream *) throw (t_exception);
+extern void load_struct_fname(t_topology &, t_iformat, const char *) throw (t_exception);
 
 extern void save_struct(t_topology &, t_oformat, const char *) throw (t_exception);
 

@@ -1,6 +1,6 @@
-#include "global.hpp"
 #include "topio.hpp"
 #include "db_scanner.hpp"
+#include "testcase.hpp"
 
 #include <boost/program_options/variables_map.hpp>
 #include <boost/program_options/errors.hpp>
@@ -20,88 +20,78 @@ void helpscreen();
 double sumcharge(const tpp::t_topology &);
 
 int main(int argc, char * argv[]) {
-  string progname("Execution rules for TPPMKTOP ");
+  string progname("Execution rules for TPPMKTEST ");
   progname = progname + VERSION;
   p_o::options_description desc(progname);
   p_o::variables_map vars;
   desc.add_options()
-          ("input,i",p_o::value<std::string>(),"Input filename (any format)")
-          ("output,o",p_o::value<std::string>(),"Output filename (itp format)")
-          ("rtp-output,r",p_o::value<std::string>(),"Output filename (rtp format)")
+          ("input,i",p_o::value<std::string>(),"Input filename (PDB format)")
+          ("testid,t",p_o::value<unsigned>(),"Test molecule ID (zero for all)")
           ("forcefield,f",p_o::value<std::string>(),"Forcefield name")
  
-          ("lack-file,l",p_o::value<std::string>(),"Topology lack filename (default 'lack.itp')")
           ("sqlserver,s",p_o::value<std::string>(),"Mysql-server adress (default 'localhost')")
           ("sqlport,t",p_o::value<unsigned>(),"Mysql-server port (default '3306')")
           ("sqluser,u",p_o::value<std::string>(),"Mysql-user (default 'tppuser')")
           ("sqlpassword,p",p_o::value<std::string>(),"Mysql-password (default 'estatic')")
-          ("nocalculate,n","Create final topology (don't create lack-file)")
-          ("max-bonds,m","Maximize amount of bonds, angles and dihedrals by selecting other atom-types.")
+
           ("verbose,v","Verbose mode")
           ("help,h", "Print this message")
   ;
   try {
-     try { // parsing boost::program_options
+     try { 
+        // parsing boost::program_options
   	p_o::store(p_o::parse_command_line(argc, argv, desc), vars);
-         p_o::notify(vars);
+        p_o::notify(vars);
      
-         // boolean options
-     if ( (vars.count("verbose") > 1) || (vars.count("nocalculate") > 1) || (vars.count("max-bonds") > 1) ) 
-       throw 1;
-     PARAM_ADD(cmdline, "verbose_flag", vars.count("verbose") ? "on" : "off" );
-     PARAM_ADD(cmdline, "nocalculate_flag",  vars.count("nocalculate") ?"on" : "off" );
-     if (vars.count("max-bonds")) PARAM_ADD(cmdline, "max-bonds", "on" );
-     if (vars.count("help") == 1) helpscreen();
-     
-         // main string options
-         if (vars.count("input") == 1) {
-         	PARAM_ADD(cmdline, "input_file", vars["input"].as<std::string>() );
-         } else throw 1;
-         if (vars.count("output") == 1) {
-         	PARAM_ADD(cmdline, "output_file", vars["output"].as<std::string>() );
-         } else throw 1;
-         if (vars.count("forcefield") == 1) {
-         	PARAM_ADD(cmdline, "forcefield", vars["forcefield"].as<std::string>() );
-         } else throw 1;
-         // optional parameters
-         if (vars.count("lack-file") == 1) {
-         	PARAM_ADD(cmdline, "lack_file", vars["lack-file"].as<std::string>() );
-         } else if (vars.count("lack-file") == 0 ) {
-         	PARAM_ADD(cmdline, "lack_file", "lack.itp" );
-         } else throw 1;
-         if (vars.count("rtp-output") == 1) {
-         	PARAM_ADD(cmdline, "rtpoutput_file", vars["rtp-output"].as<std::string>() );
-         } else if (vars.count("rtp-output") > 0) {
-                 throw 1;
-         } 
-         // SQL parameters
-         if (vars.count("sqlserver") == 1) {
-         	PARAM_ADD(cmdline, "sqlserver", vars["sqlserver"].as<std::string>() );
-         } else if (vars.count("sqlserver") == 0 ) {
-         	PARAM_ADD(cmdline, "sqlserver", "localhost" );
-         } else throw 1;
-         if (vars.count("sqluser") == 1) {
-         	PARAM_ADD(cmdline, "sqluser", vars["sqluser"].as<std::string>() );
-         } else if (vars.count("sqluser") == 0 ) {
-         	PARAM_ADD(cmdline, "sqluser", "tppuser" );
-         } else throw 1;
-         if (vars.count("sqlport") == 1) {
-                 unsigned o = vars["sqlport"].as<unsigned>();
-         	PARAM_ADD(cmdline, "sqlport", boost::lexical_cast<string>(vars["sqlport"].as<unsigned>()) );
-         } else if (vars.count("sqlport") == 0 ) {
-         	PARAM_ADD(cmdline, "sqlport", "3306" );
-         } else throw 1;
-         if (vars.count("sqlpassword") == 1) {
-         	PARAM_ADD(cmdline, "sqlpassword", vars["sqlpassword"].as<std::string>() );
-         } else if (vars.count("sqlpassword") == 0 ) {
-         	PARAM_ADD(cmdline, "sqlpassword", "estatic" );
-         } else throw 1;
+         // boolean option
+        if (vars.count("verbose") > 1)  
+          throw 1;
+        PARAM_ADD(cmdline, "verbose_flag", vars.count("verbose") ? "on" : "off" );
+        // tests are performed in nocalculate only
+        PARAM_ADD(cmdline, "nocalculate_flag",  "on" );
+
+        if (vars.count("help") == 1) helpscreen();
+        
+        // main string options
+        if (vars.count("input") == 1) {
+        	PARAM_ADD(cmdline, "input_file", vars["input"].as<std::string>() );
+        } else if (vars.count("testid") == 1) {
+                unsigned o = vars["testid"].as<unsigned>();
+        	PARAM_ADD(cmdline, "testid", boost::lexical_cast<string>(vars["testid"].as<unsigned>()) );
+        } else throw 1;
+        if (vars.count("forcefield") == 1) {
+        	PARAM_ADD(cmdline, "forcefield", vars["forcefield"].as<std::string>() );
+        } else throw 1;
+
+         
+        // SQL parameters
+        if (vars.count("sqlserver") == 1) {
+        	PARAM_ADD(cmdline, "sqlserver", vars["sqlserver"].as<std::string>() );
+        } else if (vars.count("sqlserver") == 0 ) {
+        	PARAM_ADD(cmdline, "sqlserver", "localhost" );
+        } else throw 1;
+        if (vars.count("sqluser") == 1) {
+        	PARAM_ADD(cmdline, "sqluser", vars["sqluser"].as<std::string>() );
+        } else if (vars.count("sqluser") == 0 ) {
+        	PARAM_ADD(cmdline, "sqluser", "tppuser" );
+        } else throw 1;
+        if (vars.count("sqlport") == 1) {
+                unsigned o = vars["sqlport"].as<unsigned>();
+        	PARAM_ADD(cmdline, "sqlport", boost::lexical_cast<string>(vars["sqlport"].as<unsigned>()) );
+        } else if (vars.count("sqlport") == 0 ) {
+        	PARAM_ADD(cmdline, "sqlport", "3306" );
+        } else throw 1;
+        if (vars.count("sqlpassword") == 1) {
+        	PARAM_ADD(cmdline, "sqlpassword", vars["sqlpassword"].as<std::string>() );
+        } else if (vars.count("sqlpassword") == 0 ) {
+        	PARAM_ADD(cmdline, "sqlpassword", "estatic" );
+        } else throw 1;
      }
      catch (boost::program_options::error &e) {throw 1;}
   }
   catch (int ExC) {
           if (ExC) {
-         	 cerr << format("\nTPPMKTOP %1% : Error in input parameters.\n\n") % VERSION;
+         	 cerr << format("\nTPPMKTEST %1% : Error in input parameters.\n\n") % VERSION;
           	 cerr << desc;
           }
           return(ExC);
@@ -118,17 +108,17 @@ int main(int argc, char * argv[]) {
 *                                                                    *\n\
 *   Authors:       comcon1, dr.zoidberg, piton, leela                *\n\
 *                                                                    *\n\
-*   Product:       program  TPPMKTOP-%1$-6s                          *\n\
+*   Product:       program  TPPMKTEST-%1$-6s                         *\n\
 *                                                                    *\n\
-*    Utilite for generating final topology from PDB file according   *\n\
-* to SMARTS-patterns in database. Also you can maximize correctness  *\n\
-* of topology by using special algorythmes.                          *\n\
+*    Utilite for generating test case from PDB file. This run produ- *\n\
+* ces the same topology as `tppmktop -n` but do not show it to you   *\n\
+* but write it to db or compare with already written records.        *\n\
 *                                                                    *\n\
 * Configured:     %2$-19s                                *\n\
 **********************************************************************\n\
 \n\n") % PACKAGE_VERSION % CONFIGURE_CDATE;
   } else {
-    cout << format("Starting %1$s program.\n") % "TPPMKTOP";
+    cout << format("Starting %1$s program.\n") % "TPPMKTEST";
   }
 
   // INPUT analysing
@@ -140,32 +130,25 @@ int main(int argc, char * argv[]) {
     return 1;
   }
   string subs = PARAM_READ(cmdline, "input_file").substr(ind+1);
-        if (subs == "pdb") iform = tpp::TPP_IF_PDB;
-  else if (subs == "gro") iform = tpp::TPP_IF_GRO;
-  else if (subs == "g96") iform = tpp::TPP_IF_G96;
-  else if ( (subs == "log") || (subs == "out") ) iform = tpp::TPP_IF_GAMSP;
-  else {
+  if (subs == "pdb") iform = tpp::TPP_IF_PDB;
+  else if ( (subs == "gro") || (subs == "g96") || (subs == "out") ) {
+    cerr << "ERROR:\n";
+    cerr << "Only PDB format should be used for writing test case.\n";
+    return 1;
+  } else {
     cerr << "ERROR:\n";
     cerr << "Couldn't determine format of input file. Please specify other extension.\n";
     return 1;
   }
 
   if (PARAM_READ(cmdline, "verbose_flag") == "on") {
-    switch (iform) {
-      case   tpp::TPP_IF_PDB: cout << "Input file format: Protein Data Bank." << endl; break;
-      case   tpp::TPP_IF_GRO: cout << "Input file format: GROmacs structure." << endl; break;
-      case   tpp::TPP_IF_G96: cout << "Input file format: Gromos 96 structure." << endl; break;
-      case tpp::TPP_IF_GAMSP: cout << "Input file format: GAMess output." << endl; break;
-    };
-  }
-
-  if (PARAM_EXISTS(cmdline, "nocalculate")) {
-    cout << "TPPMKTOP will try to make full-determined topology!" << endl;
+      cout << "Input file format: Protein Data Bank." << endl; 
   }
 
   // program body, using modules
   try {
     tpp::t_topology TOP;
+
     // setting up common topology parameters
     TOP.res_name = PARAM_READ(cmdline, "input_file").substr(0,3);
     TOP.nrexcl = 3;
@@ -179,33 +162,56 @@ int main(int argc, char * argv[]) {
     PARAM_ADD(par0, "password", PARAM_READ(cmdline, "sqlpassword") );
     PARAM_ADD(par0, "port", PARAM_READ(cmdline, "sqlport"));
     PARAM_ADD(par0, "ffname", PARAM_READ(cmdline, "forcefield") );
-    if (PARAM_EXISTS(cmdline, "max-bonds")) {
-      PARAM_ADD(par0, "maxbonds", "on");
-      PARAM_ADD(par0, "maxangles", "on");
-      PARAM_ADD(par0, "maxdihedrals", "on");
-    }
     // initial DB queries
     tpp::db_info DI(par0);
     PARAM_ADD(par0, "ffid", boost::lexical_cast<string>(DI.get_ffid()) );
     TOP.ffinclude = DI.get_ffinclude().c_str();
     TOP.ffinfo = PARAM_READ(par0, "ffname") + " revision " + DI.get_ffrev();
-    //
+    
+    // verbose stat output
+
     if (PARAM_READ(cmdline, "verbose_flag") == "on") {
       cout << DI.get_statistics();
     }
-    // starting program body
+
+    // preparing the topology
+
     tpp::atom_definer AD(par0, TOP);
     AD.proceed();
-    AD.log_scores();
     AD.atom_align();
     tpp::bond_definer BD(par0, TOP);
     BD.bond_align();
-    tpp::save_topology (TOP, PARAM_READ(cmdline, "output_file").c_str() ); 
-    tpp::save_lack(TOP, PARAM_READ(cmdline, "lack_file").c_str());
-    if (PARAM_EXISTS(cmdline, "rtpoutput_file")) {
-        tpp::save_topology_rtp (TOP, PARAM_READ(cmdline, "rtpoutput_file").c_str() ); 
+
+    // performs checks over the topology
+
+    double charge = sumcharge(TOP);
+    
+    cout << format("Processing molecule with total charge: %1$8.3f.\n") % charge;
+
+    if ( abs(charge - (int) charge) > 1e-5) {
+      tpp::t_input_params params;
+      PARAM_ADD(params, "procname", "tppmktest::main");
+      PARAM_ADD(params, "error", "Error in charge check.");
+      throw tpp::t_exception("Your charge is not integer!", params);
     }
-    cout << format("Please, correct your charges according to sum: %1$8.3f.\n") % sumcharge(TOP);
+
+    // -- WRITE TESTCASE mode --
+    cout << endl;
+    
+    if (PARAM_EXISTS(cmdline, "input_file")) {
+      cout << format("Generated topology will be written as a test case.\n") << endl;
+
+      tpp::db_testcase dtc(par0);
+      int molid = dtc.write_testmolecule(PARAM_READ(cmdline, "input_file").c_str(), (int)charge, "Generated by TPPMKTEST");
+
+      cout << format("[TC] Molecule was inserted with ID: %1$d.") % molid << endl;
+
+      dtc.write_testcase(TOP, molid);
+
+    }
+
+    // -- PERFORM TEST mode --
+
   }
   catch (tpp::t_sql_exception &e) {
     e.fix_log();
@@ -244,22 +250,19 @@ void helpscreen()
   OpenBabel version: %5$-8s \n\
   OpenBabel share data: %6$-8s \n\
 \n\
-                                TPPMKTOP\n\
-   Utilite for checking your structure file to be suite for  next-step\n\
-programs.  Also it adapts names and  position of atoms in file to make\n\
-following topology file more obvious.\n\
+                                TPPMKTEST\n\
+                                "
+                  //TODO: write correct help message!
+                                "\
 \n\
  USAGE: \n\
- tppmktop -i <inp> -o <out> -f <f.field> [-l <lack>] [other opt-s]\n\
+ tppmktest [ -i <inp> | -t <id> ] -f <f.field> [other opt-s]\n\
 \n\
       -i  the name of (I)nput-file, in PDB or GRO/G96 format.           \n\
-      -o  the name of (O)utput-file, contained prepared structure.      \n\
+      -t  test the ID of molecule in `selftest` table                   \n\
+            (use zero for test all molecules from DB).                  \n\
       -f  the (F)orcefield name (f.i. OPLS-AA)                          \n\
       -v  (V)erbose mode, typing more information during the execution\n\
- [ special topopolgy generation settings ]\n\
-      -n  do (N)ot calculate force parameters. Write final ITP.\n\
-      -l  specify topology (L)ACK-file definition.\n\
-      -m  (M)aximize amount of bonded interactions.\n\
  [ database options ] \n\
       -s  MySQL (S)erver host name or IP\n\
       -t  MySQL server (P)ort number\n\

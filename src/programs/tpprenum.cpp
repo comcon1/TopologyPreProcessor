@@ -148,7 +148,7 @@ cout << format ("\
  // program body, using modules
  try{
    tpp::t_topology TOP;
-   tpp::load_struct (TOP, iform, PARAM_READ(cmdline, "input_file").c_str() );
+   tpp::load_struct_fname (TOP, iform, PARAM_READ(cmdline, "input_file").c_str() );
    ublas::vector<unsigned> tail1 = tpp::generate_long_tail1(TOP.mol);
    TOP.atoms = tpp::mol_renum1(TOP.mol, TOP.atoms, tail1 );
    tpp::save_struct (TOP, oform, PARAM_READ(cmdline, "output_file").c_str() ); 

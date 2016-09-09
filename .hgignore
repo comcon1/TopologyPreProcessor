@@ -11,7 +11,21 @@ autom4te.cache
 config.h
 config.log
 config.status
-
+COPYING
+INSTALL
+Makefile
+Makefile.in
+aclocal.m4
+config.h.in
+configure
+depcomp
+*~
+install-sh
+missing
+src/programs/.deps/*
+src/programs/cash
+src/programs/log
+src/programs/tppmktest
 
 
 syntax: regexp
