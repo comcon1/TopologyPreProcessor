@@ -48,6 +48,9 @@ bool bond_definer::connect_db() throw (t_exception) {
       }
       ffid = res.at(0)["id"];
       genpairs = (bool) (res.at(0)["generate_pairs"]);
+      if (genpairs && (PARAM_READ(cmdline, "verbose_flag") == "on") ) {
+        cout << "1-4 pair generation is required for FF." << endl;
+      }
       qu.reset();
       
       // molecule stuff ))
@@ -104,23 +107,30 @@ WHERE (bonds.ffield = %3$d) AND \
   ( (bonds.i = '%1$s' and bonds.j = '%2$s') OR \
     (bonds.i = '%2$s' and bonds.j = '%1$s')\
   )") % typ1 % typ2 % ffid;
-    res = qu.store();
-    if (!res) {
-      t_input_params params;
-      PARAM_ADD(params, "procname", "tpp::bond_definer::fill_bonds");
-      PARAM_ADD(params, "error", "SQL query error");
-      PARAM_ADD(params, "sql_error", qu.error() );
-      throw t_sql_exception("SQL query failed!", params);
-    }
-    if ( res.num_rows() == 0 ) {
-      if (PARAM_EXISTS(par, "noqalculate")) {
-        t_input_params params;
-        PARAM_ADD(params, "procname", "tpp::bond_definer::fill_bonds");
-        PARAM_ADD(params, "error", string("Bond not found between ") + typ1 + " and " + typ2 + "!" );
-        throw t_exception("Bond definition error!", params);
-      }
-      runtime.log_write(string("Bond not found between ") + typ1 + " and " + typ2 + "!\n");
-    }
+     res = qu.store();
+     if (!res) {
+       t_input_params params;
+       PARAM_ADD(params, "procname", "tpp::bond_definer::fill_bonds");
+       PARAM_ADD(params, "error", "SQL query error");
+       PARAM_ADD(params, "sql_error", qu.error() );
+       throw t_sql_exception("SQL query failed!", params);
+     }
+     if ( res.num_rows() == 0 ) {
+       if (PARAM_EXISTS(par, "noqalculate")) {
+         t_input_params params;
+         PARAM_ADD(params, "procname", "tpp::bond_definer::fill_bonds");
+         PARAM_ADD(params, "error", string("Bond not found between ") + typ1 + " and " + typ2 + "!" );
+         throw t_exception("Bond definition error!", params);
+       } else {
+         ostringstream os;
+         os << format("Bond not found between %1$s and %2$s!") % typ1 % typ2;
+         runtime.log_write(os.str());
+         if (PARAM_READ(cmdline, "verbose_flag") == "on") {
+           cout << "[LACK] " << os.str() << endl;
+         }
+       }
+       runtime.log_write(string("Bond not found between ") + typ1 + " and " + typ2 + "!\n");
+     }
      t_top_coord   tpc;
      t_top_element tel;
      tel.i = it->GetBeginAtomIdx();
@@ -186,37 +196,49 @@ WHERE (angles.ffield = %4$d) AND \
   ( (angles.i = '%1$s' and angles.j = '%2$s' and angles.k = '%3$s') OR \
     (angles.i = '%3$s' and angles.j = '%2$s' and angles.k = '%1$s')\
   )") % typ1 % typ2  % typ3 % ffid;
-    res = qu.store();
-    if (!res) {
-      t_input_params params;
-      PARAM_ADD(params, "procname", "tpp::bond_definer::fill_angles");
-      PARAM_ADD(params, "error", "SQL query error");
-      PARAM_ADD(params, "sql_error", qu.error() );
-      throw t_sql_exception("SQL query failed!", params);
-    }
-    if (res.num_rows() == 0 ) {
-      if (PARAM_EXISTS(par, "noqalculate")) {
-        t_input_params params;
-        PARAM_ADD(params, "procname", "tpp::bond_definer::fill_angles");
-        PARAM_ADD(params, "error", string("Angle not found between ") + typ1 + " and " + typ2 + " and " + typ3 + "!" );
-        throw t_exception("Bond definition error!", params);
-      }
-      runtime.log_write(string("Angle between ") + typ1 + ", " + typ2 + ", " + typ3 + " not found!\n");
-    }
+     res = qu.store();
+
+     if (!res) {
+       t_input_params params;
+       PARAM_ADD(params, "procname", "tpp::bond_definer::fill_angles");
+       PARAM_ADD(params, "error", "SQL query error");
+       PARAM_ADD(params, "sql_error", qu.error() );
+       throw t_sql_exception("SQL query failed!", params);
+     }
+
+     if (res.num_rows() == 0 ) {
+ 
+       if (PARAM_EXISTS(par, "noqalculate")) {
+         t_input_params params;
+         PARAM_ADD(params, "procname", "tpp::bond_definer::fill_angles");
+         PARAM_ADD(params, "error", string("Angle not found between ") + typ1 + " and " + typ2 + " and " + typ3 + "!" );
+         throw t_exception("Bond definition error!", params);
+       } else {
+          ostringstream os;
+          os << format("Angle not found between %1$s, %2$s and %3$s!") % typ1 % typ2 % typ3;
+          runtime.log_write(os.str());
+          if (PARAM_READ(cmdline, "verbose_flag") == "on") {
+            cout << "[LACK] " << os.str() << endl;
+          }
+       }
+ 
+     }
+
      t_top_coord   tpc;
      t_top_element tel;
      tel.i = (*it)[1]+1;
      tel.j = (*it)[0]+1;
      tel.k = (*it)[2]+1;
      tpc.type = TPP_TTYPE_ANG;
-     tpc.f =  (res.num_rows() > 0) ? res.at(0)["f"] : -1;
-     tpc.c0 = (res.num_rows() > 0) ? res.at(0)["c1"] : 0.00;
-     tpc.c1 = (res.num_rows() > 0) ? res.at(0)["c2"] : 0.00;
+     tpc.f    = (res.num_rows() > 0) ? res.at(0)["f"]  : -1;
+     tpc.c0   = (res.num_rows() > 0) ? res.at(0)["c1"] : 0.00;
+     tpc.c1   = (res.num_rows() > 0) ? res.at(0)["c2"] : 0.00;
      tpc.dbid = (res.num_rows() > 0) ? res.at(0)["id"] : -1;
      tel.defname = ttc_name_generator(tpc).set_btypes({typ1,typ2,typ3}).getName(); 
      tpc.defname = tel.defname;
      tp.elements.push_back(tel);
      tp.parameters.insert(tpc);
+
   } // end FOR_BONDS_OF_MOL
 
   // clearing the same bond types
@@ -279,20 +301,6 @@ WHERE (dihedrals.ffield = %5$d) AND \
       PARAM_ADD(params, "sql_error", qu.error() );
       throw t_sql_exception("SQL query failed!", params);
     }
-    if (res.num_rows() == 0 ) {
-//      if (PARAM_EXISTS(par, "noqalculate")) {
-//        t_input_params params;
-//        PARAM_ADD(params, "procname", "tpp::bond_definer::fill_angles");
-//        PARAM_ADD(params, "error", string("Angle not found between ") + typ1 + " and " + typ2 + " and " + typ3 + "!" );
-//        throw t_exception("Bond definition error!", params);
-//      } 
-//      Making pair instead of exception
-      t_top_element tel;
-      tel.defname = "ONE_PAIR";
-      tel.i = (*it)[0]+1;
-      tel.j = (*it)[3]+1;
-      tp.elements.push_back(tel);
-    }
      t_top_coord   tpc;
      t_top_element tel;
      tel.i = (*it)[0]+1;
@@ -340,6 +348,37 @@ WHERE (dihedrals.ffield = %5$d) AND \
        tpc.c2 = 0.00;
        tpc.c3 = 0.00;
        tpc.c4 = 0.00;
+
+
+       if (PARAM_EXISTS(par, "noqalculate")) {
+         t_top_element tel_;
+         tel_.defname = "ONE_PAIR";
+         tel_.i = (*it)[0]+1;
+         tel_.j = (*it)[3]+1;
+         tp.elements.push_back(tel_);
+         
+         cout << format("[LACK] Additional pair was added instead of dihedral: %1$d-%1$d-%1$d-%1$d. \n") % 
+           tel.i % tel.j % tel.k % tel.l;
+
+/* // make pair instead of error
+ *
+         t_input_params params;
+         PARAM_ADD(params, "procname", "tpp::bond_definer::fill_dihedrals");
+         ostringstream os;
+         os << format("Angle not found between %1$s, %2$s, %3$s and %4$s!") % typ1 % typ2 % typ3 % typ4;
+         PARAM_ADD(params, "error", os.str() );
+         throw t_exception("Bond definition error!", params);
+*/
+       } else {
+         ostringstream os;
+         os << format("Dihedral not found between %1$s, %2$s, %3$s and %4$s!") % typ1 % typ2 % typ3 % typ4;
+         runtime.log_write(os.str());
+         if (PARAM_READ(cmdline, "verbose_flag") == "on") {
+           cout << "[LACK] " << os.str() << endl;
+         }
+       }
+
+
      }
      tel.defname = ttc_name_generator(tpc).set_btypes({typ1,typ2,typ3,typ4}).getName(); 
      tpc.defname = tel.defname;
