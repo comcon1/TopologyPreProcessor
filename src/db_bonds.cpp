@@ -342,6 +342,8 @@ WHERE (dihedrals.ffield = %5$d) AND \
         };
      } else {
        tpc.f = -1;
+       //TODO: tpc type of undefined dihedral should come from FF defaults
+       tpc.type = TPP_TTYPE_RBDIH;
        tpc.dbid = -1;
        tpc.c0 = 0.00;
        tpc.c1 = 0.00;

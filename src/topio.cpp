@@ -313,8 +313,8 @@ void save_lack(t_topology &tp, const char *fname) {
            qalcfile << format("#define %1$s 2 0.00 0.00 0.00 ;3\n") % typit->defname;
            break;
           case TPP_TTYPE_RBDIH:
-           qalcfile << "; Overwritted with pairs: \n";
-           qalcfile << format("#define %1$s 3 0.00 0.00  0.00 0.00 0.00 ;4") % typit->defname;
+           qalcfile << "; May be overwritten with pairs \n";
+           qalcfile << format("#define %1$s 3 0.00 0.00  0.00 0.00 0.00 ;4\n") % typit->defname;
            break;
         };
       }
