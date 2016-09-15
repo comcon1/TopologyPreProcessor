@@ -270,7 +270,8 @@ void save_topology(t_topology &tp, const char *fname) throw (t_exception) {
   if ( tp.parameters.get<1>().count(TPP_TTYPE_PAIR) > 0 ) {
     out << "\n[ pairs ]\n";
     for (t_top_map::nth_index_iterator<1>::type it = tp.parameters.get<1>().lower_bound(TPP_TTYPE_PAIR);
-         it != tp.parameters.get<1>().upper_bound(TPP_TTYPE_PAIR); ++it)
+         it != tp.parameters.get<1>().upper_bound(TPP_TTYPE_PAIR); ++it) {
+      out << ";\n";
       for (t_top_array::nth_index_iterator<1>::type it0 = tp.elements.get<1>().lower_bound(it->defname);
            it0 != tp.elements.get<1>().upper_bound(it->defname); ++it0) {
         if (it0->defname == "ONE_PAIR") 
@@ -278,6 +279,7 @@ void save_topology(t_topology &tp, const char *fname) throw (t_exception) {
         else
           out << format("%1$3d %2$3d  %3$1d %4$10.5f %5$10.5f\n") % (int)it0->i % (int)it0->j % it->f % it->c0 % it->c1;
       }
+    }
   }
   // exclusion
   if ( tp.parameters.get<1>().find(TPP_TTYPE_EXCL) != tp.parameters.get<1>().end() ) {
