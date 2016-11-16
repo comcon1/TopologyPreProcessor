@@ -36,4 +36,5 @@ syntax: regexp
 
 ^.*\.sw[po]$
 ^.*\.o$
+^.*\.orig$
 

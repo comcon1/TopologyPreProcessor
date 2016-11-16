@@ -2,29 +2,62 @@
 #include "exceptions.hpp"
 #include "runtime.hpp"
 
-#include "openbabel/obconversion.h"
-#include "openbabel/obiter.h"
 #include "strutil.h"
+
+
+#include <boost/format.hpp>
+
+#include <openbabel/obconversion.h>
+#include <openbabel/obiter.h>
+
 #include <cctype>
+
 #define PHOENIX_LIMIT 5
 #include "lexical.hpp"
-#include STRINGIZE(SPIRIT_HOME_()/attribute.hpp)
-#include STRINGIZE(SPIRIT_HOME_()/phoenix/primitives.hpp)
-#include STRINGIZE(SPIRIT_HOME_()/phoenix/operators.hpp)
-#include STRINGIZE(SPIRIT_HOME_()/phoenix/functions.hpp)
-#include STRINGIZE(SPIRIT_HOME_()/phoenix/binders.hpp)
-#include STRINGIZE(SPIRIT_HOME_()/phoenix/casts.hpp)
-#include STRINGIZE(SPIRIT_HOME_()/utility/regex.hpp)
+
+
+#if HAVE_BOOST_SPIRIT_CORE_HPP
+	#include <boost/spirit/attribute.hpp>
+	#include <boost/spirit/phoenix/primitives.hpp>
+	#include <boost/spirit/phoenix/operators.hpp>
+	#include <boost/spirit/phoenix/functions.hpp>
+	#include <boost/spirit/phoenix/binders.hpp>
+	#include <boost/spirit/phoenix/casts.hpp>
+	#include <boost/spirit/utility/regex.hpp>
+
+#elif HAVE_BOOST_SPIRIT_HOME_CLASSIC_CORE_HPP
+	#include <boost/spirit/home/classic/attribute.hpp>
+	#include <boost/spirit/home/classic/phoenix/primitives.hpp>
+	#include <boost/spirit/home/classic/phoenix/operators.hpp>
+	#include <boost/spirit/home/classic/phoenix/functions.hpp>
+	#include <boost/spirit/home/classic/phoenix/binders.hpp>
+	#include <boost/spirit/home/classic/phoenix/casts.hpp>
+	#include <boost/spirit/home/classic/utility/regex.hpp>
+
+#endif
 
 
 #if ENABLE_GAMESS_FEATURES
-#include <boost/numeric/ublas/matrix_proxy.hpp>
+	#include <boost/numeric/ublas/matrix_proxy.hpp>
 #endif
 
 #define OPENBABEL
 #define BOOST_SPIRIT_DEBUG
 
- 
+
+using std::string;
+using std::pair;
+using std::cout;
+using std::endl;
+using std::ios;
+using std::flush;
+using std::ostream;
+using std::fstream;
+using std::ostringstream;
+
+using boost::numeric_cast;
+using boost::format;
+
 namespace tpp {
 
 using OpenBabel::OBConversion;
@@ -34,11 +67,11 @@ using OpenBabel::OBAtomAtomIter;
 using namespace phoenix;
 
 
-void mol_to_atoms(t_topology &tp) {
+void mol_to_atoms(Topology &tp) {
   tp.atoms.clear();
-  pair<t_atom_array::iterator, bool> res;
+  pair<AtomArray::iterator, bool> res;
   FOR_ATOMS_OF_MOL(it,tp.mol) {
-    t_atom cur0;
+    Atom cur0;
     cur0.index = it->GetIdx();
     cur0.coord(0) = it->GetX();
     cur0.coord(1) = it->GetY();
@@ -66,7 +99,7 @@ void mol_to_atoms(t_topology &tp) {
   }
 }
 
-void save_topology_rtp(t_topology &tp, const char *fname) {
+void save_topology_rtp(Topology &tp, const char *fname) {
   // test if file exists
   runtime.log_write(string("Trying to write RTP-topology into '")+fname+"'.\n");
   fstream out(fname, ios::out);
@@ -82,7 +115,7 @@ void save_topology_rtp(t_topology &tp, const char *fname) {
 
   // atoms specification
   out << "\n[ atoms ]\n";
-  for (t_atom_array::iterator it = tp.atoms.begin(); it != tp.atoms.end(); ++it) {
+  for (AtomArray::iterator it = tp.atoms.begin(); it != tp.atoms.end(); ++it) {
     out << format("  %1$-4s   %2$-4s   %3$6.3f   %4$3d \n") %
            it->atom_name.c_str() % it->atom_type.c_str() % it->charge %
            (int)(it->c_gnr);
@@ -92,9 +125,9 @@ void save_topology_rtp(t_topology &tp, const char *fname) {
   // bonds
   if (tp.parameters.get<1>().find(TPP_TTYPE_BON) != tp.parameters.get<1>().end()) {
     out << "\n[ bonds ]\n";
-    for (t_top_map::nth_index_iterator<1>::type it = tp.parameters.get<1>().lower_bound(TPP_TTYPE_BON);
+    for (TopMap::nth_index_iterator<1>::type it = tp.parameters.get<1>().lower_bound(TPP_TTYPE_BON);
          it != tp.parameters.get<1>().upper_bound(TPP_TTYPE_BON); ++it)
-      for (t_top_array::nth_index_iterator<1>::type it0 = tp.elements.get<1>().lower_bound(it->defname);
+      for (TopArray::nth_index_iterator<1>::type it0 = tp.elements.get<1>().lower_bound(it->defname);
            it0 != tp.elements.get<1>().upper_bound(it->defname); ++it0)
         if (it->f == -1) {
           out << format(" %1$-4s   %2$-4s   bndTPP_%3$s_%4$s \n") 
@@ -111,10 +144,10 @@ void save_topology_rtp(t_topology &tp, const char *fname) {
 
   // angles
   bool flag = true;
-  for (t_top_map::nth_index<2>::type::iterator it = tp.parameters.get<2>().lower_bound(-1);
+  for (TopMap::nth_index<2>::type::iterator it = tp.parameters.get<2>().lower_bound(-1);
       it != tp.parameters.get<2>().upper_bound(-1); ++it)  
     if (it->type == TPP_TTYPE_ANG)
-      for (t_top_array::nth_index_iterator<1>::type it0 = tp.elements.get<1>().lower_bound(it->defname);
+      for (TopArray::nth_index_iterator<1>::type it0 = tp.elements.get<1>().lower_bound(it->defname);
            it0 != tp.elements.get<1>().upper_bound(it->defname); ++it0) {
         if (flag) {
           out << "\n[ angles ]\n";
@@ -131,10 +164,10 @@ void save_topology_rtp(t_topology &tp, const char *fname) {
 
   // dihedrals
   flag = true;
-  for (t_top_map::nth_index<2>::type::iterator it = tp.parameters.get<2>().lower_bound(-1);
+  for (TopMap::nth_index<2>::type::iterator it = tp.parameters.get<2>().lower_bound(-1);
       it != tp.parameters.get<2>().upper_bound(-1); ++it)  
     if (it->type == TPP_TTYPE_RBDIH)
-      for (t_top_array::nth_index_iterator<1>::type it0 = tp.elements.get<1>().lower_bound(it->defname);
+      for (TopArray::nth_index_iterator<1>::type it0 = tp.elements.get<1>().lower_bound(it->defname);
            it0 != tp.elements.get<1>().upper_bound(it->defname); ++it0) {
         if (flag) {
           out << "\n[ dihedrals ]\n";
@@ -153,9 +186,9 @@ void save_topology_rtp(t_topology &tp, const char *fname) {
 
   // impropers
   flag = true;
-  for (t_top_map::nth_index<1>::type::iterator it = tp.parameters.get<1>().lower_bound(TPP_TTYPE_SPECIMP);
+  for (TopMap::nth_index<1>::type::iterator it = tp.parameters.get<1>().lower_bound(TPP_TTYPE_SPECIMP);
       it != tp.parameters.get<1>().upper_bound(TPP_TTYPE_SPECIMP); ++it)
-      for (t_top_array::nth_index_iterator<1>::type it0 = tp.elements.get<1>().lower_bound(it->defname);
+      for (TopArray::nth_index_iterator<1>::type it0 = tp.elements.get<1>().lower_bound(it->defname);
         it0 != tp.elements.get<1>().upper_bound(it->defname); ++it0) {
         if (flag) {
           out << "\n[ impropers ]\n";
@@ -172,7 +205,7 @@ void save_topology_rtp(t_topology &tp, const char *fname) {
   out.close();
 }
 
-void save_topology(t_topology &tp, const char *fname) {
+void save_topology(Topology &tp, const char *fname) {
   bool ncf = (PARAM_READ(cmdline, "nocalculate_flag") == "on");
   // test if file exists
   runtime.log_write(string("Trying to write topology into '")+fname+"'.\n");
@@ -193,7 +226,7 @@ void save_topology(t_topology &tp, const char *fname) {
 \n\
 ; Force constant parameters\n") % top_comment % tp.ffinfo % tp.res_name % (int)(tp.nrexcl);
   // force constants parameters '#define's
-  for (t_top_map::nth_index_iterator<1>::type it = tp.parameters.get<1>().begin(); 
+  for (TopMap::nth_index_iterator<1>::type it = tp.parameters.get<1>().begin();
         it != tp.parameters.get<1>().upper_bound(TPP_TTYPE_SYMDIH); ++it) {
     if ( (it->f != -1) ^  ncf ) {
       switch (it->type) {
@@ -213,7 +246,7 @@ void save_topology(t_topology &tp, const char *fname) {
   }
   // atoms specification
   out << "\n[ atoms ]\n";
-  for (t_atom_array::iterator it = tp.atoms.begin(); it != tp.atoms.end(); ++it) {
+  for (AtomArray::iterator it = tp.atoms.begin(); it != tp.atoms.end(); ++it) {
     out << format("%1$3d  %2$-10s 1  %3$-4s  %4$-4s  %5$2d  %6$+6.3f  %7$10.6f ; [%8$3s] %9$s\n") %
            (int)(it->index) % it->atom_type.c_str() % tp.res_name.c_str() % it->atom_name.c_str() % 
            (int)(it->c_gnr) % it->charge % it->mass % it->atom_type2.c_str() % it->comment;
@@ -222,9 +255,9 @@ void save_topology(t_topology &tp, const char *fname) {
   // bonds
   if (tp.parameters.get<1>().find(TPP_TTYPE_BON) != tp.parameters.get<1>().end()) {
     out << "\n[ bonds ]\n";
-    for (t_top_map::nth_index_iterator<1>::type it = tp.parameters.get<1>().lower_bound(TPP_TTYPE_BON);
+    for (TopMap::nth_index_iterator<1>::type it = tp.parameters.get<1>().lower_bound(TPP_TTYPE_BON);
          it != tp.parameters.get<1>().upper_bound(TPP_TTYPE_BON); ++it)
-      for (t_top_array::nth_index_iterator<1>::type it0 = tp.elements.get<1>().lower_bound(it->defname);
+      for (TopArray::nth_index_iterator<1>::type it0 = tp.elements.get<1>().lower_bound(it->defname);
            it0 != tp.elements.get<1>().upper_bound(it->defname); ++it0)
         if (ncf && (it->f != -1) )
           out << format("%1$3d %2$3d  %3$2d\n") % (int)it0->i % (int)it0->j % it->f;
@@ -234,9 +267,9 @@ void save_topology(t_topology &tp, const char *fname) {
   // angles
   if (tp.parameters.get<1>().find(TPP_TTYPE_ANG) != tp.parameters.get<1>().end()) {
     out << "\n[ angles ]\n";
-    for (t_top_map::nth_index_iterator<1>::type it = tp.parameters.get<1>().lower_bound(TPP_TTYPE_ANG);
+    for (TopMap::nth_index_iterator<1>::type it = tp.parameters.get<1>().lower_bound(TPP_TTYPE_ANG);
          it != tp.parameters.get<1>().upper_bound(TPP_TTYPE_ANG); ++it)
-      for (t_top_array::nth_index_iterator<1>::type it0 = tp.elements.get<1>().lower_bound(it->defname);
+      for (TopArray::nth_index_iterator<1>::type it0 = tp.elements.get<1>().lower_bound(it->defname);
            it0 != tp.elements.get<1>().upper_bound(it->defname); ++it0)
         if (ncf && (it->f != -1) )
           out << format("%1$3d %2$3d %3$3d  %4$2d\n") % (int)it0->i % (int)it0->j % (int)it0->k % it->f;
@@ -249,9 +282,9 @@ void save_topology(t_topology &tp, const char *fname) {
        ( tp.parameters.get<1>().find(TPP_TTYPE_SYMDIH) != tp.parameters.get<1>().end() ) 
       ) {
     out << "\n[ dihedrals ]\n";
-    for (t_top_map::nth_index_iterator<1>::type it = tp.parameters.get<1>().lower_bound(TPP_TTYPE_RBDIH);
+    for (TopMap::nth_index_iterator<1>::type it = tp.parameters.get<1>().lower_bound(TPP_TTYPE_RBDIH);
          it != tp.parameters.get<1>().upper_bound(TPP_TTYPE_SYMDIH); ++it)
-      for (t_top_array::nth_index_iterator<1>::type it0 = tp.elements.get<1>().lower_bound(it->defname);
+      for (TopArray::nth_index_iterator<1>::type it0 = tp.elements.get<1>().lower_bound(it->defname);
            it0 != tp.elements.get<1>().upper_bound(it->defname); ++it0)
         if (ncf && (it->f != -1) )
           out << format("%1$3d %2$3d %3$3d %4$3d  %5$2d\n") % (int)it0->i % (int)it0->j % (int)it0->k % (int)it0->l % it->f;
@@ -261,9 +294,9 @@ void save_topology(t_topology &tp, const char *fname) {
   // impropers 
   if ( tp.parameters.get<1>().find(TPP_TTYPE_SPECIMP) != tp.parameters.get<1>().end() ) {
     out << "\n[ dihedrals ]\n";
-    for (t_top_map::nth_index_iterator<1>::type it = tp.parameters.get<1>().lower_bound(TPP_TTYPE_SPECIMP);
+    for (TopMap::nth_index_iterator<1>::type it = tp.parameters.get<1>().lower_bound(TPP_TTYPE_SPECIMP);
          it != tp.parameters.get<1>().upper_bound(TPP_TTYPE_SPECIMP); ++it)
-      for (t_top_array::nth_index_iterator<1>::type it0 = tp.elements.get<1>().lower_bound(it->defname);
+      for (TopArray::nth_index_iterator<1>::type it0 = tp.elements.get<1>().lower_bound(it->defname);
            it0 != tp.elements.get<1>().upper_bound(it->defname); ++it0)
         // impropers are always with defines (!)
           out << format("%1$3d %2$3d %3$3d %4$3d  %5$-15s\n") % (int)it0->i % (int)it0->j % (int)it0->k % (int)it0->l % it0->defname;
@@ -272,10 +305,10 @@ void save_topology(t_topology &tp, const char *fname) {
   // pairs
   if ( tp.parameters.get<1>().count(TPP_TTYPE_PAIR) > 0 ) {
     out << "\n[ pairs ]\n";
-    for (t_top_map::nth_index_iterator<1>::type it = tp.parameters.get<1>().lower_bound(TPP_TTYPE_PAIR);
+    for (TopMap::nth_index_iterator<1>::type it = tp.parameters.get<1>().lower_bound(TPP_TTYPE_PAIR);
          it != tp.parameters.get<1>().upper_bound(TPP_TTYPE_PAIR); ++it) {
       out << ";\n";
-      for (t_top_array::nth_index_iterator<1>::type it0 = tp.elements.get<1>().lower_bound(it->defname);
+      for (TopArray::nth_index_iterator<1>::type it0 = tp.elements.get<1>().lower_bound(it->defname);
            it0 != tp.elements.get<1>().upper_bound(it->defname); ++it0) {
         if (it0->defname == "ONE_PAIR") 
           out << format("%1$3d %2$3d  %3$1d\n") % (int)it0->i % (int)it0->j % it->f;
@@ -288,7 +321,7 @@ void save_topology(t_topology &tp, const char *fname) {
   if ( tp.parameters.get<1>().find(TPP_TTYPE_EXCL) != tp.parameters.get<1>().end() ) {
     out << "\n[ exclusions ]\n";
     string defname = (tp.parameters.get<1>().find(TPP_TTYPE_EXCL))->defname; // in map there is only one exclusion
-      for (t_top_array::nth_index_iterator<1>::type it0 = tp.elements.get<1>().lower_bound(defname);
+      for (TopArray::nth_index_iterator<1>::type it0 = tp.elements.get<1>().lower_bound(defname);
            it0 != tp.elements.get<1>().upper_bound(defname); ++it0)
         out << format("%1$3d %2$3d\n") % it0->i % it0->j;
   }
@@ -297,13 +330,13 @@ void save_topology(t_topology &tp, const char *fname) {
 }
 
 // save information about lacking topology
-void save_lack(t_topology &tp, const char *fname) {
+void save_lack(Topology &tp, const char *fname) {
       cout << format("TPP will write %1$d lack parameters to %2$s.\n") 
         % tp.parameters.get<2>().count(-1) % fname;
       std::ofstream qalcfile(fname, ios::out);
       BOOST_CHECK(qalcfile.is_open());
       qalcfile << "; TPP topology lack\n";
-      for (t_top_map::nth_index<2>::type::iterator typit = tp.parameters.get<2>().lower_bound(-1);
+      for (TopMap::nth_index<2>::type::iterator typit = tp.parameters.get<2>().lower_bound(-1);
          typit != tp.parameters.get<2>().upper_bound(-1); ++typit) {  
         switch (typit->type) {
           case TPP_TTYPE_BON:
@@ -412,7 +445,7 @@ Error in parsing file '%1%' catched:  \n\
 #endif // CONDITIONAL COMPILE: ENABLE_GAMESS_FEATURES
 
 // loading topology parameters from lack-file
-extern void load_lack(t_topology &tp, const char *fname) {
+extern void load_lack(Topology &tp, const char *fname) {
    {
   runtime.log_write(string("Trying to read lack-file into topology from '")+fname+"'.\n");
   fstream inf(fname, ios::in);
@@ -425,7 +458,7 @@ extern void load_lack(t_topology &tp, const char *fname) {
   lex::iterator first(fname);
   lex::iterator last = first.make_end();
   lex::rule_r clrs, coms, define, common;
-  t_top_coord _tc;
+  TopCoord _tc;
   
   coms = *blank_p >> ch_p(';') >> (*(anychar_p - eol_p))[&lex::echo::val_print] >> eol_p;
   clrs = *blank_p >> eol_p;
@@ -478,7 +511,7 @@ Error in parsing file '%1%' catched:  \n\
 
 
 
-void load_topology(t_topology &tp, const char *fname) {
+void load_topology(Topology &tp, const char *fname) {
   // test if file exists
   {
   runtime.log_write(string("Trying to read topology from '")+fname+"'.\n");
@@ -494,9 +527,9 @@ void load_topology(t_topology &tp, const char *fname) {
   lex::iterator last = first.make_end();
   lex::rule_r clrs, coms, define, atom, bond, angl, dihe, header, 
     pair, atoms, moltype, bonds, angles, dihedrals, pairs, common;
-  t_top_coord _tc;
-  t_atom _at;
-  t_top_element _te;
+  TopCoord _tc;
+  Atom _at;
+  TopElement _te;
   
   coms = *blank_p >> ch_p(';') >> (*(anychar_p - eol_p))[&lex::echo::val_print] >> eol_p;
   clrs = *blank_p >> eol_p;
@@ -639,14 +672,14 @@ Error in parsing file '%1%' catched:  \n\
  return;
 }
 
-void check_topology(t_topology &tp) {
+void check_topology(Topology &tp) {
 
   // header
 
   ;
 }
 
-void load_struct_fname(t_topology &tp, t_iformat ifm, const char *fname) {
+void load_struct_fname(Topology &tp, InputFormat ifm, const char *fname) {
    // test if file exists
   runtime.log_write(string("Trying to read structure from '")+fname+"'.\n");
   fstream inf(fname, ios::in);
@@ -670,7 +703,7 @@ void load_struct_fname(t_topology &tp, t_iformat ifm, const char *fname) {
 /*
  * LOADING STRUCTURE FROM DIFFERENT FILE FORMATS
  * */
-void load_struct_stream(t_topology &tp, t_iformat ifm, std::istream *inf) {
+void load_struct_stream(Topology &tp, InputFormat ifm, std::istream *inf) {
  try {
   // test if tp variable contains structure
   if (!tp.atoms.empty()) {
@@ -703,14 +736,14 @@ void load_struct_stream(t_topology &tp, t_iformat ifm, std::istream *inf) {
 
   tp.mol = mol;
  
-// Reading molecule in t_atom_array format
+// Reading molecule in AtomArray format
 // ---------------------------------------
   switch(ifm) {
     case TPP_IF_PDB: {
      char *s0  = new char[300], *SEL = new char[7], *NAM = new char[5], *RES = new char[5], *qat = new char[2]; 
      int  res, strc, incrementalIndex = 0;
-     std::pair<t_atom_array::iterator, bool> at_it;
-     t_atom cur0;
+     std::pair<AtomArray::iterator, bool> at_it;
+     Atom cur0;
      float __x,__y,__z;
      strc = 0;
      bool ignoreIndexFlag = (PARAM_READ(cmdline, "ignore_index") == "on");
@@ -811,8 +844,8 @@ void load_struct_stream(t_topology &tp, t_iformat ifm, std::istream *inf) {
       if (!isalnum(tp.res_name[i])) {
         runtime.log_write("Incorrect residue name in PDB file, using 'RES' instead.\n");
         tp.res_name = "RES";
-        for (t_atom_array::iterator it = tp.atoms.begin(); it != tp.atoms.end(); ++it) {
-          t_atom at(*it);
+        for (AtomArray::iterator it = tp.atoms.begin(); it != tp.atoms.end(); ++it) {
+          Atom at(*it);
           at.res_name = "RES";
           tp.atoms.replace(it, at);
         }
@@ -833,7 +866,7 @@ void load_struct_stream(t_topology &tp, t_iformat ifm, std::istream *inf) {
   } catch(Exception e) { e.fix_log(); throw e;  }
 }
 
- void save_struct(t_topology &tp, t_oformat ofm, const char *fname) {
+ void save_struct(Topology &tp, OutputFormat ofm, const char *fname) {
   try {
   // test if file exists
   runtime.log_write(string("Trying to write structure into '")+fname+"'.\n");
@@ -850,7 +883,7 @@ void load_struct_stream(t_topology &tp, t_iformat ifm, std::istream *inf) {
   switch (ofm) {
     case TPP_OF_PDB:
       out << format("TITLE  Written by TPP: %1$s (topoplogy for residue %2$-4s)\n") % tp.name % tp.res_name;
-      for (t_atom_array::iterator it = tp.atoms.begin(); it != tp.atoms.end(); ++it) {
+      for (AtomArray::iterator it = tp.atoms.begin(); it != tp.atoms.end(); ++it) {
         out << format("%1$-6s%2$5d %3$4s%4$4s %5$c%6$4d    %7$8.3f%8$8.3f%9$8.3f  0.00  0.00          %10$2s\n")
           % "ATOM" % (int)it->index % it->atom_name % tp.res_name % 'A' 
           % (int)it->mol_id % it->coord(0) % it->coord(1) % it->coord(2) % it->qmname;
@@ -868,7 +901,7 @@ void load_struct_stream(t_topology &tp, t_iformat ifm, std::istream *inf) {
  $DATA\n\
  %1$s\n\
  C1\n") % tp.name;
-      for (t_atom_array::iterator it = tp.atoms.begin(); it != tp.atoms.end(); ++it) {
+      for (AtomArray::iterator it = tp.atoms.begin(); it != tp.atoms.end(); ++it) {
         out << format("%1$-4s %2$2.1f  %3$15.10f %4$15.10f %5$15.10f\n")
           % it->atom_name % numeric_cast<float>(it->ncharge) % it->coord(0) % it->coord(1) % it->coord(2);
       }

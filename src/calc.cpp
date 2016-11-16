@@ -9,7 +9,7 @@
 #include "calc.hpp"
 namespace tpp {
 
-double __CALC_DIH(int i, const t_point& v1, const t_point& v2, const t_point& v3, const t_point& v4) throw (t_exception) {
+double __CALC_DIH(int i, const Point& v1, const Point& v2, const Point& v3, const Point& v4) throw (t_exception) {
   double x1=v1(0),x2=v2(0),x3=v3(0),x4=v4(0),
          y1=v1(1),y2=v2(1),y3=v3(1),y4=v4(1),
          z1=v1(2),z2=v2(2),z3=v3(2),z4=v4(2),result,sign;
@@ -55,7 +55,7 @@ double __CALC_DIH(int i, const t_point& v1, const t_point& v2, const t_point& v3
 }
 
 
-double __CALC_ANG(int i, const t_point& v1, const t_point& v2, const t_point& v3) {
+double __CALC_ANG(int i, const Point& v1, const Point& v2, const Point& v3) {
    double x1=v1(0),x2=v2(0),x3=v3(0),
          y1=v1(1),y2=v2(1),y3=v3(1),
          z1=v1(2),z2=v2(2),z3=v3(2),result;
@@ -260,7 +260,7 @@ double __CALC_ANG(int i, const t_point& v1, const t_point& v2, const t_point& v3
    return result;
 }
 
-double __CALC_BOND(int i, const t_point& v1, const t_point& v2) {
+double __CALC_BOND(int i, const Point& v1, const Point& v2) {
    double x1=v1(0),x2=v2(0),
          y1=v1(1),y2=v2(1),
          z1=v1(2),z2=v2(2),result;

@@ -1,11 +1,19 @@
+/** \file db_scanner.hpp
+ *
+ *	\brief One more mysterious header that has something to do with parsing...
+ *
+ */
+
 #ifndef TPP_DBSCANNER_H
 #define TPP_DBSCANNER_H
 
 #include "global.hpp"
+#include "core.hpp"
 #include "exceptions.hpp"
 
 #include <mysql++/mysql++.h>
 #include <set>
+#include <map>
 
 
 #define TPP_SMART_COEFF 10
@@ -108,10 +116,10 @@ namespace tpp {
     protected:
       virtual bool connect_db() throw (Exception);
       int ffid;
-      string ffname;
-      string ffdesc;
-      string ffinclude;
-      string ffrev;
+      std::string ffname;
+      std::string ffdesc;
+      std::string ffinclude;
+      std::string ffrev;
 
       void getFFdata();
       void getDBdata();
@@ -119,9 +127,9 @@ namespace tpp {
     public:
       db_info(t_input_params) throw (Exception);
       int get_ffid() { return ffid; }
-      string get_ffinclude() { return ffinclude; }
-      string get_ffrev() { return ffrev; }
-      string get_statistics();
+      std::string get_ffinclude() { return ffinclude; }
+      std::string get_ffrev() { return ffrev; }
+      std::string get_statistics();
 
   };
 
@@ -130,13 +138,13 @@ namespace tpp {
    */
   class atom_definer: public db_base {
    private:
-    t_topology &tp;
+    Topology &tp;
 
     /*
      * atom ID -> 
      *          { atomtype ID -> score }
      */
-    map<int, map<int, int> > scores;
+    std::map<int, std::map<int, int> > scores;
 
     /*
      * Function fill *scores* map according to `atom_patterns`
@@ -147,7 +155,7 @@ namespace tpp {
     /*
      * ID -> {atomtype ID}
      */ 
-    map<int, set<int> > nb_suite;
+    std::map<int, std::set<int> > nb_suite;
 
     /*
      * Function matches atomtypes according only to atomic number.
@@ -170,9 +178,9 @@ namespace tpp {
      */
     void spread_atomid() throw (Exception);
 
-    map<spec2, set<spec2_> > bon_suite;
-    map<spec3, set<spec3_> > ang_suite;
-    map<spec4, set<spec4_> > dih_suite;
+    std::map<spec2, std::set<spec2_> > bon_suite;
+    std::map<spec3, std::set<spec3_> > ang_suite;
+    std::map<spec4, std::set<spec4_> > dih_suite;
 
     short  ffid; // id of current forcefield
     void fill_bon() throw (Exception);
@@ -186,7 +194,7 @@ namespace tpp {
 
    public:
 
-    atom_definer(t_input_params, t_topology &) throw (Exception);
+    atom_definer(t_input_params, Topology &) throw (Exception);
     void log_scores();
     void proceed() throw (Exception);
     void atom_align() throw (Exception);
@@ -194,9 +202,9 @@ namespace tpp {
 
   class bond_definer: public db_base {
     private:
-      t_internals_array bonds;
-      t_topology &tp;
-      map<string, string> namemap; // map of uname -> name ))
+      InternalsArray bonds;
+      Topology &tp;
+      std::map<std::string, std::string> namemap; // map of uname -> name ))
       short ffid;
       bool  genpairs;
       std::ofstream qalcfile;
@@ -210,7 +218,7 @@ namespace tpp {
       void fill_impropers() throw (Exception, DbException);
       void fill_pairs() throw (Exception);
     public:
-      bond_definer(t_input_params, t_topology &) throw (Exception);
+      bond_definer(t_input_params, Topology &) throw (Exception);
       virtual ~bond_definer(); 
       void bond_align() throw (Exception);
       void log_needed_bonds();

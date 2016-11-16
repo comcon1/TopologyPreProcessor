@@ -7,6 +7,7 @@
  *
  */
 
+#include "core.hpp"
 #include "global.hpp"
 #include "exceptions.hpp"
 #include "runtime.hpp"
@@ -18,6 +19,7 @@
 #include <boost/program_options/errors.hpp>
 #include <boost/program_options/options_description.hpp>
 #include <boost/program_options/parsers.hpp>
+#include <boost/format.hpp>
 
 namespace p_o = boost::program_options;
 using tpp::cmdline;
@@ -27,10 +29,16 @@ using tpp::PARAM_READ;
 using tpp::PARAM_EXISTS;
 using tpp::t_input_param;
 using boost::format;
+using std::cout;
+using std::cerr;
+using std::endl;
 using std::string;
+using namespace boost::numeric;
+
 void helpscreen();
 
 int main(int argc, char * argv[]) {
+
     string progname("Execution rules for TPPRENUM ");
     progname += PACKAGE_VERSION;
     p_o::options_description desc(progname);
@@ -108,8 +116,8 @@ int main(int argc, char * argv[]) {
 
 
     // INPUT analysing
-    tpp::t_iformat iform;
-    tpp::t_oformat oform;
+    tpp::InputFormat iform;
+    tpp::OutputFormat oform;
     string::size_type ind = PARAM_READ(cmdline, "input_file").find(".",0);
     if ( ind == string::npos) {
         cerr << "ERROR:\n";
@@ -177,11 +185,11 @@ int main(int argc, char * argv[]) {
 
     // main program body, using modules
     try {
-        tpp::t_topology TOP;
-        tpp::load_struct_fname (TOP, iform, PARAM_READ(cmdline, "input_file").c_str() );
-        ublas::vector<unsigned> tail1 = tpp::generate_long_tail1(TOP.mol);
-        TOP.atoms = tpp::mol_renum1(TOP.mol, TOP.atoms, tail1 );
-        tpp::save_struct (TOP, oform, PARAM_READ(cmdline, "output_file").c_str() );
+        tpp::Topology topology;
+        tpp::load_struct_fname (topology, iform, PARAM_READ(cmdline, "input_file").c_str() );
+        ublas::vector<unsigned> tail1 = tpp::generate_long_tail1(topology.mol);
+        topology.atoms = tpp::mol_renum1(topology.mol, topology.atoms, tail1 );
+        tpp::save_struct (topology, oform, PARAM_READ(cmdline, "output_file").c_str() );
     } catch (tpp::Exception e) {
         cerr << "  TPP_EXCEPTION FROM: " << e["procname"] << endl;
         cerr << "  With following error: " << e["error"] << endl;

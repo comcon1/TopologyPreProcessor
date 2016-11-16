@@ -70,9 +70,9 @@ namespace tpp {
 
           std::vector<tpp::selftestcase_Bond> sca_br;
 
-          for (t_top_map::nth_index_iterator<1>::type it = _tp.parameters.get<1>().lower_bound(TPP_TTYPE_BON);
+          for (TopMap::nth_index_iterator<1>::type it = _tp.parameters.get<1>().lower_bound(TPP_TTYPE_BON);
               it != _tp.parameters.get<1>().upper_bound(TPP_TTYPE_BON); ++it)
-            for (t_top_array::nth_index_iterator<1>::type it0 = _tp.elements.get<1>().lower_bound(it->defname);
+            for (TopArray::nth_index_iterator<1>::type it0 = _tp.elements.get<1>().lower_bound(it->defname);
                 it0 != _tp.elements.get<1>().upper_bound(it->defname); ++it0) {
               sca_br.push_back( selftestcase_Bond(molid, this->ffid, *it, *it0) );
             }
@@ -90,9 +90,9 @@ namespace tpp {
 
           std::vector<tpp::selftestcase_Angle> sca_gr;
 
-          for (t_top_map::nth_index_iterator<1>::type it = _tp.parameters.get<1>().lower_bound(TPP_TTYPE_ANG);
+          for (TopMap::nth_index_iterator<1>::type it = _tp.parameters.get<1>().lower_bound(TPP_TTYPE_ANG);
               it != _tp.parameters.get<1>().upper_bound(TPP_TTYPE_ANG); ++it)
-            for (t_top_array::nth_index_iterator<1>::type it0 = _tp.elements.get<1>().lower_bound(it->defname);
+            for (TopArray::nth_index_iterator<1>::type it0 = _tp.elements.get<1>().lower_bound(it->defname);
                 it0 != _tp.elements.get<1>().upper_bound(it->defname); ++it0) {
                 sca_gr.push_back( selftestcase_Angle(molid, this->ffid, *it, *it0) );
             }
@@ -113,9 +113,9 @@ namespace tpp {
 
           std::vector<tpp::selftestcase_Dihedral> sca_dr;
 
-          for (t_top_map::nth_index_iterator<1>::type it = _tp.parameters.get<1>().lower_bound(TPP_TTYPE_RBDIH);
+          for (TopMap::nth_index_iterator<1>::type it = _tp.parameters.get<1>().lower_bound(TPP_TTYPE_RBDIH);
               it != _tp.parameters.get<1>().upper_bound(TPP_TTYPE_SYMDIH); ++it)
-            for (t_top_array::nth_index_iterator<1>::type it0 = _tp.elements.get<1>().lower_bound(it->defname);
+            for (TopArray::nth_index_iterator<1>::type it0 = _tp.elements.get<1>().lower_bound(it->defname);
                 it0 != _tp.elements.get<1>().upper_bound(it->defname); ++it0) {
                 sca_dr.push_back( selftestcase_Dihedral(molid, this->ffid, *it, *it0) );
             }

@@ -122,7 +122,7 @@ int main(int argc, char * argv[]) {
   }
 
   // INPUT analysing
-  tpp::t_iformat iform;
+  tpp::InputFormat iform;
   string::size_type ind = PARAM_READ(cmdline, "input_file").find(".",0);
   if ( ind == string::npos) {
     cerr << "ERROR:\n";

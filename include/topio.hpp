@@ -1,6 +1,7 @@
 #ifndef TPP_TOPIO_H
 #define TPP_TOPIO_H
 
+#include "core.hpp"
 #include "global.hpp"
 
 namespace tpp {
@@ -20,22 +21,22 @@ static const char * top_comment =
 "; do not guarantee that. If you find that something\n"
 "; is wrong, please report us to " PACKAGE_BUGREPORT "\n";
 
-extern void save_topology(t_topology &, const char *) ;
+void save_topology(Topology &, const char *) ;
 
-extern void save_topology_rtp(t_topology &, const char *);
+void save_topology_rtp(Topology &, const char *);
 
-extern void load_topology(t_topology &, const char *);
+void load_topology(Topology &, const char *);
 
-extern void load_lack(t_topology &, const char *);
+void load_lack(Topology &, const char *);
 
-extern void check_topology(t_topology &) ;
+void check_topology(Topology &) ;
 
-extern void load_struct_stream(t_topology &, t_iformat, std::istream *) ;
-extern void load_struct_fname(t_topology &, t_iformat, const char *);
+void load_struct_stream(Topology &, InputFormat, std::istream *) ;
+void load_struct_fname(Topology &, InputFormat, const char *);
 
-extern void save_struct(t_topology &, t_oformat, const char *) ;
+void save_struct(Topology &, OutputFormat, const char *) ;
 
-extern void save_lack(t_topology &, const char *);
+void save_lack(Topology &, const char *);
 
 #if ENABLE_GAMESS_FEATURES
 extern void load_hessian(ublas::matrix<double>&, const char *);

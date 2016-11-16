@@ -53,7 +53,7 @@ namespace tpp {
 
   class selftestcase_Bond : public selftestcase {
     public:
-      selftestcase_Bond(const mysqlpp::sql_int &molid, const mysqlpp::sql_int &ffid, const t_top_coord& c, const t_top_element &e) :
+      selftestcase_Bond(const mysqlpp::sql_int &molid, const mysqlpp::sql_int &ffid, const TopCoord& c, const TopElement &e) :
         selftestcase( 0, molid, ffid, 
             "bond", boost::lexical_cast<string>(c.f), e.i, e.j, mysqlpp::null, mysqlpp::null,
             c.c0, c.c1, mysqlpp::null, mysqlpp::null, mysqlpp::null, mysqlpp::null ) {
@@ -63,7 +63,7 @@ namespace tpp {
 
   class selftestcase_Angle : public selftestcase {
     public:
-      selftestcase_Angle(const mysqlpp::sql_int &molid, const mysqlpp::sql_int &ffid, const t_top_coord& c, const t_top_element &e) :
+      selftestcase_Angle(const mysqlpp::sql_int &molid, const mysqlpp::sql_int &ffid, const TopCoord& c, const TopElement &e) :
         selftestcase( 0, molid, ffid, 
             "angle", boost::lexical_cast<string>(c.f), e.i, e.j, e.k, mysqlpp::null,
             c.c0, c.c1, c.c2, mysqlpp::null, mysqlpp::null, mysqlpp::null ) {
@@ -73,7 +73,7 @@ namespace tpp {
 
   class selftestcase_Dihedral : public selftestcase {
     public:
-      selftestcase_Dihedral(const mysqlpp::sql_int &molid, const mysqlpp::sql_int &ffid, const t_top_coord& c, const t_top_element &e) :
+      selftestcase_Dihedral(const mysqlpp::sql_int &molid, const mysqlpp::sql_int &ffid, const TopCoord& c, const TopElement &e) :
         selftestcase( 0, molid, ffid, 
             "dihedral", boost::lexical_cast<string>(c.f), e.i, e.j, e.k, e.l,
             c.c0, c.c1, c.c2, c.c3, c.c4, c.c5 ) {

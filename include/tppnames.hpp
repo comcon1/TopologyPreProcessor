@@ -1,13 +1,13 @@
 #ifndef TPP_TOPIO_H
 #define TPP_TOPIO_H
 
-#include "global.hpp"
+#include "core.hpp"
 
 
 namespace tpp {
 
-  /*
-   * Base abstract class for naming TPP instances.
+  /**
+   *  \brief Base abstract class for naming TPP instances.
    */
   template<typename T>
   class name_generator {
@@ -15,44 +15,46 @@ namespace tpp {
      T instance;
     public:
      name_generator(T &i): instance(i) {;}
-     virtual string getName() = 0;
+     virtual std::string getName() = 0;
   };
 
-  /*
-   * Class for naming force field parameters.
+  /**
+   *  \brief Class for naming force field parameters.
    */
-  class ttc_name_generator: name_generator<t_top_coord> {
+  class ttc_name_generator: name_generator<TopCoord> {
 
     private:
-      array<string,4> btypes;
+      boost::array<std::string,4> btypes;
 
-      string getBondName();
-      string getAngleName();
-      string getDihedralName();
+      std::string getBondName();
+      std::string getAngleName();
+      std::string getDihedralName();
 
     public:
 
-      ttc_name_generator(t_top_coord &i): name_generator<t_top_coord>(i) {;}
+      ttc_name_generator(TopCoord &i): name_generator<TopCoord>(i) {;}
 
-      /*
+      /**
        * Add information about bonding types
        */
-      ttc_name_generator &set_btypes(array<string,4> );
+      ttc_name_generator &set_btypes(boost::array<std::string,4> );
 
-      /*
+      /**
        * getName calls private subfunctions in depend on i.f
        */
-      virtual string getName();
+      virtual std::string getName();
   };
 
-  /*
-   * Common feature to be able the following with name_generator instance ng:
+  /**
+   * \brief Common feature that extends the stream usage.
+   *
+   * Example: with name_generator instance ng:
    *  cout << ng;
-   * or the following:
+   * or:
    *  s = lexical_cast<int>(ng)
    */
   template<typename T>
-  ostream &operator << (ostream &out, name_generator<T> &ng) {
+  std::ostream &operator << (std::ostream &out, name_generator<T> &ng) {
     out << ng.getName();
     return out;
   }

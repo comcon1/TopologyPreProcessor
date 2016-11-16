@@ -3,10 +3,23 @@
 #include "exceptions.hpp"
 #include "runtime.hpp"
 
-#include "openbabel/obiter.h"
-#include "openbabel/parsmart.h"
+#include <openbabel/obiter.h>
+#include <openbabel/parsmart.h>
+
+#include <boost/format.hpp>
+#include <boost/lexical_cast.hpp>
 
 //#define CDB
+
+using std::map;
+using std::cout;
+using std::flush;
+using std::endl;
+using std::string;
+using std::vector;
+
+using boost::format;
+using boost::lexical_cast;
 
 namespace tpp {
 
@@ -14,8 +27,8 @@ namespace tpp {
 
 void atom_definer::smart_cgnr() throw (Exception) {
       // zero all charge groups
-      for (t_atom_array::iterator it = tp.atoms.begin(); it != tp.atoms.end(); ++it) {
-          t_atom nat = *it;
+      for (AtomArray::iterator it = tp.atoms.begin(); it != tp.atoms.end(); ++it) {
+          Atom nat = *it;
           nat.c_gnr = 0;
           tp.atoms.replace(it,nat);
       }
@@ -84,12 +97,12 @@ void atom_definer::smart_cgnr() throw (Exception) {
 
                   for(int i=0;i<maplist.size();++i) {
                       for (int j=0; j<maplist[i].size(); ++j) {
-                          t_atom_array::iterator cur_it = tp.atoms.find((int) (maplist[i][j]));
+                          AtomArray::iterator cur_it = tp.atoms.find((int) (maplist[i][j]));
 #ifdef CDB
                           cout << maplist[i][j] << " " << flush;
 #endif
                           BOOST_CHECK(cur_it != tp.atoms.end());
-                          t_atom cur0 = *cur_it;
+                          Atom cur0 = *cur_it;
                           cur0.c_gnr = curCG; 
                           tp.atoms.replace(cur_it, cur0);
                       }
@@ -107,12 +120,12 @@ void atom_definer::smart_cgnr() throw (Exception) {
             int current_cgr = 1;
             std::set<TPP_INDEX> done_atoms;
             std::set<TPP_INDEX> _tempset;
-            for(t_atom_array::iterator it = tp.atoms.begin();
+            for(AtomArray::iterator it = tp.atoms.begin();
                     it != tp.atoms.end(); ++it) {
                 if (done_atoms.count(it->index)) continue;
                 // for atom as a separate group
                 if (it->c_gnr == 0) {
-                    t_atom cur0 = *it;
+                    Atom cur0 = *it;
                     cur0.c_gnr = current_cgr;
                     done_atoms.insert(cur0.index);
                     tp.atoms.replace(it, cur0);
@@ -124,7 +137,7 @@ void atom_definer::smart_cgnr() throw (Exception) {
 #endif
                     TPP_INDEX oldcgnr = it->c_gnr;
                     _tempset.clear();
-                    for (t_atom_array::nth_index_iterator<2>::type cit = tp.atoms.get<2>().lower_bound(oldcgnr);
+                    for (AtomArray::nth_index_iterator<2>::type cit = tp.atoms.get<2>().lower_bound(oldcgnr);
                         cit != tp.atoms.get<2>().upper_bound(oldcgnr); ++cit) {
                         if (done_atoms.count(cit->index)) continue;
                         _tempset.insert(cit->index);
@@ -132,9 +145,9 @@ void atom_definer::smart_cgnr() throw (Exception) {
                         // Needs: see multi_index documentation.. )
                     }
                     for (set<TPP_INDEX>::iterator ii = _tempset.begin(); ii != _tempset.end(); ++ii) {
-                        t_atom_array::iterator cit = tp.atoms.find(*ii);
+                        AtomArray::iterator cit = tp.atoms.find(*ii);
                         BOOST_CHECK( cit != tp.atoms.end() );
-                        t_atom cur0 = *cit;
+                        Atom cur0 = *cit;
                         cur0.c_gnr = current_cgr;
                         tp.atoms.replace(cit, cur0);
 #ifdef CDB

@@ -1,5 +1,11 @@
 #include "tppnames.hpp"
 
+#include <boost/lexical_cast.hpp>
+
+using std::string;
+using boost::array;
+using boost::lexical_cast;
+
 namespace tpp {
 
 

@@ -5,6 +5,7 @@
  */
 
 #include "global.hpp"
+#include "core.hpp"
 #include "exceptions.hpp"
 #include "runtime.hpp"
 #include "topio.hpp"
@@ -15,6 +16,8 @@
 #include <boost/program_options/options_description.hpp>
 #include <boost/program_options/parsers.hpp>
 
+#include <boost/format.hpp>
+
 namespace p_o = boost::program_options;
 using tpp::cmdline;
 using tpp::t_input_param;
@@ -22,10 +25,16 @@ using tpp::PARAM_ADD;
 using tpp::PARAM_DEL;
 using tpp::PARAM_READ;
 using tpp::PARAM_EXISTS;
+
 using boost::format;
+
+using std::cout;
+using std::cerr;
+using std::endl;
+
 using std::string;
 void helpscreen();
-double sumcharge(const tpp::t_topology &);
+double sumcharge(const tpp::Topology &);
 
 int main(int argc, char * argv[]) {
 	string progname("Execution rules for TPPMKTOP ");
@@ -170,7 +179,7 @@ int main(int argc, char * argv[]) {
 	}
 
 	// INPUT analysing
-	tpp::t_iformat iform;
+	tpp::InputFormat iform;
 	string::size_type ind = PARAM_READ(cmdline, "input_file").find(".", 0);
 	if (ind == string::npos) {
 		cerr << "ERROR:\n";
@@ -217,7 +226,7 @@ int main(int argc, char * argv[]) {
 
 	// program body, using modules
 	try {
-		tpp::t_topology TOP;
+		tpp::Topology TOP;
 		// setting up common topology parameters
 		TOP.res_name = PARAM_READ(cmdline, "input_file").substr(0, 3);
 		TOP.nrexcl = 3;
@@ -329,9 +338,9 @@ following topology file more obvious.\n\
 	throw 0;
 }
 
-double sumcharge(const tpp::t_topology &tp) {
+double sumcharge(const tpp::Topology &tp) {
 	double sum = 0.0;
-	for (tpp::t_atom_array::iterator it = tp.atoms.begin();
+	for (tpp::AtomArray::iterator it = tp.atoms.begin();
 			it != tp.atoms.end(); ++it) {
 		sum += it->charge;
 	}

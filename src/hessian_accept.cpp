@@ -32,7 +32,7 @@ bool accept_hessian(t_topology &tp, const matrix<double> &hessian) throw (t_exce
   map<string, vector<double> > coord_values;
   // applying all bonds into new basis
   int _Counter = 0;
-  for (t_top_map::nth_index<2>::type::iterator typit = tp.parameters.get<2>().begin();
+  for (TopMap::nth_index<2>::type::iterator typit = tp.parameters.get<2>().begin();
        typit != tp.parameters.get<2>().end(); ++typit) 
   if (typit->type == TPP_TTYPE_BON) {
     if (typit->f == -1) { // bond is lack
@@ -40,10 +40,10 @@ bool accept_hessian(t_topology &tp, const matrix<double> &hessian) throw (t_exce
       coord_map.insert(std::pair<string, vector<int> >(typit->defname, vector<int>() ));
       coord_values.insert(std::pair<string, vector<double> >(typit->defname, vector<double>() ) );
     }
-    for (t_top_array::nth_index<1>::type::iterator elit = tp.elements.get<1>().lower_bound(typit->defname);
+    for (TopArray::nth_index<1>::type::iterator elit = tp.elements.get<1>().lower_bound(typit->defname);
         elit != tp.elements.get<1>().upper_bound(typit->defname); ++elit) {
       int i = elit->i, j = elit->j;
-      t_point v1 = tp.atoms.find(i)->coord / BOHR, 
+      Point v1 = tp.atoms.find(i)->coord / BOHR, 
               v2 = tp.atoms.find(j)->coord / BOHR;
       int rn = svd_rank(jacobi);
       runtime.log_write("Adding into jacobi matrix bond (" 
@@ -76,7 +76,7 @@ bool accept_hessian(t_topology &tp, const matrix<double> &hessian) throw (t_exce
 
   
   // applaying bad angles into new basis
-  for (t_top_map::nth_index<2>::type::iterator typit = tp.parameters.get<2>().begin();
+  for (TopMap::nth_index<2>::type::iterator typit = tp.parameters.get<2>().begin();
        typit != tp.parameters.get<2>().end(); ++typit) 
   if (typit->type == TPP_TTYPE_ANG) {
     if (typit->f == -1) {
@@ -84,10 +84,10 @@ bool accept_hessian(t_topology &tp, const matrix<double> &hessian) throw (t_exce
       coord_map.insert(std::pair<string, vector<int> >(typit->defname, vector<int>() ));
       coord_values.insert(std::pair<string, vector<double> >(typit->defname, vector<double>() ) );
     } else continue;
-    for (t_top_array::nth_index<1>::type::iterator elit = tp.elements.get<1>().lower_bound(typit->defname);
+    for (TopArray::nth_index<1>::type::iterator elit = tp.elements.get<1>().lower_bound(typit->defname);
         elit != tp.elements.get<1>().upper_bound(typit->defname); ++elit) {
       int i = elit->i, j = elit->j, k = elit->k;
-      t_point v1 = tp.atoms.find(i)->coord / BOHR, 
+      Point v1 = tp.atoms.find(i)->coord / BOHR, 
               v2 = tp.atoms.find(j)->coord / BOHR,
               v3 = tp.atoms.find(k)->coord / BOHR;
       int rn = svd_rank(jacobi);
@@ -228,7 +228,7 @@ bool accept_hessian(t_topology &tp, const matrix<double> &hessian) throw (t_exce
   
   
   // cycle all lack parameters
-  for (t_top_map::nth_index<2>::type::iterator typit = tp.parameters.get<2>().lower_bound(-1);
+  for (TopMap::nth_index<2>::type::iterator typit = tp.parameters.get<2>().lower_bound(-1);
        typit != tp.parameters.get<2>().upper_bound(-1); ++typit) {
     runtime.log_write("Applying hessian for " + typit->defname + "\n");
     double sumh = 0.00, sumv = 0.00;
@@ -253,7 +253,7 @@ bool accept_hessian(t_topology &tp, const matrix<double> &hessian) throw (t_exce
     runtime.log_write("\n");
     sumh /= coord_map.find(typit->defname)->second.size();
     sumv /= coord_values.find(typit->defname)->second.size();
-    t_top_coord ttc;
+    TopCoord ttc;
     ttc.defname = typit->defname;
     ttc.type = typit->type;  
     ttc.f = -1;  

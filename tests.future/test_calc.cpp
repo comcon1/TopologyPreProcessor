@@ -3,10 +3,10 @@
 #include <global.hpp>
 #include <calc.hpp>
 
-using tpp::t_point;
+using tpp::Point;
 
 void TEST_BOND() {
-  t_point p1,p2;
+  Point p1,p2;
   p1(0) = 0.0;  p1(1) = 0.0; p1(2) = 00.;
   p2(0) = 0.5;  p2(1) = 0.5; p2(2) = 0.5;
   BOOST_CHECK( fcmp(sqrt(0.75)) == tpp::__CALC_BOND(0,p1,p2) );
@@ -15,7 +15,7 @@ void TEST_BOND() {
 }
 
 void TEST_BOND_PART() {
-  t_point p1,p2;
+  Point p1,p2;
   p1(0) = 0.0;  p1(1) = 0.0; p1(2) = 0.0;
   p2(0) = 0.5;  p2(1) = 0.5; p2(2) = 0.5;
   double d[7];
@@ -33,7 +33,7 @@ void TEST_BOND_PART() {
 }
 
 void TEST_ANG() {
-  t_point p1,p2,p3;
+  Point p1,p2,p3;
   p1(0) = 0.0;  p1(1) = 0.0; p1(2) = 0.0;
   p2(0) = 1.0;  p2(1) = 0.0; p2(2) = 0.0;
   p3(0) = 0.0;  p3(1) = 0.0; p3(2) = 1.0;
@@ -56,7 +56,7 @@ void TEST_ANG() {
 }
 
 void TEST_BAD_ANG() {
-  t_point p1,p2,p3;
+  Point p1,p2,p3;
   p1(0) = 0.0;  p1(1) = 0.0; p1(2) = 0.0;
   p2(0) = 1.0;  p2(1) = 0.0; p2(2) = 0.0;
   p3(0) = 0.0;  p3(1) = 0.0; p3(2) = 1.0;
@@ -68,7 +68,7 @@ void TEST_BAD_ANG() {
 }
 
 void TEST_DIH() throw (tpp::t_exception) {
-  t_point p1,p2,p3,p4,p5;
+  Point p1,p2,p3,p4,p5;
   p1(0) = 0.0;  p1(1) = 0.0; p1(2) = 0.0;
   p2(0) = 1.0;  p2(1) = 0.0; p2(2) = 0.0;
   p3(0) = 1.0;  p3(1) = 0.0; p3(2) = 1.0;
@@ -134,7 +134,7 @@ void TEST_DIH() throw (tpp::t_exception) {
 
 
 void TEST_DIH_10000() throw (tpp::t_exception) {
-  t_point p1,p2,p3,p4;
+  Point p1,p2,p3,p4;
 
   double sum;
 

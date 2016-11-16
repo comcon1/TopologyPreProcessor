@@ -4,6 +4,18 @@
 
 #include <algorithm>
 
+#include <boost/format.hpp>
+
+using boost::format;
+
+using std::string;
+using std::endl;
+using std::cout;
+using std::cerr;
+using std::vector;
+using std::ostringstream;
+
+
 namespace tpp {
 
   /*

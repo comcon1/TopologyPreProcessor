@@ -12,12 +12,12 @@
 
 namespace tpp {
 
-extern double __CALC_DIH(int i, const t_point& v1, const t_point& v2, 
-    const t_point& v3, const t_point& v4) throw (t_exception);
+extern double __CALC_DIH(int i, const Point& v1, const Point& v2, 
+    const Point& v3, const Point& v4) throw (t_exception);
 
-extern double __CALC_ANG(int i, const t_point& v1,const t_point& v2,const t_point& v3);
+extern double __CALC_ANG(int i, const Point& v1,const Point& v2,const Point& v3);
 
-extern double __CALC_BOND(int i, const t_point& v1,const t_point& v2);
+extern double __CALC_BOND(int i, const Point& v1,const Point& v2);
 
 
 }

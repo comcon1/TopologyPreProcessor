@@ -5,16 +5,32 @@
 #include "boost/multi_index_container.hpp"
 #include "db_scanner.hpp"
 #include "tppnames.hpp"
-#include "openbabel/obconversion.h"
-#include "openbabel/obiter.h"
+#include <openbabel/obconversion.h>
+#include <openbabel/obiter.h>
+
+#include <boost/format.hpp>
+#include <boost/lexical_cast.hpp>
 
 //#define CDB
+
+using std::map;
+using std::cout;
+using std::pair;
+using std::flush;
+using std::endl;
+using std::string;
+using std::vector;
+using std::ostringstream;
+
+using boost::format;
+using boost::lexical_cast;
+
 
 namespace tpp {
   using namespace OpenBabel;
 
   // common place procedures...
-  bond_definer::bond_definer(t_input_params _par, t_topology &_tp) throw (Exception):
+  bond_definer::bond_definer(t_input_params _par, Topology &_tp) throw (Exception):
     db_base(_par), tp(_tp) {
       connect_db();
   }
@@ -59,7 +75,7 @@ bool bond_definer::connect_db() throw (Exception) {
       // molecule stuff ))
       string query;
       FOR_ATOMS_OF_MOL(it,tp.mol) {
-        t_atom_array::iterator pa = tp.atoms.find(it->GetIdx());
+        AtomArray::iterator pa = tp.atoms.find(it->GetIdx());
         namemap.insert(pair<string, string>(
               pa->atom_type, string("") )
             );
@@ -134,8 +150,8 @@ WHERE (bonds.ffield = %3$d) AND \
        }
        runtime.log_write(string("Bond not found between ") + typ1 + " and " + typ2 + "!\n");
      }
-     t_top_coord   tpc;
-     t_top_element tel;
+     TopCoord   tpc;
+     TopElement tel;
      tel.i = it->GetBeginAtomIdx();
      tel.j = it->GetEndAtomIdx();
      tpc.type = TPP_TTYPE_BON;
@@ -152,10 +168,10 @@ WHERE (bonds.ffield = %3$d) AND \
   
   
   // clearing the same bond types  
-  for (t_top_map::nth_index<1>::type::iterator it = tp.parameters.get<1>().lower_bound(TPP_TTYPE_BON);
+  for (TopMap::nth_index<1>::type::iterator it = tp.parameters.get<1>().lower_bound(TPP_TTYPE_BON);
       it != tp.parameters.get<1>().upper_bound(TPP_TTYPE_BON); ++it) 
    if ( tp.elements.get<1>().find(it->defname) != tp.elements.get<1>().end() ) {
-    for (t_top_map::nth_index<1>::type::iterator it0 = tp.parameters.get<1>().lower_bound(TPP_TTYPE_BON);
+    for (TopMap::nth_index<1>::type::iterator it0 = tp.parameters.get<1>().lower_bound(TPP_TTYPE_BON);
         it0 != tp.parameters.get<1>().upper_bound(TPP_TTYPE_BON); ++it0) 
       // if defines are equal numerically
 /*
@@ -166,14 +182,14 @@ WHERE (bonds.ffield = %3$d) AND \
       if ( (it0 != it) && (it0->dbid == it->dbid) && 
            (tp.elements.get<1>().find(it0->defname) != tp.elements.get<1>().end()) ) { 
         string lastdef = it0->defname;
-        t_top_array::nth_index<1>::type::iterator fnd = tp.elements.get<1>().find(it0->defname);
-        t_top_element emod = *fnd;
+        TopArray::nth_index<1>::type::iterator fnd = tp.elements.get<1>().find(it0->defname);
+        TopElement emod = *fnd;
         emod.defname = it->defname;
         tp.elements.get<1>().replace(fnd, emod); // correctly replacement with multi_index
         }
    }
   // erasing non-meaning parameters 
-  for (t_top_map::nth_index<1>::type::iterator it = tp.parameters.get<1>().lower_bound(TPP_TTYPE_BON);
+  for (TopMap::nth_index<1>::type::iterator it = tp.parameters.get<1>().lower_bound(TPP_TTYPE_BON);
       it != tp.parameters.get<1>().upper_bound(TPP_TTYPE_BON); ++it) 
    if ( tp.elements.get<1>().find(it->defname) == tp.elements.get<1>().end() ) 
      tp.parameters.get<1>().erase(it);
@@ -227,8 +243,8 @@ WHERE (angles.ffield = %4$d) AND \
  
      }
 
-     t_top_coord   tpc;
-     t_top_element tel;
+     TopCoord   tpc;
+     TopElement tel;
      tel.i = (*it)[1]+1;
      tel.j = (*it)[0]+1;
      tel.k = (*it)[2]+1;
@@ -245,10 +261,10 @@ WHERE (angles.ffield = %4$d) AND \
   } // end FOR_BONDS_OF_MOL
 
   // clearing the same bond types
-  for (t_top_map::nth_index<1>::type::iterator it = tp.parameters.get<1>().lower_bound(TPP_TTYPE_ANG);
+  for (TopMap::nth_index<1>::type::iterator it = tp.parameters.get<1>().lower_bound(TPP_TTYPE_ANG);
       it != tp.parameters.get<1>().upper_bound(TPP_TTYPE_ANG); ++it) 
    if (tp.elements.get<1>().find(it->defname) !=  tp.elements.get<1>().end() ) {
-    for (t_top_map::nth_index<1>::type::iterator it0 = tp.parameters.get<1>().lower_bound(TPP_TTYPE_ANG);
+    for (TopMap::nth_index<1>::type::iterator it0 = tp.parameters.get<1>().lower_bound(TPP_TTYPE_ANG);
         it0 != tp.parameters.get<1>().upper_bound(TPP_TTYPE_ANG); ++it0) 
       // if defines are equal ;-)
       //if ( (it0 != it) && (it0->c0 == it->c0) && (it0->c1 == it->c1) && (it0->f == it->f) &&
@@ -257,15 +273,15 @@ WHERE (angles.ffield = %4$d) AND \
       //  now see only at dbid 
       if ( (it0 != it) && (it0->dbid == it->dbid) && 
            (tp.elements.get<1>().find(it0->defname) != tp.elements.get<1>().end()) ) { 
-        t_top_array::nth_index<1>::type::iterator fnd = tp.elements.get<1>().find(it0->defname);
-        t_top_element emod = *fnd;
+        TopArray::nth_index<1>::type::iterator fnd = tp.elements.get<1>().find(it0->defname);
+        TopElement emod = *fnd;
         emod.defname = it->defname;
         tp.elements.get<1>().replace(fnd, emod); // correctly replacement with multi_index
       }
   }
 
   // erasing non-meaning parameters 
-  for (t_top_map::nth_index<1>::type::iterator it = tp.parameters.get<1>().lower_bound(TPP_TTYPE_ANG);
+  for (TopMap::nth_index<1>::type::iterator it = tp.parameters.get<1>().lower_bound(TPP_TTYPE_ANG);
       it != tp.parameters.get<1>().upper_bound(TPP_TTYPE_ANG); ++it) 
    if ( tp.elements.get<1>().find(it->defname) == tp.elements.get<1>().end() ) 
      tp.parameters.get<1>().erase(it);
@@ -304,8 +320,8 @@ WHERE (dihedrals.ffield = %5$d) AND \
       PARAM_ADD(params, "sql_error", qu.error() );
       throw t_sql_exception("SQL query failed!", params);
     }
-     t_top_coord   tpc;
-     t_top_element tel;
+     TopCoord   tpc;
+     TopElement tel;
      tel.i = (*it)[0]+1;
      tel.j = (*it)[1]+1;
      tel.k = (*it)[2]+1;
@@ -356,7 +372,7 @@ WHERE (dihedrals.ffield = %5$d) AND \
 
 
        if (PARAM_EXISTS(par, "noqalculate")) {
-         t_top_element tel_;
+         TopElement tel_;
          tel_.defname = "ONE_PAIR";
          tel_.i = (*it)[0]+1;
          tel_.j = (*it)[3]+1;
@@ -392,10 +408,10 @@ WHERE (dihedrals.ffield = %5$d) AND \
   } // end FOR_BONDS_OF_MOL
 
   // clearing the same bond types
-  for (t_top_map::nth_index<1>::type::iterator it = tp.parameters.get<1>().lower_bound(TPP_TTYPE_RBDIH);
+  for (TopMap::nth_index<1>::type::iterator it = tp.parameters.get<1>().lower_bound(TPP_TTYPE_RBDIH);
       it != tp.parameters.get<1>().upper_bound(TPP_TTYPE_SYMDIH); ++it) 
    if (tp.elements.get<1>().find(it->defname) != tp.elements.get<1>().end()) {
-    for (t_top_map::nth_index<1>::type::iterator it0 = tp.parameters.get<1>().lower_bound(TPP_TTYPE_RBDIH);
+    for (TopMap::nth_index<1>::type::iterator it0 = tp.parameters.get<1>().lower_bound(TPP_TTYPE_RBDIH);
         it0 != tp.parameters.get<1>().upper_bound(TPP_TTYPE_SYMDIH); ++it0) 
       // if defines are equal ;-)
       // if ( (it0 != it) && (it0->c0 == it->c0) && (it0->c1 == it->c1) && 
@@ -405,15 +421,15 @@ WHERE (dihedrals.ffield = %5$d) AND \
       //    ) { 
       if ( (it0 != it) && (it0->dbid == it->dbid) && 
            (tp.elements.get<1>().find(it0->defname) != tp.elements.get<1>().end()) ) { 
-        t_top_array::nth_index<1>::type::iterator fnd = tp.elements.get<1>().find(it0->defname);
-        t_top_element emod = *fnd;
+        TopArray::nth_index<1>::type::iterator fnd = tp.elements.get<1>().find(it0->defname);
+        TopElement emod = *fnd;
         emod.defname = it->defname;
         tp.elements.get<1>().replace(fnd, emod); // correctly replacement with multi_index
       }
   }
 
   // erasing non-meaning parameters 
-  for (t_top_map::nth_index<1>::type::iterator it = tp.parameters.get<1>().lower_bound(TPP_TTYPE_RBDIH);
+  for (TopMap::nth_index<1>::type::iterator it = tp.parameters.get<1>().lower_bound(TPP_TTYPE_RBDIH);
       it != tp.parameters.get<1>().upper_bound(TPP_TTYPE_SYMDIH); ++it) 
    if ( tp.elements.get<1>().find(it->defname) == tp.elements.get<1>().end() ) 
      tp.parameters.get<1>().erase(it);
@@ -472,7 +488,7 @@ void bond_definer::fill_impropers() throw (Exception,DbException) {
       for(int i=0;i<maplist.size();++i) {
               int oo = (int) (row["order"]);
               BOOST_CHECK(oo <= 4321 and oo >= 1234);
-              t_top_element tel;
+              TopElement tel;
               BOOST_CHECK(oo % 10 <= 4); // 4312 -> 2
               tel.l = maplist[i][ oo % 10 - 1 ];
               oo = oo / 10;
@@ -498,7 +514,7 @@ void bond_definer::fill_impropers() throw (Exception,DbException) {
               tp.elements.push_back(tel);
               // top-coord is added only once
               if ( !tp.parameters.count(tel.defname) ) {
-                  t_top_coord tpc;
+                  TopCoord tpc;
                   tpc.type = TPP_TTYPE_SPECIMP;
                   tpc.defname = tel.defname;
                   tpc.f = (int) row["f"];
@@ -529,7 +545,7 @@ void bond_definer::fill_impropers() throw (Exception,DbException) {
 void bond_definer::fill_pairs() throw (Exception) {
   if (genpairs) {
     // including single pair definition
-        t_top_coord tpc;
+        TopCoord tpc;
         tpc.type = TPP_TTYPE_PAIR;
         tpc.defname = "ONE_PAIR";
         tpc.f = 1;
@@ -537,7 +553,7 @@ void bond_definer::fill_pairs() throw (Exception) {
     // generating pairs
     cout << "Generating 1-4 pairs for FF needs.." << flush;
     FOR_TORSIONS_OF_MOL(it,tp.mol) {
-      t_top_element tel;
+      TopElement tel;
       tel.defname = "ONE_PAIR";
       BOOST_CHECK(tp.atoms.find((*it)[0]+1) != tp.atoms.end());
       tel.i = tp.atoms.find((*it)[0]+1)->index; 

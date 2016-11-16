@@ -1,10 +1,27 @@
 #include "mysql.h"
 #include "runtime.hpp"
 #include "db_scanner.hpp"
-#include "openbabel/obconversion.h"
-#include "openbabel/obiter.h"
+
+
+#include <openbabel/obconversion.h>
+#include <openbabel/obiter.h>
+
+#include <boost/format.hpp>
+#include <boost/lexical_cast.hpp>
 
 //#define CDB
+
+using std::map;
+using std::set;
+using std::pair;
+using std::cout;
+using std::endl;
+using std::flush;
+using std::string;
+using std::ostringstream;
+
+using boost::format;
+using namespace boost::multi_index;
 
 namespace tpp {
   using namespace OpenBabel;
@@ -518,8 +535,8 @@ void atom_definer::atom_align() throw (Exception) {
     indexed_by<
       ordered_unique<member<tempstruct_t, int, &tempstruct_t::id> >
       >
-   > t_atom_mapper;
-  t_atom_mapper atom_mapper;
+   > AtomMapper;
+  AtomMapper atom_mapper;
   mysqlpp::Query qu = con->query();
   MYSQLPP_RESULT res;
   mysqlpp::Row    row;
@@ -544,8 +561,8 @@ void atom_definer::atom_align() throw (Exception) {
   cout << "done." << endl;
   // finding atoms with maximum scores
   cout << "Applying scores..." << endl;
-  t_atom_mapper::iterator chk0;
-  t_atom_array::iterator newa_;
+  AtomMapper::iterator chk0;
+  AtomArray::iterator newa_;
   int max, max_; string name;
   for (map<int, map<int,int> >::iterator sit = scores.begin(); sit != scores.end(); ++sit) {
     max_ = 0;
@@ -555,9 +572,9 @@ void atom_definer::atom_align() throw (Exception) {
     BOOST_CHECK(chk0 != atom_mapper.end());
     name = chk0->type; // name of best atom
     tp.mol.GetAtom(sit->first)->SetType(name);
-    t_atom_array::iterator newa_ = tp.atoms.find(sit->first);
+    AtomArray::iterator newa_ = tp.atoms.find(sit->first);
     BOOST_CHECK(newa_ != tp.atoms.end() );
-    t_atom newa = *newa_;
+    Atom newa = *newa_;
     newa.atom_type = chk0->type;
     newa.atom_type2 = chk0->type2;
     newa.charge = chk0->charge;
@@ -731,7 +748,7 @@ void atom_definer::log_scores() {
  /*
   * Standard constructor with DB connection
   */
- atom_definer::atom_definer(t_input_params p_, t_topology &tp_) throw (Exception): db_base(p_), tp(tp_) {
+ atom_definer::atom_definer(t_input_params p_, Topology &tp_) throw (Exception): db_base(p_), tp(tp_) {
    connect_db();
    this->ffid = boost::lexical_cast<int>(PARAM_READ(this->par, "ffid"));
  }
