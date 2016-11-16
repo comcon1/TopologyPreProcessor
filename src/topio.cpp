@@ -1,4 +1,7 @@
 #include "topio.hpp"
+#include "exceptions.hpp"
+#include "runtime.hpp"
+
 #include "openbabel/obconversion.h"
 #include "openbabel/obiter.h"
 #include "strutil.h"
@@ -31,7 +34,7 @@ using OpenBabel::OBAtomAtomIter;
 using namespace phoenix;
 
 
-void mol_to_atoms(t_topology &tp) throw (t_exception) {
+void mol_to_atoms(t_topology &tp) {
   tp.atoms.clear();
   pair<t_atom_array::iterator, bool> res;
   FOR_ATOMS_OF_MOL(it,tp.mol) {
@@ -58,12 +61,12 @@ void mol_to_atoms(t_topology &tp) throw (t_exception) {
                t_input_params params;
                PARAM_ADD(params, "procname", "tpp::mol_to_atoms");
                PARAM_ADD(params, "error", "PDB parsing error. Repeated index.");
-               throw t_exception("..something to log..", params);
+               throw Exception("..something to log..", params);
     }
   }
 }
 
-void save_topology_rtp(t_topology &tp, const char *fname) throw (t_exception) {
+void save_topology_rtp(t_topology &tp, const char *fname) {
   // test if file exists
   runtime.log_write(string("Trying to write RTP-topology into '")+fname+"'.\n");
   fstream out(fname, ios::out);
@@ -169,7 +172,7 @@ void save_topology_rtp(t_topology &tp, const char *fname) throw (t_exception) {
   out.close();
 }
 
-void save_topology(t_topology &tp, const char *fname) throw (t_exception) {
+void save_topology(t_topology &tp, const char *fname) {
   bool ncf = (PARAM_READ(cmdline, "nocalculate_flag") == "on");
   // test if file exists
   runtime.log_write(string("Trying to write topology into '")+fname+"'.\n");
@@ -332,7 +335,7 @@ typedef ublas::matrix<double> umd;
 static member_function_ptr<umd::reference, umd,  umd::size_type, umd::size_type, umd::const_reference> 
  ins_elem = &umd::insert_element;
 
-extern void load_hessian(ublas::matrix<double>& mtx, const char *fname) throw (t_exception) {
+extern void load_hessian(ublas::matrix<double>& mtx, const char *fname) {
    {
   runtime.log_write(string("Trying to read ") + fname + " into hessian matrix.\n");
   fstream inf(fname, ios::in);
@@ -391,7 +394,7 @@ Error in parsing file '%1%' catched:  \n\
 * - the point of error\n";
        t_input_params pars0;
        PARAM_ADD(pars0, "error", "Parsing error");
-       throw t_exception("GAMESS output parsing error!", pars0);
+       throw Exception("GAMESS output parsing error!", pars0);
  }
  
  // symmetry matrix ;))
@@ -409,7 +412,7 @@ Error in parsing file '%1%' catched:  \n\
 #endif // CONDITIONAL COMPILE: ENABLE_GAMESS_FEATURES
 
 // loading topology parameters from lack-file
-extern void load_lack(t_topology &tp, const char *fname) throw (t_exception) {
+extern void load_lack(t_topology &tp, const char *fname) {
    {
   runtime.log_write(string("Trying to read lack-file into topology from '")+fname+"'.\n");
   fstream inf(fname, ios::in);
@@ -467,7 +470,7 @@ Error in parsing file '%1%' catched:  \n\
         cout << lex::outs.str() << endl;
        t_input_params pars0;
        PARAM_ADD(pars0, "error", "Parsing error");
-       throw t_exception("Topology lack parsing error!", pars0);
+       throw Exception("Topology lack parsing error!", pars0);
  }
  return;
 
@@ -475,7 +478,7 @@ Error in parsing file '%1%' catched:  \n\
 
 
 
-void load_topology(t_topology &tp, const char *fname) throw (t_exception) {
+void load_topology(t_topology &tp, const char *fname) {
   // test if file exists
   {
   runtime.log_write(string("Trying to read topology from '")+fname+"'.\n");
@@ -623,7 +626,7 @@ Error in parsing file '%1%' catched:  \n\
         cout << lex::outs.str() << endl;
        t_input_params pars0;
        PARAM_ADD(pars0, "error", "Parsing error");
-       throw t_exception("Topology parsing error!", pars0);
+       throw Exception("Topology parsing error!", pars0);
  }
  {
  ostringstream os;
@@ -636,14 +639,14 @@ Error in parsing file '%1%' catched:  \n\
  return;
 }
 
-void check_topology(t_topology &tp) throw (t_exception) {
+void check_topology(t_topology &tp) {
 
   // header
 
   ;
 }
 
-void load_struct_fname(t_topology &tp, t_iformat ifm, const char *fname) throw (t_exception) {
+void load_struct_fname(t_topology &tp, t_iformat ifm, const char *fname) {
    // test if file exists
   runtime.log_write(string("Trying to read structure from '")+fname+"'.\n");
   fstream inf(fname, ios::in);
@@ -654,7 +657,7 @@ void load_struct_fname(t_topology &tp, t_iformat ifm, const char *fname) throw (
     PARAM_ADD(params, "procname", "tpp::load_struct");
     PARAM_ADD(params, "error", "invalid filename");
     PARAM_ADD(params, "filename", fname);
-    t_exception e("Can't open specified file for read.", params);
+    Exception e("Can't open specified file for read.", params);
     e.fix_log();
     throw e;
   }
@@ -667,7 +670,7 @@ void load_struct_fname(t_topology &tp, t_iformat ifm, const char *fname) throw (
 /*
  * LOADING STRUCTURE FROM DIFFERENT FILE FORMATS
  * */
-void load_struct_stream(t_topology &tp, t_iformat ifm, std::istream *inf) throw (t_exception) {
+void load_struct_stream(t_topology &tp, t_iformat ifm, std::istream *inf) {
  try {
   // test if tp variable contains structure
   if (!tp.atoms.empty()) {
@@ -694,7 +697,7 @@ void load_struct_stream(t_topology &tp, t_iformat ifm, std::istream *inf) throw 
                t_input_params params;
                PARAM_ADD(params, "procname", "tpp::load_struct");
                PARAM_ADD(params, "error", "OpenBabel: parsing error");
-               throw t_exception("Can't read file format.", params);
+               throw Exception("Can't read file format.", params);
   }
   runtime.log_write("OK.\n");
 
@@ -744,7 +747,7 @@ void load_struct_stream(t_topology &tp, t_iformat ifm, std::istream *inf) throw 
                PARAM_ADD(params, "procname", "tpp::load_struct");
                PARAM_ADD(params, "error", "PDB parsing error");
                PARAM_ADD(params, "line", lexical_cast<string>(strc).c_str());
-               throw t_exception("Invalid ATOM string in your PDB file.", params);
+               throw Exception("Invalid ATOM string in your PDB file.", params);
          }
          
 //         cerr << strc << ")";
@@ -773,7 +776,7 @@ void load_struct_stream(t_topology &tp, t_iformat ifm, std::istream *inf) throw 
                PARAM_ADD(params, "procname", "tpp::load_struct");
                PARAM_ADD(params, "error", "PDB parsing error");
                PARAM_ADD(params, "line", lexical_cast<string>(strc).c_str());
-               throw t_exception("Repeat index or something else.", params);
+               throw Exception("Repeat index or something else.", params);
          }
 
          if (ignoreIndexFlag) {
@@ -823,14 +826,14 @@ void load_struct_stream(t_topology &tp, t_iformat ifm, std::istream *inf) throw 
                t_input_params params;
                PARAM_ADD(params, "procname", "tpp::load_struct");
                PARAM_ADD(params, "error", "no atoms");
-               throw t_exception("No atoms in structure file or bad format.", params);
+               throw Exception("No atoms in structure file or bad format.", params);
      } else {
        runtime.log_write(string("Successfully readed ")+lexical_cast<string>(tp.atoms.size())+ " atoms!\n");
      }
-  } catch(t_exception e) { e.fix_log(); throw e;  }
+  } catch(Exception e) { e.fix_log(); throw e;  }
 }
 
- void save_struct(t_topology &tp, t_oformat ofm, const char *fname) throw (t_exception) {
+ void save_struct(t_topology &tp, t_oformat ofm, const char *fname) {
   try {
   // test if file exists
   runtime.log_write(string("Trying to write structure into '")+fname+"'.\n");
@@ -842,7 +845,7 @@ void load_struct_stream(t_topology &tp, t_iformat ifm, std::istream *inf) throw 
     PARAM_ADD(params, "procname", "tpp::load_struct");
     PARAM_ADD(params, "error", "invalid filename");
     PARAM_ADD(params, "filename", fname);
-    throw t_exception("Can't open specified file for write.", params);
+    throw Exception("Can't open specified file for write.", params);
   }
   switch (ofm) {
     case TPP_OF_PDB:
@@ -874,7 +877,7 @@ void load_struct_stream(t_topology &tp, t_iformat ifm, std::istream *inf) throw 
   };
   out.close();
   // header
-  } catch (t_exception e) {
+  } catch (Exception e) {
      e.fix_log();
      throw e;
   }

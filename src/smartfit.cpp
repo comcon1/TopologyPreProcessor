@@ -1,4 +1,8 @@
 #include "db_scanner.hpp"
+
+#include "exceptions.hpp"
+#include "runtime.hpp"
+
 #include "openbabel/obiter.h"
 #include "openbabel/parsmart.h"
 
@@ -8,7 +12,7 @@ namespace tpp {
 
   using namespace OpenBabel;
 
-void atom_definer::smart_cgnr() throw (t_exception) {
+void atom_definer::smart_cgnr() throw (Exception) {
       // zero all charge groups
       for (t_atom_array::iterator it = tp.atoms.begin(); it != tp.atoms.end(); ++it) {
           t_atom nat = *it;
@@ -144,13 +148,13 @@ void atom_definer::smart_cgnr() throw (t_exception) {
             cout << "finished." << endl;
           } // ending CGNR renumbering block
 
-      } catch (t_exception &et) {
+      } catch (Exception &et) {
           cout << "-- CATCH AT SMART_CGNR! --" << endl;
           throw et;
       }
 }
 
-void atom_definer::smart_fit() throw (t_exception) {
+void atom_definer::smart_fit() throw (Exception) {
 
       // make zero-scored copy of scores map
       map<int, map<int, int> > sf_scores (scores);
@@ -221,7 +225,7 @@ WHERE  (not atom_patterns.group = 1) and (atoms.ffield = %1$d)") % this->ffid;
             PARAM_ADD(params, "procname", "tpp::atom_definer::smartfit");
             PARAM_ADD(params, "error", string("SMART atom pattern #") + 
                 lexical_cast<string>(row["apid"]) + " in DB is for invalid atom type!");
-            throw t_exception("SMARTS-DB ERROR!", params);
+            throw Exception("SMARTS-DB ERROR!", params);
           }
           // fixing bug with summarizing equimatching smarts weights
           if ( (int)row["good"] > score_subit->second ) {

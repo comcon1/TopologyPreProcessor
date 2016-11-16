@@ -2,6 +2,8 @@
 #define TPP_DBSCANNER_H
 
 #include "global.hpp"
+#include "exceptions.hpp"
+
 #include <mysql++/mysql++.h>
 #include <set>
 
@@ -81,20 +83,20 @@ namespace tpp {
   extern bool operator <(const spec3 &, const spec3 &);
   extern bool operator <(const spec4 &, const spec4 &);
 
-  class t_sql_exception : public t_exception {
+  class t_sql_exception : public Exception {
     public:
     virtual void fix_log() const; 
-    t_sql_exception(const char *s, t_input_params &p): t_exception(s, p) { ; }
+    t_sql_exception(const char *s, t_input_params &p): Exception(s, p) { ; }
   };
 
   class db_base {
     protected:
       mysqlpp::Connection *con;
       t_input_params par;
-      virtual bool connect_db() throw (t_exception);
+      virtual bool connect_db() throw (Exception);
     public:
       // need parameters 'host','user','dbname','password','port','ffname'
-      db_base(t_input_params p) throw (t_exception);
+      db_base(t_input_params p) throw (Exception);
       virtual ~db_base() { delete con; }
   };
  
@@ -104,7 +106,7 @@ namespace tpp {
   class db_info: public db_base {
 
     protected:
-      virtual bool connect_db() throw (t_exception);
+      virtual bool connect_db() throw (Exception);
       int ffid;
       string ffname;
       string ffdesc;
@@ -115,7 +117,7 @@ namespace tpp {
       void getDBdata();
 
     public:
-      db_info(t_input_params) throw (t_exception);
+      db_info(t_input_params) throw (Exception);
       int get_ffid() { return ffid; }
       string get_ffinclude() { return ffinclude; }
       string get_ffrev() { return ffrev; }
@@ -140,7 +142,7 @@ namespace tpp {
      * Function fill *scores* map according to `atom_patterns`
      * table of the database.
      */
-    void smart_fit() throw (t_exception);
+    void smart_fit() throw (Exception);
     
     /*
      * ID -> {atomtype ID}
@@ -151,14 +153,14 @@ namespace tpp {
      * Function matches atomtypes according only to atomic number.
      * Result is filling *nb_suite* map.
      */
-    void fill_nb() throw (t_exception);
+    void fill_nb() throw (Exception);
     
     /*
      * Summarize scores from different x_suite maps.
      * Weight coefficients of every property in atomtype definition are applied
      * here. Coef-s are defined at the top of this header in TPP_XXX defines.
      */
-    void count_scores() throw (t_exception);
+    void count_scores() throw (Exception);
 
     /*
      * << WHAT IS THIS ?? >>
@@ -166,28 +168,28 @@ namespace tpp {
      * (uname) that corresponds to this bonded type. 
      * Makes sense only if fill_bon/ang/dih are used.
      */
-    void spread_atomid() throw (t_exception);
+    void spread_atomid() throw (Exception);
 
     map<spec2, set<spec2_> > bon_suite;
     map<spec3, set<spec3_> > ang_suite;
     map<spec4, set<spec4_> > dih_suite;
 
     short  ffid; // id of current forcefield
-    void fill_bon() throw (t_exception);
-    void fill_ang() throw (t_exception);
-    void fill_dih() throw (t_exception);
+    void fill_bon() throw (Exception);
+    void fill_ang() throw (Exception);
+    void fill_dih() throw (Exception);
     void print_scores(std::ostream &os);
-    void smart_cgnr() throw (t_exception);
+    void smart_cgnr() throw (Exception);
 
    protected:
-    virtual bool connect_db() throw (t_exception);
+    virtual bool connect_db() throw (Exception);
 
    public:
 
-    atom_definer(t_input_params, t_topology &) throw (t_exception);
+    atom_definer(t_input_params, t_topology &) throw (Exception);
     void log_scores();
-    void proceed() throw (t_exception);
-    void atom_align() throw (t_exception);
+    void proceed() throw (Exception);
+    void atom_align() throw (Exception);
   };
 
   class bond_definer: public db_base {
@@ -200,17 +202,17 @@ namespace tpp {
       std::ofstream qalcfile;
 
       // methods
-      virtual bool connect_db() throw (t_exception);
-      void fill_bonds() throw (t_exception);
-      void fill_angles() throw (t_exception);
-      void fill_dihedrals() throw (t_exception);
-      void fill_special() throw (t_exception);
-      void fill_impropers() throw (t_exception, t_db_exception);
-      void fill_pairs() throw (t_exception);
+      virtual bool connect_db() throw (Exception);
+      void fill_bonds() throw (Exception);
+      void fill_angles() throw (Exception);
+      void fill_dihedrals() throw (Exception);
+      void fill_special() throw (Exception);
+      void fill_impropers() throw (Exception, DbException);
+      void fill_pairs() throw (Exception);
     public:
-      bond_definer(t_input_params, t_topology &) throw (t_exception);
+      bond_definer(t_input_params, t_topology &) throw (Exception);
       virtual ~bond_definer(); 
-      void bond_align() throw (t_exception);
+      void bond_align() throw (Exception);
       void log_needed_bonds();
   };
 

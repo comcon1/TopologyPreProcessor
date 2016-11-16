@@ -1,4 +1,5 @@
 #include "mysql.h"
+#include "runtime.hpp"
 #include "db_scanner.hpp"
 #include "openbabel/obconversion.h"
 #include "openbabel/obiter.h"
@@ -54,7 +55,7 @@ namespace tpp {
            );           
   }
 
-    void atom_definer::fill_nb() throw (t_exception) {
+    void atom_definer::fill_nb() throw (Exception) {
       cout << "Comparing atom by elements.." << endl;
       mysqlpp::Query qu = con->query();
       MYSQLPP_RESULT res;
@@ -97,7 +98,7 @@ GROUP BY name") % anum % ffid;
       } 
 
 /* ============BONDS====================*/
-void atom_definer::fill_bon() throw (t_exception) {
+void atom_definer::fill_bon() throw (Exception) {
 
       cout << "Comparing atom by bonds.." << endl;
       mysqlpp::Query qu = con->query();
@@ -213,7 +214,7 @@ AND ( SELECT MIN( znuc ) FROM atoms WHERE atoms.name = bonds.j AND atoms.ffield 
 
 
   /*=================ANGLES=========================*/
- void atom_definer::fill_ang() throw (t_exception) {
+ void atom_definer::fill_ang() throw (Exception) {
 
       cout << "Comparing atom by angles.." << endl;
       mysqlpp::Query qu = con->query();
@@ -330,7 +331,7 @@ WHERE angles.ffield = %1$d\n\
 
 
   /*================DIHEDRALS=======================*/
- void atom_definer::fill_dih() throw (t_exception) {
+ void atom_definer::fill_dih() throw (Exception) {
 
       cout << "Comparing atom by dihedrals.." << endl;
       mysqlpp::Query qu = con->query();
@@ -452,7 +453,7 @@ WHERE dihedrals.ffield = %1$d\n\
       cout << flush;
     }
 
-void atom_definer::spread_atomid() throw (t_exception) {
+void atom_definer::spread_atomid() throw (Exception) {
       mysqlpp::Query qu = con->query();
       MYSQLPP_RESULT res;
       mysqlpp::Row    row;
@@ -510,7 +511,7 @@ WHERE atoms.name = atoms1.name and not (atoms.id = %1$d)") % score_subit->first;
 
   typedef struct { int id; string type; string type2; double charge; double mass; string comment; } tempstruct_t;
 
-void atom_definer::atom_align() throw (t_exception) {
+void atom_definer::atom_align() throw (Exception) {
   cout << "Starting atom_alig.." << endl;
   typedef multi_index_container<
     tempstruct_t,
@@ -569,7 +570,7 @@ void atom_definer::atom_align() throw (t_exception) {
 }
 
 // count scores for znuc, atoms, bonds and dihedrals
-void atom_definer::count_scores() throw (t_exception) {
+void atom_definer::count_scores() throw (Exception) {
    map<int,int> tmp, tmp1, tmp2,tmp3;
    map<int,int> tmpit;
    scores.clear();
@@ -730,7 +731,7 @@ void atom_definer::log_scores() {
  /*
   * Standard constructor with DB connection
   */
- atom_definer::atom_definer(t_input_params p_, t_topology &tp_) throw (t_exception): db_base(p_), tp(tp_) {
+ atom_definer::atom_definer(t_input_params p_, t_topology &tp_) throw (Exception): db_base(p_), tp(tp_) {
    connect_db();
    this->ffid = boost::lexical_cast<int>(PARAM_READ(this->par, "ffid"));
  }
@@ -738,7 +739,7 @@ void atom_definer::log_scores() {
  /*
   * Initial DB queries.
   */
- bool atom_definer::connect_db() throw (t_exception) {
+ bool atom_definer::connect_db() throw (Exception) {
      db_base::connect_db();
 
      ; // what do we need ?
@@ -749,7 +750,7 @@ void atom_definer::log_scores() {
  /*
  * Main class method caller.
  */
- void atom_definer::proceed() throw (t_exception) {
+ void atom_definer::proceed() throw (Exception) {
    try {
      fill_nb();
      if (PARAM_EXISTS(par,"maxbonds"))     fill_bon();

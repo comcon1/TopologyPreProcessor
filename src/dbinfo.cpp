@@ -1,4 +1,7 @@
 #include "db_scanner.hpp"
+#include "exceptions.hpp"
+#include "runtime.hpp"
+
 #include <algorithm>
 
 namespace tpp {
@@ -18,7 +21,7 @@ namespace tpp {
   /*
    * Standard constructor with DB connection
    */
-  db_base::db_base(t_input_params p_) throw (t_exception): 
+  db_base::db_base(t_input_params p_) throw (Exception):
        par(p_), con(new mysqlpp::Connection(false)) {
          ;
   }
@@ -26,7 +29,7 @@ namespace tpp {
   /*
    * Standart DB connection.
    */
-  bool db_base::connect_db() throw (t_exception) {
+  bool db_base::connect_db() throw (Exception) {
     con->connect(
         PARAM_READ(par,"dbname").c_str(),
         (PARAM_READ(par,"host")+string(":")+PARAM_READ(par,"port")).c_str(),
@@ -63,7 +66,7 @@ namespace tpp {
       t_input_params params;
       PARAM_ADD(params, "procname", "tpp::db_info::connect_db");
       PARAM_ADD(params, "error", "Error in DB check.");
-      throw t_exception("Your DataBase is empty!", params);
+      throw Exception("Your DataBase is empty!", params);
     }
 
     string cur_mn(res.at(0)["value"]);
@@ -87,14 +90,14 @@ namespace tpp {
   /*
    * Initializing DB-INFO class.
    */
-  db_info::db_info(t_input_params p) throw (t_exception): db_base(p) {
+  db_info::db_info(t_input_params p) throw (Exception): db_base(p) {
     this->connect_db();
   }
 
   /*
    * DB queries for DB-INFO class
    */
-  bool db_info::connect_db() throw (t_exception) {
+  bool db_info::connect_db() throw (Exception) {
     db_base::connect_db();
     this->getFFdata();
   }
@@ -121,7 +124,7 @@ namespace tpp {
       t_input_params params;
       PARAM_ADD(params, "procname", "tpp::db_info::getFFdata");
       PARAM_ADD(params, "error", "Error in parameters");
-      throw t_exception((string("Force field '")+this->ffname+string("' not found!")).c_str(), params);
+      throw Exception((string("Force field '")+this->ffname+string("' not found!")).c_str(), params);
     }
     this->ffid = res.at(0)["id"];
     this->ffinclude = (res.at(0)["include"]).c_str();

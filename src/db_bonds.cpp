@@ -1,4 +1,7 @@
 #include "mysql.h"
+
+#include "runtime.hpp"
+
 #include "boost/multi_index_container.hpp"
 #include "db_scanner.hpp"
 #include "tppnames.hpp"
@@ -11,7 +14,7 @@ namespace tpp {
   using namespace OpenBabel;
 
   // common place procedures...
-  bond_definer::bond_definer(t_input_params _par, t_topology &_tp) throw (t_exception): 
+  bond_definer::bond_definer(t_input_params _par, t_topology &_tp) throw (Exception):
     db_base(_par), tp(_tp) {
       connect_db();
   }
@@ -21,7 +24,7 @@ namespace tpp {
   }
 
 
-bool bond_definer::connect_db() throw (t_exception) {
+bool bond_definer::connect_db() throw (Exception) {
      db_base::connect_db();
 
      string ffname = PARAM_READ(par,"ffname");
@@ -44,7 +47,7 @@ bool bond_definer::connect_db() throw (t_exception) {
         t_input_params params;
         PARAM_ADD(params, "procname", "tpp::bond_definer::connect_db");
         PARAM_ADD(params, "error", "Error in parameters");
-        throw t_exception("Force field not found!", params);
+        throw Exception("Force field not found!", params);
       }
       ffid = res.at(0)["id"];
       genpairs = (bool) (res.at(0)["generate_pairs"]);
@@ -87,7 +90,7 @@ bool bond_definer::connect_db() throw (t_exception) {
 }
 
 // special functions))
-void bond_definer::fill_bonds() throw (t_exception) {
+void bond_definer::fill_bonds() throw (Exception) {
   mysqlpp::Query qu = con->query();
   MYSQLPP_RESULT res;
   mysqlpp::Row    row;
@@ -120,7 +123,7 @@ WHERE (bonds.ffield = %3$d) AND \
          t_input_params params;
          PARAM_ADD(params, "procname", "tpp::bond_definer::fill_bonds");
          PARAM_ADD(params, "error", string("Bond not found between ") + typ1 + " and " + typ2 + "!" );
-         throw t_exception("Bond definition error!", params);
+         throw Exception("Bond definition error!", params);
        } else {
          ostringstream os;
          os << format("Bond not found between %1$s and %2$s!") % typ1 % typ2;
@@ -177,7 +180,7 @@ WHERE (bonds.ffield = %3$d) AND \
 
 }
 
-void bond_definer::fill_angles() throw (t_exception) {
+void bond_definer::fill_angles() throw (Exception) {
   mysqlpp::Query qu = con->query();
   MYSQLPP_RESULT res;
   mysqlpp::Row    row;
@@ -212,7 +215,7 @@ WHERE (angles.ffield = %4$d) AND \
          t_input_params params;
          PARAM_ADD(params, "procname", "tpp::bond_definer::fill_angles");
          PARAM_ADD(params, "error", string("Angle not found between ") + typ1 + " and " + typ2 + " and " + typ3 + "!" );
-         throw t_exception("Bond definition error!", params);
+         throw Exception("Bond definition error!", params);
        } else {
           ostringstream os;
           os << format("Angle not found between %1$s, %2$s and %3$s!") % typ1 % typ2 % typ3;
@@ -268,11 +271,11 @@ WHERE (angles.ffield = %4$d) AND \
      tp.parameters.get<1>().erase(it);
 }
 
-void bond_definer::fill_special() throw (t_exception) {
+void bond_definer::fill_special() throw (Exception) {
  // TODO: add special dihedrals according to SMARTS
 }
 
-void bond_definer::fill_dihedrals() throw (t_exception) {
+void bond_definer::fill_dihedrals() throw (Exception) {
   mysqlpp::Query qu = con->query();
   MYSQLPP_RESULT res;
   mysqlpp::Row    row;
@@ -369,7 +372,7 @@ WHERE (dihedrals.ffield = %5$d) AND \
          ostringstream os;
          os << format("Angle not found between %1$s, %2$s, %3$s and %4$s!") % typ1 % typ2 % typ3 % typ4;
          PARAM_ADD(params, "error", os.str() );
-         throw t_exception("Bond definition error!", params);
+         throw Exception("Bond definition error!", params);
 */
        } else {
          ostringstream os;
@@ -418,7 +421,7 @@ WHERE (dihedrals.ffield = %5$d) AND \
 }
 
 // use for clever choosing and posing improper dihedrals
-void bond_definer::fill_impropers() throw (t_exception,t_db_exception) {
+void bond_definer::fill_impropers() throw (Exception,DbException) {
     runtime.log_write("Starting curious SMART-improper-dihedral fitting.\n");
     mysqlpp::Query qu = con->query();
     qu <<  format("SELECT ip.id, ip.PAT, ip.order, ia.name, ip.impid, \
@@ -436,7 +439,7 @@ void bond_definer::fill_impropers() throw (t_exception,t_db_exception) {
       PARAM_ADD(params, "error", "SQL query error");
       PARAM_ADD(params, "sql_error", qu.error() );
       PARAM_ADD(params, "sql_query", qu.str() ); 
-      throw t_db_exception("SQL query failed!", params);
+      throw DbException("SQL query failed!", params);
     }
     runtime.log_write("OK!\n");
     cout << " finished.\n" <<      
@@ -523,7 +526,7 @@ void bond_definer::fill_impropers() throw (t_exception,t_db_exception) {
 /*
  * Function makes special pairs and common 1-4 pairs - ALSO.
  */
-void bond_definer::fill_pairs() throw (t_exception) {
+void bond_definer::fill_pairs() throw (Exception) {
   if (genpairs) {
     // including single pair definition
         t_top_coord tpc;
@@ -546,7 +549,7 @@ void bond_definer::fill_pairs() throw (t_exception) {
   }
 }
 
-  void bond_definer::bond_align() throw (t_exception) {
+  void bond_definer::bond_align() throw (Exception) {
     try {
       fill_bonds();
       fill_angles();
@@ -555,9 +558,9 @@ void bond_definer::fill_pairs() throw (t_exception) {
       fill_impropers();
       fill_pairs();
     } 
-    catch (t_db_exception &e) { e.fix_log(); cout << "..something fails." << endl; }
+    catch (DbException &e) { e.fix_log(); cout << "..something fails." << endl; }
     catch (t_sql_exception &e) { e.fix_log(); cout << "..something fails." << endl; }
-    catch (t_exception &e) { e.fix_log();  cout << "..something fails." << endl; }
+    catch (Exception &e) { e.fix_log();  cout << "..something fails." << endl; }
   }
 
   void bond_definer::log_needed_bonds() {

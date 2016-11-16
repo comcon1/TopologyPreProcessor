@@ -1,4 +1,5 @@
 #include "global.hpp"
+#include "runtime.hpp"
 
 namespace tpp {
 
@@ -35,20 +36,6 @@ t_runtime::~t_runtime() {
   cash_write("cash_end",8);
   fclose(log);
   fclose(cash);
-}
-
-// exception main constructor
-t_exception::t_exception(const char *s, t_input_params &p): mesg(s), pars(p) {
-      if (PARAM_EXISTS(pars,"fatal")) {
-        cerr << "TPP was abnormally terminated at " << second_clock::local_time() << "\n";
-        cerr << format("Position: %1% -> %2% \n") % PARAM_READ(pars, "classname") % PARAM_READ(pars, "procname");
-        cerr << mesg << endl;
-        cerr << "Saving log and cache files..";
-        runtime.~t_runtime();
-        cerr << "Ok.\n";
-        cerr << "---------------------------------------------------------\n";
-        exit(1);
-      }
 }
 
 }

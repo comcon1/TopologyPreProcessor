@@ -26,7 +26,11 @@ src/programs/.deps/*
 src/programs/cash
 src/programs/log
 src/programs/tppmktest
-
+doxydoc
+.cproject
+.project
+.settings
+compile
 
 syntax: regexp
 

@@ -1,7 +1,10 @@
 #include "pdbutils.hpp"
-#include "openbabel/obiter.h"
-#include "openbabel/atom.h"
-#include "openbabel/mol.h"
+#include "runtime.hpp"
+
+#include <openbabel/obiter.h>
+#include <openbabel/atom.h>
+#include <openbabel/mol.h>
+
 #include <set>
 #include <boost/numeric/ublas/matrix.hpp>
 #include <boost/numeric/ublas/io.hpp>
@@ -34,13 +37,13 @@ namespace tpp {
  }
 
  // main chain private numbering function
- string mc_numerer(int id) throw (t_exception) {
+ string mc_numerer(int id) {
     char *rrr = new char[4];
     if ( (id > 255) || ( (PARAM_READ(cmdline, "hex_flag") == "off") && (id > 99) ) ) {
       t_input_params params;
       PARAM_ADD(params, "procname", "tpp::mc_numerer");
       PARAM_ADD(params, "error", string("Too many atoms to number. Try to turn HEX mode. ") );
-      throw t_exception("Bad connection atoms", params);
+      throw Exception("Bad connection atoms", params);
     }
     if (PARAM_READ(cmdline, "hex_flag") == "on") {
       sprintf(rrr, "%X", id);
@@ -50,7 +53,7 @@ namespace tpp {
     return string(rrr);
  }
 
-BondMatrix::BondMatrix(const OBMol &src) throw (t_exception) {
+BondMatrix::BondMatrix(const OBMol &src) {
  int dim = src.NumAtoms();
  mtx = zero_matrix <bool> (dim+1, dim+1);
  FOR_BONDS_OF_MOL(it,const_cast<OBMol&>(src)) {
@@ -73,7 +76,7 @@ void BondMatrix::rec_check(int _cur) {
  }
 }
 
-bool BondMatrix::check() throw (t_exception) {
+bool BondMatrix::check() {
   int cur = 1;
   curset.clear();
   curset.insert(1);
@@ -87,7 +90,7 @@ bool BondMatrix::check() throw (t_exception) {
    t_input_params params;
    PARAM_ADD(params, "procname", "tpp::BondMatrix::check");
    PARAM_ADD(params, "error", os.str());
-   throw t_exception("Bad connection atoms", params);
+   throw Exception("Bad connection atoms", params);
   }
   return true;
 }
@@ -130,7 +133,7 @@ void recurse_mol_scan(OBMol &mol, std::vector<unsigned> &tail,
 /*
  * GENERATE LONGTAIL COMCON1 ALGORYTHM
  */
-ublas::vector<int> generate_long_tail1(OBMol &mol, std::set<unsigned> &excluded, int startpoint) throw (t_exception) {
+ublas::vector<int> generate_long_tail1(OBMol &mol, std::set<unsigned> &excluded, int startpoint) {
     std::vector<unsigned> maxtail;
     std::vector<unsigned> curtail;
     int id = 0;
@@ -174,7 +177,7 @@ ublas::vector<int> generate_long_tail1(OBMol &mol, std::set<unsigned> &excluded,
 
 
 // wrapper to simplier exported variant
-ublas::vector<int> generate_long_tail1(OBMol &mol) throw (t_exception) {
+ublas::vector<int> generate_long_tail1(OBMol &mol) {
   std::set<unsigned> emptyset;
   return generate_long_tail1(mol, emptyset, -1);
 }
@@ -182,7 +185,7 @@ ublas::vector<int> generate_long_tail1(OBMol &mol) throw (t_exception) {
 /*
  * GENERATE LONGTAIL ZOIDBERG ALGORYTHM
  */
-ublas::vector<int> generate_long_tail(OBMol &mol) throw (t_exception) {
+ublas::vector<int> generate_long_tail(OBMol &mol) {
 /*#define resize_matrix(mat,x,y)\
   { tmpmt = zero_matrix<int>(x,y);\
     subrange(tmpmt,0,mat.size1(),0,mat.size2()) = mat;\
@@ -320,7 +323,7 @@ ublas::vector<int> generate_long_tail(OBMol &mol) throw (t_exception) {
 
 std::pair<matrix<int>, matrix<int> > 
    top_neig
-   (OBMol &X, matrix<int> M, int a, int b, int c, int flag) throw (t_exception) {
+   (OBMol &X, matrix<int> M, int a, int b, int c, int flag) {
   matrix<int> tmpmt(1,1);
   matrix<int> neig(flag+1,2);
   matrix<int> funct = zero_matrix<int>(flag+1,7);
@@ -403,7 +406,7 @@ if ( S(1) > 27 ) {
    t_input_params params;
    PARAM_ADD(params, "procname", "tpp::top_neig");
    PARAM_ADD(params, "error", (string("Too many neighbours of atom ")+lexical_cast<string>(a)).c_str() );
-   throw t_exception("Bad connection atoms", params);
+   throw Exception("Bad connection atoms", params);
 }
   for (int p=1; p <= flag; p++) {
     for (int q=1; q < S(1); q++) {
@@ -428,7 +431,7 @@ if ( S(1) > 27 ) {
               lexical_cast<string>(X.GetAtom(neig(p,q))->GetAtomicNum())+ ", ID=" +
                 lexical_cast<string>(neig(p,q))
                 ).c_str() );
-        throw t_exception("Your system has strange atoms", params); */
+        throw Exception("Your system has strange atoms", params); */
         std::ostringstream os;
         os << "WARNING: in tpp::top_neig\n";
         os << format("Strange atom, algorythm can't work with atom #%d ID=%d\n") % X.GetAtom(neig(p,q))->GetAtomicNum() % neig(p,q); 
@@ -439,7 +442,7 @@ if ( S(1) > 27 ) {
   return std::pair<matrix<int>, matrix<int> > (funct, neig);
 }
 
-t_atom_array mol_renum(OBMol &mol, t_atom_array &ar, ublas::vector<int> tail) throw (t_exception) {
+t_atom_array mol_renum(OBMol &mol, t_atom_array &ar, ublas::vector<int> tail) {
 
  int mode            = 0,       // turn topcreator prerun - create a file for atomtypes definition (0), or run - make a full topology file(1).
      nneig           = 1,       // difines the order of neighbourhood to consider
@@ -607,7 +610,7 @@ for (t_atom_array::iterator ait = A.begin(); ait != A.end(); ++ait) {
 
 // recursion part of mol_renum1
 void __mol_renum1(OBMol &_mol, t_atom_array &_ar, ublas::vector<int> &_tail, std::set<unsigned> &_tailed, 
-    t_atom_array &_A, int &_n, int &_h) throw (t_exception) {
+    t_atom_array &_A, int &_n, int &_h) {
 
  // append <tailed> array
  for (int p=1; p < _tail.size(); ++p)
@@ -655,7 +658,7 @@ void __mol_renum1(OBMol &_mol, t_atom_array &_ar, ublas::vector<int> &_tail, std
 } // end of recursion function
 
 // main function
-t_atom_array mol_renum1(OBMol &mol, t_atom_array &ar, ublas::vector<int> tail) throw (t_exception) {
+t_atom_array mol_renum1(OBMol &mol, t_atom_array &ar, ublas::vector<int> tail) {
 
  runtime.log_write("Starting C1 renumerator alrogithm.\n");
  #ifdef TPP_UNIT_TEST

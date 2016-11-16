@@ -7,6 +7,9 @@
 #error !! YOU SHOULD RUN CONFIGURE SCRIPT !!
 #endif
 
+
+#include "paramset.hpp"
+
 // system
 #include <unistd.h>
 // STL
@@ -52,6 +55,11 @@
 #define SPIRIT_HOME boost/spirit/home/classic
 #endif
 
+//
+//	THIS SECTION MUST BE REMOVED
+//
+//	It pollutes global namespace!
+//
 using std::string;
 using std::pair;
 using std::map;
@@ -67,53 +75,17 @@ using std::auto_ptr;
 using std::ios;
 using std::ostringstream;
 
+//
+//	END of removed section
+//
+//
 #define TPP_GMX_EXTERNAL
 #define TPP_MAX_ATOM_NUM 200
 #define TPP_INDEX unsigned
 #define TPP_MAX_FREQ_NUM 600
 #define TPP_MAX_BONDS 4
 
-#ifdef TPP_UNIT_TEST
 
- #define BOOST_TEST_BUILD_INFO yes
- #define BOOST_TEST_REPORT_LEVEL detailed
- #define BOOST_TEST_REPORT_FORMAT HRF
- #define BOOST_TEST_LOG_LEVEL all
-
-    #include <boost/test/unit_test.hpp>
-    #include <boost/test/unit_test_monitor.hpp>
-    #include <boost/bind.hpp>
-    #include <boost/test/framework.hpp>
-    #include <boost/test/unit_test_log.hpp>
-    #include <boost/test/results_collector.hpp>
-    #include <boost/test/results_reporter.hpp>
-    #include <boost/test/test_tools.hpp>
-       using boost::unit_test::test_suite;
-       using boost::bind;
-       using boost::ref;
-       namespace ut = boost::unit_test; 
- #define _BLOB_ \
-                perror("UNIT_TEST is turned on so you should make all the BLOBS..\n"); \
-                assert(0);
-       
-#else
- #include <cassert>
- #define _BLOB_(x) cout << "[ UNDER CONSTRUCTION - " << #x << " ]" << endl;
- // overloading of BOOST_TEST operators
- #define BOOST_CHECK(x) if (! ( x ) ) \
-      printf("CHECK failed at procedure in %s at line %d\n --> %s", \
-              __FILE__, __LINE__, #x);
- #define BOOST_REQUIRE(x) assert ( x );
- #define BOOST_FAIL(x) perror(#x); abort();
- #define BOOST_ERROR(x) perror(#x); abort();
- 
- #ifdef ALLOW_WARNINGS
-  #define BOOST_WARN(x) perror(#x);
- #else
-  #define BOOST_WARN(x) ((void)0)
- #endif
-
-#endif
 
 namespace tpp {
 
@@ -248,86 +220,8 @@ class t_topology {
 // optimize constant list
 typedef vector<double*>  t_optimize_list;
 
-// parameters for everything
-typedef map<string, string> t_input_params;
-typedef pair<string,string> t_input_param;
-// fast work with params
-template<typename T>
-bool PARAM_EXISTS(const t_input_params &pars, const T x) {
-  return (pars.find(x) != pars.end());
-}
-template<typename T>
-const string PARAM_READ(const t_input_params &pars, const T x) {
-  return (pars.find(x) != pars.end()) ? ((pars.find(x))->second) : string("");
-}
-template<typename T1, typename T2>
-void PARAM_ADD(t_input_params &pars, const T1 par, const T2 val) {
-   BOOST_CHECK( (pars.insert(t_input_param(par,val))).second );
-}
-template<typename T>
-void PARAM_DEL(t_input_params &pars, const T par) {
-   BOOST_CHECK(PARAM_EXISTS(pars,par)); 
-   pars.erase( pars.find(par) );
-}
 
-// -- for example for command line :)
-extern t_input_params cmdline;
 
-class t_runtime {
-  private:
-    FILE *cash;
-    FILE *log;
-  public:
-    t_runtime(const char *, const char *); // opening files log & cash
-    void log_write(const char *); // string writing to log
-    void log_write(string s) {log_write(s.c_str());}
-    void cash_write(const char *, unsigned); // binary writing to cash
-    ~t_runtime();
-};
-extern t_runtime runtime;
-
-class t_exception {
-  protected:
-   string mesg;
-   t_input_params pars;
-  public:
-   t_exception(): mesg("Undefined exception.") {;}
-   t_exception(const char *, t_input_params &);
-   t_exception(const char *s): mesg(s) {;}
-   virtual string operator [] (const char *s) const { return string(PARAM_READ(pars,s)); }
-   virtual string operator [] (const string &s) const { return string(PARAM_READ(pars,s)); }
-
-   // rebuild all the files if you change pure-virtual function
-   virtual void fix_log() const {
-     std::ostringstream os;
-     os << "TPP catched exception!\n";
-     os << format("***** from %1% -> %2%\n") % PARAM_READ(pars, "classname") % PARAM_READ(pars, "procname");
-     os << format("***** ===[ %1% ]===\n") % PARAM_READ(pars, "error");
-     if (PARAM_EXISTS(pars, "line"))
-         os << "***** parsing line: #" << PARAM_READ(pars, "line") << endl;
-     os << "***** " << mesg << endl;
-     runtime.log_write(os.str()); 
-   }
-};
-
-// TODO: rewrite via MYSQLPP::QUERY interface
-class t_db_exception: public t_exception {
-  public:
-   t_db_exception(const char *a, t_input_params &b): t_exception(a,b) {}
-   virtual void fix_log() const {
-     std::ostringstream os;
-     os << "TPP catched exception!\n";
-     os << format("***** from %1% -> %2%\n") % PARAM_READ(pars, "classname") % PARAM_READ(pars, "procname");
-     os << format("***** ===[ %1% ]===\n") % PARAM_READ(pars, "error");
-     if (PARAM_EXISTS(pars, "line"))
-         os << "***** parsing line: #" << PARAM_READ(pars, "line") << endl;
-     os << "***** SQL error: #" << PARAM_READ(pars, "sql_error") << endl;
-     os << "***** SQL query: #" << PARAM_READ(pars, "sql_query") << endl;
-     os << "***** " << mesg << endl;
-     runtime.log_write(os.str()); 
-
-   }
-};
 
 } // end namespace tpp
 
