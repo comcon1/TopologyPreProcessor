@@ -157,6 +157,9 @@ fi
 # Override LIBS to make program-specific linking in AM
 LIBS="-lopenbabel -lboost_program_options"
 
+#TODO: make compiler flags conditional
+CXXFLAGS="-g"
+
 # FIXME: unit test with ENABLE option
 
 # Checks for typedefs, structures, and compiler characteristics.
