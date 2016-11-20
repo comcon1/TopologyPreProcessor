@@ -101,10 +101,10 @@ namespace tpp {
     protected:
       mysqlpp::Connection *con;
       t_input_params par;
-      virtual bool connect_db() throw (Exception);
+      virtual bool connect_db();
     public:
       // need parameters 'host','user','dbname','password','port','ffname'
-      db_base(t_input_params p) throw (Exception);
+      db_base(t_input_params p);
       virtual ~db_base() { delete con; }
   };
  
@@ -114,7 +114,7 @@ namespace tpp {
   class db_info: public db_base {
 
     protected:
-      virtual bool connect_db() throw (Exception);
+      virtual bool connect_db();
       int ffid;
       std::string ffname;
       std::string ffdesc;
@@ -125,7 +125,7 @@ namespace tpp {
       void getDBdata();
 
     public:
-      db_info(t_input_params) throw (Exception);
+      db_info(t_input_params);
       int get_ffid() { return ffid; }
       std::string get_ffinclude() { return ffinclude; }
       std::string get_ffrev() { return ffrev; }
@@ -150,7 +150,7 @@ namespace tpp {
      * Function fill *scores* map according to `atom_patterns`
      * table of the database.
      */
-    void smart_fit() throw (Exception);
+    void smart_fit();
     
     /*
      * ID -> {atomtype ID}
@@ -161,14 +161,14 @@ namespace tpp {
      * Function matches atomtypes according only to atomic number.
      * Result is filling *nb_suite* map.
      */
-    void fill_nb() throw (Exception);
+    void fill_nb();
     
     /*
      * Summarize scores from different x_suite maps.
      * Weight coefficients of every property in atomtype definition are applied
      * here. Coef-s are defined at the top of this header in TPP_XXX defines.
      */
-    void count_scores() throw (Exception);
+    void count_scores();
 
     /*
      * << WHAT IS THIS ?? >>
@@ -176,28 +176,28 @@ namespace tpp {
      * (uname) that corresponds to this bonded type. 
      * Makes sense only if fill_bon/ang/dih are used.
      */
-    void spread_atomid() throw (Exception);
+    void spread_atomid();
 
     std::map<spec2, std::set<spec2_> > bon_suite;
     std::map<spec3, std::set<spec3_> > ang_suite;
     std::map<spec4, std::set<spec4_> > dih_suite;
 
     short  ffid; // id of current forcefield
-    void fill_bon() throw (Exception);
-    void fill_ang() throw (Exception);
-    void fill_dih() throw (Exception);
+    void fill_bon();
+    void fill_ang();
+    void fill_dih();
     void print_scores(std::ostream &os);
-    void smart_cgnr() throw (Exception);
+    void smart_cgnr();
 
    protected:
-    virtual bool connect_db() throw (Exception);
+    virtual bool connect_db();
 
    public:
 
-    atom_definer(t_input_params, Topology &) throw (Exception);
+    atom_definer(t_input_params, Topology &);
     void log_scores();
-    void proceed() throw (Exception);
-    void atom_align() throw (Exception);
+    void proceed();
+    void atom_align();
   };
 
   class bond_definer: public db_base {
@@ -210,17 +210,17 @@ namespace tpp {
       std::ofstream qalcfile;
 
       // methods
-      virtual bool connect_db() throw (Exception);
-      void fill_bonds() throw (Exception);
-      void fill_angles() throw (Exception);
-      void fill_dihedrals() throw (Exception);
-      void fill_special() throw (Exception);
-      void fill_impropers() throw (Exception, DbException);
-      void fill_pairs() throw (Exception);
+      virtual bool connect_db();
+      void fill_bonds();
+      void fill_angles();
+      void fill_dihedrals();
+      void fill_special();
+      void fill_impropers();
+      void fill_pairs();
     public:
-      bond_definer(t_input_params, Topology &) throw (Exception);
+      bond_definer(t_input_params, Topology &);
       virtual ~bond_definer(); 
-      void bond_align() throw (Exception);
+      void bond_align();
       void log_needed_bonds();
   };
 

@@ -33,7 +33,7 @@ namespace tpp {
   /*
    * Standard constructor with DB connection
    */
-  db_base::db_base(t_input_params p_) throw (Exception):
+  db_base::db_base(t_input_params p_):
        par(p_), con(new mysqlpp::Connection(false)) {
          ;
   }
@@ -41,7 +41,7 @@ namespace tpp {
   /*
    * Standart DB connection.
    */
-  bool db_base::connect_db() throw (Exception) {
+  bool db_base::connect_db()  {
     con->connect(
         PARAM_READ(par,"dbname").c_str(),
         (PARAM_READ(par,"host")+string(":")+PARAM_READ(par,"port")).c_str(),
@@ -102,14 +102,14 @@ namespace tpp {
   /*
    * Initializing DB-INFO class.
    */
-  db_info::db_info(t_input_params p) throw (Exception): db_base(p) {
+  db_info::db_info(t_input_params p): db_base(p) {
     this->connect_db();
   }
 
   /*
    * DB queries for DB-INFO class
    */
-  bool db_info::connect_db() throw (Exception) {
+  bool db_info::connect_db() {
     db_base::connect_db();
     this->getFFdata();
   }

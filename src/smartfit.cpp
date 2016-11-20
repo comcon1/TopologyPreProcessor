@@ -25,7 +25,7 @@ namespace tpp {
 
   using namespace OpenBabel;
 
-void atom_definer::smart_cgnr() throw (Exception) {
+void atom_definer::smart_cgnr() {
       // zero all charge groups
       for (AtomArray::iterator it = tp.atoms.begin(); it != tp.atoms.end(); ++it) {
           Atom nat = *it;
@@ -167,7 +167,7 @@ void atom_definer::smart_cgnr() throw (Exception) {
       }
 }
 
-void atom_definer::smart_fit() throw (Exception) {
+void atom_definer::smart_fit() {
 
       // make zero-scored copy of scores map
       map<int, map<int, int> > sf_scores (scores);

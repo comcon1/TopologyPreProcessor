@@ -30,7 +30,7 @@ namespace tpp {
   using namespace OpenBabel;
 
   // common place procedures...
-  bond_definer::bond_definer(t_input_params _par, Topology &_tp) throw (Exception):
+  bond_definer::bond_definer(t_input_params _par, Topology &_tp):
     db_base(_par), tp(_tp) {
       connect_db();
   }
@@ -40,7 +40,7 @@ namespace tpp {
   }
 
 
-bool bond_definer::connect_db() throw (Exception) {
+bool bond_definer::connect_db() {
      db_base::connect_db();
 
      string ffname = PARAM_READ(par,"ffname");
@@ -106,7 +106,7 @@ bool bond_definer::connect_db() throw (Exception) {
 }
 
 // special functions))
-void bond_definer::fill_bonds() throw (Exception) {
+void bond_definer::fill_bonds() {
   mysqlpp::Query qu = con->query();
   MYSQLPP_RESULT res;
   mysqlpp::Row    row;
@@ -196,7 +196,7 @@ WHERE (bonds.ffield = %3$d) AND \
 
 }
 
-void bond_definer::fill_angles() throw (Exception) {
+void bond_definer::fill_angles() {
   mysqlpp::Query qu = con->query();
   MYSQLPP_RESULT res;
   mysqlpp::Row    row;
@@ -287,11 +287,11 @@ WHERE (angles.ffield = %4$d) AND \
      tp.parameters.get<1>().erase(it);
 }
 
-void bond_definer::fill_special() throw (Exception) {
+void bond_definer::fill_special() {
  // TODO: add special dihedrals according to SMARTS
 }
 
-void bond_definer::fill_dihedrals() throw (Exception) {
+void bond_definer::fill_dihedrals() {
   mysqlpp::Query qu = con->query();
   MYSQLPP_RESULT res;
   mysqlpp::Row    row;
@@ -437,7 +437,7 @@ WHERE (dihedrals.ffield = %5$d) AND \
 }
 
 // use for clever choosing and posing improper dihedrals
-void bond_definer::fill_impropers() throw (Exception,DbException) {
+void bond_definer::fill_impropers()  {
     runtime.log_write("Starting curious SMART-improper-dihedral fitting.\n");
     mysqlpp::Query qu = con->query();
     qu <<  format("SELECT ip.id, ip.PAT, ip.order, ia.name, ip.impid, \
@@ -542,7 +542,7 @@ void bond_definer::fill_impropers() throw (Exception,DbException) {
 /*
  * Function makes special pairs and common 1-4 pairs - ALSO.
  */
-void bond_definer::fill_pairs() throw (Exception) {
+void bond_definer::fill_pairs()  {
   if (genpairs) {
     // including single pair definition
         TopCoord tpc;
@@ -565,7 +565,7 @@ void bond_definer::fill_pairs() throw (Exception) {
   }
 }
 
-  void bond_definer::bond_align() throw (Exception) {
+  void bond_definer::bond_align() {
     try {
       fill_bonds();
       fill_angles();
