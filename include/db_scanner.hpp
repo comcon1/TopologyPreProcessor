@@ -94,17 +94,17 @@ namespace tpp {
   class t_sql_exception : public Exception {
     public:
     virtual void fix_log() const; 
-    t_sql_exception(const char *s, t_input_params &p): Exception(s, p) { ; }
+    t_sql_exception(const char *s, Parameters &p): Exception(s, p) { ; }
   };
 
   class db_base {
     protected:
       mysqlpp::Connection *con;
-      t_input_params par;
+      Parameters par;
       virtual bool connect_db();
     public:
       // need parameters 'host','user','dbname','password','port','ffname'
-      db_base(t_input_params p);
+      db_base(Parameters p);
       virtual ~db_base() { delete con; }
   };
  
@@ -125,7 +125,7 @@ namespace tpp {
       void getDBdata();
 
     public:
-      db_info(t_input_params);
+      db_info(Parameters);
       int get_ffid() { return ffid; }
       std::string get_ffinclude() { return ffinclude; }
       std::string get_ffrev() { return ffrev; }
@@ -194,7 +194,7 @@ namespace tpp {
 
    public:
 
-    atom_definer(t_input_params, Topology &);
+    atom_definer(Parameters, Topology &);
     void log_scores();
     void proceed();
     void atom_align();
@@ -218,7 +218,7 @@ namespace tpp {
       void fill_impropers();
       void fill_pairs();
     public:
-      bond_definer(t_input_params, Topology &);
+      bond_definer(Parameters, Topology &);
       virtual ~bond_definer(); 
       void bond_align();
       void log_needed_bonds();

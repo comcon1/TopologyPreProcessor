@@ -30,7 +30,7 @@ namespace tpp {
   using namespace OpenBabel;
 
   // common place procedures...
-  bond_definer::bond_definer(t_input_params _par, Topology &_tp):
+  bond_definer::bond_definer(Parameters _par, Topology &_tp):
     db_base(_par), tp(_tp) {
       connect_db();
   }
@@ -43,7 +43,7 @@ namespace tpp {
 bool bond_definer::connect_db() {
      db_base::connect_db();
 
-     string ffname = PARAM_READ(par,"ffname");
+     string ffname = par.read("ffname");
      int cat, cbon, cang, cdih, cnb;
 
      // get ffid
@@ -53,21 +53,21 @@ bool bond_definer::connect_db() {
       qu << format("SELECT id, generate_pairs FROM forcefield WHERE name='%1$s'") % ffname.c_str();
       res = qu.store();
       if (!res) {
-        t_input_params params;
-        PARAM_ADD(params, "procname", "tpp::bond_definer::connect_db");
-        PARAM_ADD(params, "error", "SQL query error");
-        PARAM_ADD(params, "sql_error", qu.error() );
+        Parameters params;
+        params.add("procname", "tpp::bond_definer::connect_db");
+        params.add("error", "SQL query error");
+        params.add("sql_error", qu.error() );
         throw t_sql_exception("SQL query failed!", params);
       }
       if (res.num_rows() == 0) {
-        t_input_params params;
-        PARAM_ADD(params, "procname", "tpp::bond_definer::connect_db");
-        PARAM_ADD(params, "error", "Error in parameters");
+        Parameters params;
+        params.add("procname", "tpp::bond_definer::connect_db");
+        params.add("error", "Error in parameters");
         throw Exception("Force field not found!", params);
       }
       ffid = res.at(0)["id"];
       genpairs = (bool) (res.at(0)["generate_pairs"]);
-      if (genpairs && (PARAM_READ(cmdline, "verbose_flag") == "on") ) {
+      if (genpairs && (cmdline.read("verbose_flag") == "on") ) {
         cout << "1-4 pair generation is required for FF." << endl;
       }
       qu.reset();
@@ -90,10 +90,10 @@ bool bond_definer::connect_db() {
       qu << query;
       res = qu.store();
       if (!res) {
-        t_input_params params;
-        PARAM_ADD(params, "procname", "tpp::bond_definer::connect_db");
-        PARAM_ADD(params, "error", "SQL query error");
-        PARAM_ADD(params, "sql_error", qu.error() );
+        Parameters params;
+        params.add("procname", "tpp::bond_definer::connect_db");
+        params.add("error", "SQL query error");
+        params.add("sql_error", qu.error() );
         throw t_sql_exception("SQL query failed!", params);
       }
 
@@ -128,23 +128,23 @@ WHERE (bonds.ffield = %3$d) AND \
   )") % typ1 % typ2 % ffid;
      res = qu.store();
      if (!res) {
-       t_input_params params;
-       PARAM_ADD(params, "procname", "tpp::bond_definer::fill_bonds");
-       PARAM_ADD(params, "error", "SQL query error");
-       PARAM_ADD(params, "sql_error", qu.error() );
+       Parameters params;
+       params.add("procname", "tpp::bond_definer::fill_bonds");
+       params.add("error", "SQL query error");
+       params.add("sql_error", qu.error() );
        throw t_sql_exception("SQL query failed!", params);
      }
      if ( res.num_rows() == 0 ) {
-       if (PARAM_EXISTS(par, "noqalculate")) {
-         t_input_params params;
-         PARAM_ADD(params, "procname", "tpp::bond_definer::fill_bonds");
-         PARAM_ADD(params, "error", string("Bond not found between ") + typ1 + " and " + typ2 + "!" );
+       if (par.exists("noqalculate")) {
+         Parameters params;
+         params.add("procname", "tpp::bond_definer::fill_bonds");
+         params.add("error", string("Bond not found between ") + typ1 + " and " + typ2 + "!" );
          throw Exception("Bond definition error!", params);
        } else {
          ostringstream os;
          os << format("Bond not found between %1$s and %2$s!") % typ1 % typ2;
          runtime.log_write(os.str());
-         if (PARAM_READ(cmdline, "verbose_flag") == "on") {
+         if (cmdline.read("verbose_flag") == "on") {
            cout << "[LACK] " << os.str() << endl;
          }
        }
@@ -218,25 +218,25 @@ WHERE (angles.ffield = %4$d) AND \
      res = qu.store();
 
      if (!res) {
-       t_input_params params;
-       PARAM_ADD(params, "procname", "tpp::bond_definer::fill_angles");
-       PARAM_ADD(params, "error", "SQL query error");
-       PARAM_ADD(params, "sql_error", qu.error() );
+       Parameters params;
+       params.add("procname", "tpp::bond_definer::fill_angles");
+       params.add("error", "SQL query error");
+       params.add("sql_error", qu.error() );
        throw t_sql_exception("SQL query failed!", params);
      }
 
      if (res.num_rows() == 0 ) {
  
-       if (PARAM_EXISTS(par, "noqalculate")) {
-         t_input_params params;
-         PARAM_ADD(params, "procname", "tpp::bond_definer::fill_angles");
-         PARAM_ADD(params, "error", string("Angle not found between ") + typ1 + " and " + typ2 + " and " + typ3 + "!" );
+       if (par.exists("noqalculate")) {
+         Parameters params;
+         params.add("procname", "tpp::bond_definer::fill_angles");
+         params.add("error", string("Angle not found between ") + typ1 + " and " + typ2 + " and " + typ3 + "!" );
          throw Exception("Bond definition error!", params);
        } else {
           ostringstream os;
           os << format("Angle not found between %1$s, %2$s and %3$s!") % typ1 % typ2 % typ3;
           runtime.log_write(os.str());
-          if (PARAM_READ(cmdline, "verbose_flag") == "on") {
+          if (cmdline.read("verbose_flag") == "on") {
             cout << "[LACK] " << os.str() << endl;
           }
        }
@@ -314,10 +314,10 @@ WHERE (dihedrals.ffield = %5$d) AND \
   )") % typ1 % typ2  % typ3 % typ4 % ffid;
     res = qu.store();
     if (!res) {
-      t_input_params params;
-      PARAM_ADD(params, "procname", "tpp::bond_definer::fill_dihedrals");
-      PARAM_ADD(params, "error", "SQL query error");
-      PARAM_ADD(params, "sql_error", qu.error() );
+      Parameters params;
+      params.add("procname", "tpp::bond_definer::fill_dihedrals");
+      params.add("error", "SQL query error");
+      params.add("sql_error", qu.error() );
       throw t_sql_exception("SQL query failed!", params);
     }
      TopCoord   tpc;
@@ -371,7 +371,7 @@ WHERE (dihedrals.ffield = %5$d) AND \
        tpc.c4 = 0.00;
 
 
-       if (PARAM_EXISTS(par, "noqalculate")) {
+       if (par.exists("noqalculate")) {
          TopElement tel_;
          tel_.defname = "ONE_PAIR";
          tel_.i = (*it)[0]+1;
@@ -383,18 +383,18 @@ WHERE (dihedrals.ffield = %5$d) AND \
 
 /* // make pair instead of error
  *
-         t_input_params params;
-         PARAM_ADD(params, "procname", "tpp::bond_definer::fill_dihedrals");
+         Parameters params;
+         params.add("procname", "tpp::bond_definer::fill_dihedrals");
          ostringstream os;
          os << format("Angle not found between %1$s, %2$s, %3$s and %4$s!") % typ1 % typ2 % typ3 % typ4;
-         PARAM_ADD(params, "error", os.str() );
+         params.add("error", os.str() );
          throw Exception("Bond definition error!", params);
 */
        } else {
          ostringstream os;
          os << format("Dihedral not found between %1$s, %2$s, %3$s and %4$s!") % typ1 % typ2 % typ3 % typ4;
          runtime.log_write(os.str());
-         if (PARAM_READ(cmdline, "verbose_flag") == "on") {
+         if (cmdline.read("verbose_flag") == "on") {
            cout << "[LACK] " << os.str() << endl;
          }
        }
@@ -450,11 +450,11 @@ void bond_definer::fill_impropers()  {
     MYSQLPP_RESULT res;
     res = qu.store();
     if (!res) {
-      t_input_params params;
-      PARAM_ADD(params, "procname", "tpp::bond_definer::fill_impropers");
-      PARAM_ADD(params, "error", "SQL query error");
-      PARAM_ADD(params, "sql_error", qu.error() );
-      PARAM_ADD(params, "sql_query", qu.str() ); 
+      Parameters params;
+      params.add("procname", "tpp::bond_definer::fill_impropers");
+      params.add("error", "SQL query error");
+      params.add("sql_error", qu.error() );
+      params.add("sql_query", qu.str() );
       throw DbException("SQL query failed!", params);
     }
     runtime.log_write("OK!\n");

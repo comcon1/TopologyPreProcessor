@@ -3,10 +3,7 @@
 
 #include <map>
 
-//
-//	This whole thing should be refactored into a separate class
-//
-
+//#define TPP_UNIT_TEST
 
 #ifdef TPP_UNIT_TEST
 
@@ -54,28 +51,41 @@
 
 namespace tpp
 {
-	// parameters for everything
-	typedef std::map<std::string, std::string> t_input_params;
-	typedef std::pair<std::string,std::string> t_input_param;
-	// fast work with params
-	template<typename T>
-	bool PARAM_EXISTS(const t_input_params &pars, const T x) {
-	  return (pars.find(x) != pars.end());
-	}
-	template<typename T>
-	const std::string PARAM_READ(const t_input_params &pars, const T x) {
-	  return (pars.find(x) != pars.end()) ? ((pars.find(x))->second) : std::string("");
-	}
-	template<typename T1, typename T2>
-	void PARAM_ADD(t_input_params &pars, const T1 par, const T2 val) {
-	   BOOST_CHECK( (pars.insert(t_input_param(par,val))).second );
-	}
-	template<typename T>
-	void PARAM_DEL(t_input_params &pars, const T par) {
-	   BOOST_CHECK(PARAM_EXISTS(pars,par));
-	   pars.erase( pars.find(par) );
-	}
-}
+	typedef std::pair<std::string,std::string> Parameter; //! parameter for everything
+
+
+	///
+	///	\brief A dictionary of parameters. Some bicycle related to serialization.
+	///
+	class Parameters
+	{
+		std::map<std::string, std::string> _params;
+	public:
+		Parameters() {}
+		~Parameters() {}
+
+		template<typename T>
+		bool exists(const T& key) const {  return _params.find(key) != _params.end(); }
+
+		template<typename T>
+		const std::string read(const T& key) const {
+			auto ptr = _params.find(key);
+			if (ptr == _params.end()) return std::string(""); //! A silent fallback. A bad idea.
+			return ptr->second;
+		}
+
+		template<typename T1, typename T2>
+		void add(const T1& par, const T2& val) { BOOST_CHECK( _params.insert(Parameter(par,val)).second ); }
+
+		template<typename T>
+		void remove(const T& key) {
+			   BOOST_CHECK(exists(key));
+			   _params.erase(_params.find(key));
+			}
+	}; // class Parameters
+
+
+} // namespace tpp
 
 
 

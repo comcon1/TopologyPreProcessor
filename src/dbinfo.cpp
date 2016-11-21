@@ -24,16 +24,16 @@ namespace tpp {
   void t_sql_exception::fix_log() const {
     std::ostringstream os; 
     os << "TPP catched exception!\n";
-    os << format("***** from %1% -> %2%\n") % PARAM_READ(pars, "classname") % PARAM_READ(pars, "procname");
+    os << format("***** from %1% -> %2%\n") % pars.read("classname") % pars.read("procname");
     os << "***** " << mesg << endl;
-    os << "***** MYSQL: " << PARAM_READ(pars, "sql_error") << endl;
+    os << "***** MYSQL: " << pars.read("sql_error") << endl;
     runtime.log_write(os.str());
   }
 
   /*
    * Standard constructor with DB connection
    */
-  db_base::db_base(t_input_params p_):
+  db_base::db_base(Parameters p_):
        par(p_), con(new mysqlpp::Connection(false)) {
          ;
   }
@@ -43,18 +43,18 @@ namespace tpp {
    */
   bool db_base::connect_db()  {
     con->connect(
-        PARAM_READ(par,"dbname").c_str(),
-        (PARAM_READ(par,"host")+string(":")+PARAM_READ(par,"port")).c_str(),
-        PARAM_READ(par,"user").c_str(),
-        PARAM_READ(par,"password").c_str()
+        par.read("dbname").c_str(),
+        (par.read("host")+string(":")+par.read("port")).c_str(),
+        par.read("user").c_str(),
+        par.read("password").c_str()
         );
 
     // connection established
     if (!con->connected()) {
-      t_input_params params;
-      PARAM_ADD(params, "procname", "tpp::atom_definer::connect_db");
-      PARAM_ADD(params, "error", "SQL connection error");
-      PARAM_ADD(params, "sql_error", con->error() );
+      Parameters params;
+      params.add("procname", "tpp::atom_definer::connect_db");
+      params.add("error", "SQL connection error");
+      params.add("sql_error", con->error() );
       throw t_sql_exception("SQL connection failed!", params);
     }
 
@@ -68,16 +68,16 @@ namespace tpp {
     qu << "SELECT `id`,`keyword`,`value` FROM `properties` WHERE keyword='magic_number'";
     res = qu.store();
     if (!res) {
-      t_input_params params;
-      PARAM_ADD(params, "procname", "tpp::db_info::connect_db");
-      PARAM_ADD(params, "error", "SQL query error");
-      PARAM_ADD(params, "sql_error", qu.error() );
+      Parameters params;
+      params.add("procname", "tpp::db_info::connect_db");
+      params.add("error", "SQL query error");
+      params.add("sql_error", qu.error() );
       throw t_sql_exception("SQL query failed: may be you have incorrect DataBase!", params);
     }
     if (res.num_rows() != 1) {
-      t_input_params params;
-      PARAM_ADD(params, "procname", "tpp::db_info::connect_db");
-      PARAM_ADD(params, "error", "Error in DB check.");
+      Parameters params;
+      params.add("procname", "tpp::db_info::connect_db");
+      params.add("error", "Error in DB check.");
       throw Exception("Your DataBase is empty!", params);
     }
 
@@ -102,7 +102,7 @@ namespace tpp {
   /*
    * Initializing DB-INFO class.
    */
-  db_info::db_info(t_input_params p): db_base(p) {
+  db_info::db_info(Parameters p): db_base(p) {
     this->connect_db();
   }
 
@@ -122,20 +122,20 @@ namespace tpp {
     MYSQLPP_RESULT res;
     mysqlpp::Row row;
     // get ffid
-    this->ffname = PARAM_READ(par,"ffname");
+    this->ffname = par.read("ffname");
     qu << format("SELECT `id`,`include`,`desc` FROM `forcefield` WHERE name='%1$s'") % this->ffname.c_str();
     res = qu.store();
     if (!res) {
-      t_input_params params;
-      PARAM_ADD(params, "procname", "tpp::db_info::getFFdata");
-      PARAM_ADD(params, "error", "SQL query error");
-      PARAM_ADD(params, "sql_error", qu.error() );
+      Parameters params;
+      params.add("procname", "tpp::db_info::getFFdata");
+      params.add("error", "SQL query error");
+      params.add("sql_error", qu.error() );
       throw t_sql_exception("SQL query failed!", params);
     }
     if (!res.num_rows()) {
-      t_input_params params;
-      PARAM_ADD(params, "procname", "tpp::db_info::getFFdata");
-      PARAM_ADD(params, "error", "Error in parameters");
+      Parameters params;
+      params.add("procname", "tpp::db_info::getFFdata");
+      params.add("error", "Error in parameters");
       throw Exception((string("Force field '")+this->ffname+string("' not found!")).c_str(), params);
     }
     this->ffid = res.at(0)["id"];
@@ -146,10 +146,10 @@ namespace tpp {
     qu << format("select `value` from `properties` WHERE `keyword`='%1$srev'") % this->ffname;
     res = qu.store();
     if ( (!res) || (!res.at(0)) ) {
-        t_input_params params;
-        PARAM_ADD(params, "procname", "tpp::atom_definer::connect_db");
-        PARAM_ADD(params, "error", "SQL query error");
-        PARAM_ADD(params, "sql_error", qu.error() );
+        Parameters params;
+        params.add("procname", "tpp::atom_definer::connect_db");
+        params.add("error", "SQL query error");
+        params.add("sql_error", qu.error() );
         throw t_sql_exception("SQL force field revision is unknown!", params);
     }
     this->ffrev = res.at(0)["value"].c_str();
@@ -173,10 +173,10 @@ SELECT\n\
  (SELECT COUNT(*) as CF FROM nonbonded WHERE ffield = %1$d) as count_nonbond;") % this->ffid;
     res = qu.store();
     if ( (!res) || (!res.at(0)) ) {
-        t_input_params params;
-        PARAM_ADD(params, "procname", "tpp::atom_definer::connect_db");
-        PARAM_ADD(params, "error", "SQL query error");
-        PARAM_ADD(params, "sql_error", qu.error() );
+        Parameters params;
+        params.add("procname", "tpp::atom_definer::connect_db");
+        params.add("error", "SQL query error");
+        params.add("sql_error", qu.error() );
         throw t_sql_exception("SQL query failed!", params);
     }
     std::ostringstream os;
@@ -192,13 +192,13 @@ Total statistics:\n\
 
     //TODO: this query does not show last INSERT events. Should fix.
     qu.reset();
-    qu << format("show table status from `%1$s`") % PARAM_READ(par,"dbname");
+    qu << format("show table status from `%1$s`") % par.read("dbname");
     res = qu.store();
     if ( (!res) || (!res.at(0)) ) {
-        t_input_params params;
-        PARAM_ADD(params, "procname", "tpp::atom_definer::connect_db");
-        PARAM_ADD(params, "error", "SQL query error");
-        PARAM_ADD(params, "sql_error", qu.error() );
+        Parameters params;
+        params.add("procname", "tpp::atom_definer::connect_db");
+        params.add("error", "SQL query error");
+        params.add("sql_error", qu.error() );
         throw t_sql_exception("SQL status query failed!", params);
     }
 

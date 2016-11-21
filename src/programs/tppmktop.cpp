@@ -20,11 +20,7 @@
 
 namespace p_o = boost::program_options;
 using tpp::cmdline;
-using tpp::t_input_param;
-using tpp::PARAM_ADD;
-using tpp::PARAM_DEL;
-using tpp::PARAM_READ;
-using tpp::PARAM_EXISTS;
+using tpp::Parameters;
 
 using boost::format;
 
@@ -69,74 +65,74 @@ int main(int argc, char * argv[]) {
 			if ((vars.count("verbose") > 1) || (vars.count("nocalculate") > 1)
 					|| (vars.count("max-bonds") > 1))
 				throw 1;
-			PARAM_ADD(cmdline, "verbose_flag",
+			cmdline.add("verbose_flag",
 					vars.count("verbose") ? "on" : "off");
-			PARAM_ADD(cmdline, "nocalculate_flag",
+			cmdline.add("nocalculate_flag",
 					vars.count("nocalculate") ? "on" : "off");
 			if (vars.count("max-bonds"))
-				PARAM_ADD(cmdline, "max-bonds", "on");
+				cmdline.add("max-bonds", "on");
 			if (vars.count("help") == 1)
 				helpscreen();
 
 			// main string options
 			if (vars.count("input") == 1) {
-				PARAM_ADD(cmdline, "input_file",
+				cmdline.add("input_file",
 						vars["input"].as<std::string>());
 			} else
 				throw 1;
 			if (vars.count("output") == 1) {
-				PARAM_ADD(cmdline, "output_file",
+				cmdline.add("output_file",
 						vars["output"].as<std::string>());
 			} else
 				throw 1;
 			if (vars.count("forcefield") == 1) {
-				PARAM_ADD(cmdline, "forcefield",
+				cmdline.add("forcefield",
 						vars["forcefield"].as<std::string>());
 			} else
 				throw 1;
 			// optional parameters
 			if (vars.count("lack-file") == 1) {
-				PARAM_ADD(cmdline, "lack_file",
+				cmdline.add("lack_file",
 						vars["lack-file"].as<std::string>());
 			} else if (vars.count("lack-file") == 0) {
-				PARAM_ADD(cmdline, "lack_file", "lack.itp");
+				cmdline.add("lack_file", "lack.itp");
 			} else
 				throw 1;
 			if (vars.count("rtp-output") == 1) {
-				PARAM_ADD(cmdline, "rtpoutput_file",
+				cmdline.add("rtpoutput_file",
 						vars["rtp-output"].as<std::string>());
 			} else if (vars.count("rtp-output") > 0) {
 				throw 1;
 			}
 			// SQL parameters
 			if (vars.count("sqlserver") == 1) {
-				PARAM_ADD(cmdline, "sqlserver",
+				cmdline.add("sqlserver",
 						vars["sqlserver"].as<std::string>());
 			} else if (vars.count("sqlserver") == 0) {
-				PARAM_ADD(cmdline, "sqlserver", "localhost");
+				cmdline.add("sqlserver", "localhost");
 			} else
 				throw 1;
 			if (vars.count("sqluser") == 1) {
-				PARAM_ADD(cmdline, "sqluser",
+				cmdline.add("sqluser",
 						vars["sqluser"].as<std::string>());
 			} else if (vars.count("sqluser") == 0) {
-				PARAM_ADD(cmdline, "sqluser", "tppuser");
+				cmdline.add("sqluser", "tppuser");
 			} else
 				throw 1;
 			if (vars.count("sqlport") == 1) {
 				unsigned o = vars["sqlport"].as<unsigned>();
-				PARAM_ADD(cmdline, "sqlport",
+				cmdline.add("sqlport",
 						boost::lexical_cast<string>(
 								vars["sqlport"].as<unsigned>()));
 			} else if (vars.count("sqlport") == 0) {
-				PARAM_ADD(cmdline, "sqlport", "3306");
+				cmdline.add("sqlport", "3306");
 			} else
 				throw 1;
 			if (vars.count("sqlpassword") == 1) {
-				PARAM_ADD(cmdline, "sqlpassword",
+				cmdline.add("sqlpassword",
 						vars["sqlpassword"].as<std::string>());
 			} else if (vars.count("sqlpassword") == 0) {
-				PARAM_ADD(cmdline, "sqlpassword", "estatic");
+				cmdline.add("sqlpassword", "estatic");
 			} else
 				throw 1;
 		} catch (boost::program_options::error &e) {
@@ -154,7 +150,7 @@ int main(int argc, char * argv[]) {
 	// finish analysing
 	// starting work with input and output files
 
-	if (PARAM_READ(cmdline, "verbose_flag") == "on") {
+	if (cmdline.read("verbose_flag") == "on") {
 		cout
 				<< format(
 						"\
@@ -180,14 +176,14 @@ int main(int argc, char * argv[]) {
 
 	// INPUT analysing
 	tpp::InputFormat iform;
-	string::size_type ind = PARAM_READ(cmdline, "input_file").find(".", 0);
+	string::size_type ind = cmdline.read("input_file").find(".", 0);
 	if (ind == string::npos) {
 		cerr << "ERROR:\n";
 		cerr
 				<< "Couldn't determine format of input file. Please specify extension.\n";
 		return 1;
 	}
-	string subs = PARAM_READ(cmdline, "input_file").substr(ind + 1);
+	string subs = cmdline.read("input_file").substr(ind + 1);
 	if (subs == "pdb")
 		iform = tpp::TPP_IF_PDB;
 	else if (subs == "gro")
@@ -203,7 +199,7 @@ int main(int argc, char * argv[]) {
 		return 1;
 	}
 
-	if (PARAM_READ(cmdline, "verbose_flag") == "on") {
+	if (cmdline.read("verbose_flag") == "on") {
 		switch (iform) {
 		case tpp::TPP_IF_PDB:
 			cout << "Input file format: Protein Data Bank." << endl;
@@ -220,7 +216,7 @@ int main(int argc, char * argv[]) {
 		};
 	}
 
-	if (PARAM_EXISTS(cmdline, "nocalculate")) {
+	if (cmdline.exists("nocalculate")) {
 		cout << "TPPMKTOP will try to make full-determined topology!" << endl;
 	}
 
@@ -228,31 +224,31 @@ int main(int argc, char * argv[]) {
 	try {
 		tpp::Topology TOP;
 		// setting up common topology parameters
-		TOP.res_name = PARAM_READ(cmdline, "input_file").substr(0, 3);
+		TOP.res_name = cmdline.read("input_file").substr(0, 3);
 		TOP.nrexcl = 3;
 		// ;-)
 		tpp::load_struct_fname(TOP, iform,
-				PARAM_READ(cmdline, "input_file").c_str());
+				cmdline.read("input_file").c_str());
 		// customization of 2-nd level parameters
-		tpp::t_input_params par0;
-		PARAM_ADD(par0, "host", PARAM_READ(cmdline, "sqlserver"));
-		PARAM_ADD(par0, "dbname", "tppforcefield");
-		PARAM_ADD(par0, "user", PARAM_READ(cmdline, "sqluser"));
-		PARAM_ADD(par0, "password", PARAM_READ(cmdline, "sqlpassword"));
-		PARAM_ADD(par0, "port", PARAM_READ(cmdline, "sqlport"));
-		PARAM_ADD(par0, "ffname", PARAM_READ(cmdline, "forcefield"));
-		if (PARAM_EXISTS(cmdline, "max-bonds")) {
-			PARAM_ADD(par0, "maxbonds", "on");
-			PARAM_ADD(par0, "maxangles", "on");
-			PARAM_ADD(par0, "maxdihedrals", "on");
+		tpp::Parameters par0;
+		par0.add("host", cmdline.read("sqlserver"));
+		par0.add("dbname", "tppforcefield");
+		par0.add("user", cmdline.read("sqluser"));
+		par0.add("password", cmdline.read("sqlpassword"));
+		par0.add("port", cmdline.read("sqlport"));
+		par0.add("ffname", cmdline.read("forcefield"));
+		if (cmdline.exists("max-bonds")) {
+			par0.add("maxbonds", "on");
+			par0.add("maxangles", "on");
+			par0.add("maxdihedrals", "on");
 		}
 		// initial DB queries
 		tpp::db_info DI(par0);
-		PARAM_ADD(par0, "ffid", boost::lexical_cast<string>(DI.get_ffid()));
+		par0.add("ffid", boost::lexical_cast<string>(DI.get_ffid()));
 		TOP.ffinclude = DI.get_ffinclude().c_str();
-		TOP.ffinfo = PARAM_READ(par0, "ffname") + " revision " + DI.get_ffrev();
+		TOP.ffinfo = par0.read("ffname") + " revision " + DI.get_ffrev();
 		//
-		if (PARAM_READ(cmdline, "verbose_flag") == "on") {
+		if (cmdline.read("verbose_flag") == "on") {
 			cout << DI.get_statistics();
 		}
 		// starting program body
@@ -262,11 +258,11 @@ int main(int argc, char * argv[]) {
 		AD.atom_align();
 		tpp::bond_definer BD(par0, TOP);
 		BD.bond_align();
-		tpp::save_topology(TOP, PARAM_READ(cmdline, "output_file").c_str());
-		tpp::save_lack(TOP, PARAM_READ(cmdline, "lack_file").c_str());
-		if (PARAM_EXISTS(cmdline, "rtpoutput_file")) {
+		tpp::save_topology(TOP, cmdline.read("output_file").c_str());
+		tpp::save_lack(TOP, cmdline.read("lack_file").c_str());
+		if (cmdline.exists("rtpoutput_file")) {
 			tpp::save_topology_rtp(TOP,
-					PARAM_READ(cmdline, "rtpoutput_file").c_str());
+					cmdline.read("rtpoutput_file").c_str());
 		}
 		cout
 				<< format(

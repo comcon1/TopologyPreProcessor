@@ -43,10 +43,10 @@ void atom_definer::smart_cgnr() {
           MYSQLPP_RESULT res;
           res = qu.store();
           if (!res) {
-              t_input_params params;
-              PARAM_ADD(params, "procname", "tpp::atom_definer::smart_cgnr");
-              PARAM_ADD(params, "error", "SQL query error");
-              PARAM_ADD(params, "sql_error", qu.error() );
+              Parameters params;
+              params.add("procname", "tpp::atom_definer::smart_cgnr");
+              params.add("error", "SQL query error");
+              params.add("sql_error", qu.error() );
               throw t_sql_exception("SQL query failed!", params);
           }
           runtime.log_write("OK!\n");
@@ -197,10 +197,10 @@ WHERE  (not atom_patterns.group = 1) and (atoms.ffield = %1$d)") % this->ffid;
       cout << "Patterns are loading. Please wait.." << flush;
       res = qu.store();
       if (!res) {
-        t_input_params params;
-        PARAM_ADD(params, "procname", "tpp::atom_definer::smartfit");
-        PARAM_ADD(params, "error", "SQL query error");
-        PARAM_ADD(params, "sql_error", qu.error() );
+        Parameters params;
+        params.add("procname", "tpp::atom_definer::smartfit");
+        params.add("error", "SQL query error");
+        params.add("sql_error", qu.error() );
         throw t_sql_exception("SQL query failed!", params);
       }
       runtime.log_write("OK!\n");
@@ -234,9 +234,9 @@ WHERE  (not atom_patterns.group = 1) and (atoms.ffield = %1$d)") % this->ffid;
           BOOST_CHECK( score_it != sf_scores.end() );
           score_subit = score_it->second.find( row["atom_ids"] );
           if ( score_subit == score_it->second.end() ) {
-            t_input_params params;
-            PARAM_ADD(params, "procname", "tpp::atom_definer::smartfit");
-            PARAM_ADD(params, "error", string("SMART atom pattern #") + 
+            Parameters params;
+            params.add("procname", "tpp::atom_definer::smartfit");
+            params.add("error", string("SMART atom pattern #") +
                 lexical_cast<string>(row["apid"]) + " in DB is for invalid atom type!");
             throw Exception("SMARTS-DB ERROR!", params);
           }

@@ -601,7 +601,7 @@ void atom_definer::count_scores() {
      scores.insert(pair<int, map<int, int> >(it->first, tmp));
    }
 
-   if (PARAM_EXISTS(par, "maxbonds")) {
+   if (par.exists("maxbonds")) {
     // bond scores apply
     for (map<spec2, set<spec2_> >::iterator it = bon_suite.begin(); it != bon_suite.end(); ++it) {
 #ifdef CDB
@@ -632,7 +632,7 @@ void atom_definer::count_scores() {
     }
    } // endif maxbond
 
-   if (PARAM_EXISTS(par, "maxangles")) {
+   if (par.exists("maxangles")) {
     // angle scores apply
     for (map<spec3, set<spec3_> >::iterator it = ang_suite.begin(); it != ang_suite.end(); ++it) {
 #ifdef CDB
@@ -672,7 +672,7 @@ void atom_definer::count_scores() {
     }
    } // endif angles
 
-   if (PARAM_EXISTS(par, "maxdihedrals")) {
+   if (par.exists("maxdihedrals")) {
     // dihedral scores apply
     for (map<spec4, set<spec4_> >::iterator it = dih_suite.begin(); it != dih_suite.end(); ++it) {
 #ifdef CDB
@@ -748,9 +748,9 @@ void atom_definer::log_scores() {
  /*
   * Standard constructor with DB connection
   */
- atom_definer::atom_definer(t_input_params p_, Topology &tp_): db_base(p_), tp(tp_) {
+ atom_definer::atom_definer(Parameters p_, Topology &tp_): db_base(p_), tp(tp_) {
    connect_db();
-   this->ffid = boost::lexical_cast<int>(PARAM_READ(this->par, "ffid"));
+   this->ffid = boost::lexical_cast<int>(par.read("ffid"));
  }
  
  /*
@@ -770,9 +770,9 @@ void atom_definer::log_scores() {
  void atom_definer::proceed() {
    try {
      fill_nb();
-     if (PARAM_EXISTS(par,"maxbonds"))     fill_bon();
-     if (PARAM_EXISTS(par,"maxangles"))    fill_ang();
-     if (PARAM_EXISTS(par,"maxdihedrals")) fill_dih();
+     if (par.exists("maxbonds"))     fill_bon();
+     if (par.exists("maxangles"))    fill_ang();
+     if (par.exists("maxdihedrals")) fill_dih();
      count_scores();
      smart_fit();
    } catch(t_sql_exception e) { 
