@@ -1,10 +1,11 @@
+#include "db_base.hpp"
+
 #include "exceptions.hpp"
 #include "runtime.hpp"
 
 #include <algorithm>
 
 #include <boost/format.hpp>
-#include <db_base.hpp>
 
 using boost::format;
 
@@ -21,7 +22,7 @@ namespace tpp {
   /*
    * SQL Exception message format.
    */
-  void t_sql_exception::fix_log() const {
+  void SqlException::fix_log() const {
     std::ostringstream os; 
     os << "TPP catched exception!\n";
     os << format("***** from %1% -> %2%\n") % pars.read("classname") % pars.read("procname");
@@ -33,7 +34,7 @@ namespace tpp {
   /*
    * Standard constructor with DB connection
    */
-  db_base::db_base(Parameters p_):
+  DbBase::DbBase(Parameters p_):
        par(p_), con(new mysqlpp::Connection(false)) {
          ;
   }
@@ -41,7 +42,7 @@ namespace tpp {
   /*
    * Standart DB connection.
    */
-  bool db_base::connect_db()  {
+  bool DbBase::connect_db()  {
     con->connect(
         par.read("dbname").c_str(),
         (par.read("host")+string(":")+par.read("port")).c_str(),
@@ -55,7 +56,7 @@ namespace tpp {
       params.add("procname", "tpp::atom_definer::connect_db");
       params.add("error", "SQL connection error");
       params.add("sql_error", con->error() );
-      throw t_sql_exception("SQL connection failed!", params);
+      throw SqlException("SQL connection failed!", params);
     }
 
     mysqlpp::Query qu = this->con->query();
@@ -69,14 +70,14 @@ namespace tpp {
     res = qu.store();
     if (!res) {
       Parameters params;
-      params.add("procname", "tpp::db_info::connect_db");
+      params.add("procname", "tpp::DbInfo::connect_db");
       params.add("error", "SQL query error");
       params.add("sql_error", qu.error() );
-      throw t_sql_exception("SQL query failed: may be you have incorrect DataBase!", params);
+      throw SqlException("SQL query failed: may be you have incorrect DataBase!", params);
     }
     if (res.num_rows() != 1) {
       Parameters params;
-      params.add("procname", "tpp::db_info::connect_db");
+      params.add("procname", "tpp::DbInfo::connect_db");
       params.add("error", "Error in DB check.");
       throw Exception("Your DataBase is empty!", params);
     }
@@ -102,22 +103,20 @@ namespace tpp {
   /*
    * Initializing DB-INFO class.
    */
-  db_info::db_info(Parameters p): db_base(p) {
+  DbInfo::DbInfo(Parameters p): DbBase(p) {
     this->connect_db();
   }
 
   /*
    * DB queries for DB-INFO class
    */
-  bool db_info::connect_db() {
-    db_base::connect_db();
+  bool DbInfo::connect_db() {
+    DbBase::connect_db();
     this->getFFdata();
   }
 
-  /*
-   * Protected method gathering force field information.
-   */
-  void db_info::getFFdata() {
+
+  void DbInfo::getFFdata() {
     mysqlpp::Query qu = this->con->query();
     MYSQLPP_RESULT res;
     mysqlpp::Row row;
@@ -127,14 +126,14 @@ namespace tpp {
     res = qu.store();
     if (!res) {
       Parameters params;
-      params.add("procname", "tpp::db_info::getFFdata");
+      params.add("procname", "tpp::DbInfo::getFFdata");
       params.add("error", "SQL query error");
       params.add("sql_error", qu.error() );
-      throw t_sql_exception("SQL query failed!", params);
+      throw SqlException("SQL query failed!", params);
     }
     if (!res.num_rows()) {
       Parameters params;
-      params.add("procname", "tpp::db_info::getFFdata");
+      params.add("procname", "tpp::DbInfo::getFFdata");
       params.add("error", "Error in parameters");
       throw Exception((string("Force field '")+this->ffname+string("' not found!")).c_str(), params);
     }
@@ -150,15 +149,13 @@ namespace tpp {
         params.add("procname", "tpp::atom_definer::connect_db");
         params.add("error", "SQL query error");
         params.add("sql_error", qu.error() );
-        throw t_sql_exception("SQL force field revision is unknown!", params);
+        throw SqlException("SQL force field revision is unknown!", params);
     }
     this->ffrev = res.at(0)["value"].c_str();
   }
 
-  /*
-   * Public function giving string statistics about current force field.
-   */
-  string db_info::get_statistics() {
+
+  string DbInfo::get_statistics() {
 
     mysqlpp::Query qu = this->con->query();
     MYSQLPP_RESULT res;
@@ -177,7 +174,7 @@ SELECT\n\
         params.add("procname", "tpp::atom_definer::connect_db");
         params.add("error", "SQL query error");
         params.add("sql_error", qu.error() );
-        throw t_sql_exception("SQL query failed!", params);
+        throw SqlException("SQL query failed!", params);
     }
     std::ostringstream os;
     os << format("\
@@ -199,7 +196,7 @@ Total statistics:\n\
         params.add("procname", "tpp::atom_definer::connect_db");
         params.add("error", "SQL query error");
         params.add("sql_error", qu.error() );
-        throw t_sql_exception("SQL status query failed!", params);
+        throw SqlException("SQL status query failed!", params);
     }
 
     vector<string> ss;

@@ -9,30 +9,32 @@ namespace tpp
  * \brief A class that defines bonds between atoms, I guess?
  *
  */
-class bond_definer: public db_base {
-  private:
-    InternalsArray bonds;
-    Topology &tp;
-    std::map<std::string, std::string> namemap; // map of uname -> name ))
-    short ffid;
-    bool  genpairs;
-    std::ofstream qalcfile;
+class BondDefiner: public DbBase {
+public:
 
-    // methods
-    virtual bool connect_db();
-    void fill_bonds();
-    void fill_angles();
-    void fill_dihedrals();
-    void fill_special();
-    void fill_impropers();
-    void fill_pairs();
-  public:
+	BondDefiner(Parameters, Topology &);
+	virtual ~BondDefiner();
+	void bond_align();
+	void log_needed_bonds();
 
-    bond_definer(Parameters, Topology &);
-    virtual ~bond_definer();
-    void bond_align();
-    void log_needed_bonds();
+private:
+	InternalsArray bonds;
+	Topology &tp;
+	std::map<std::string, std::string> namemap; //! map of uname -> name
+	short ffid;
+	bool genpairs;
+	std::ofstream qalcfile;
+
+	// methods
+	bool connect_db() override;
+	void fill_bonds();
+	void fill_angles();
+	void fill_dihedrals();
+	void fill_special();
+	void fill_impropers();
+	void fill_pairs();
+
 };
-}
+} // of namespace tpp
 
 #endif

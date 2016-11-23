@@ -13,7 +13,6 @@
 #include "atom_definer.hpp"
 #include "bond_definer.hpp"
 
-
 #include <boost/program_options/variables_map.hpp>
 #include <boost/program_options/errors.hpp>
 #include <boost/program_options/options_description.hpp>
@@ -246,7 +245,7 @@ int main(int argc, char * argv[]) {
 			par0.add("maxdihedrals", "on");
 		}
 		// initial DB queries
-		tpp::db_info DI(par0);
+		tpp::DbInfo DI(par0);
 		par0.add("ffid", boost::lexical_cast<string>(DI.get_ffid()));
 		TOP.ffinclude = DI.get_ffinclude().c_str();
 		TOP.ffinfo = par0.read("ffname") + " revision " + DI.get_ffrev();
@@ -255,11 +254,11 @@ int main(int argc, char * argv[]) {
 			cout << DI.get_statistics();
 		}
 		// starting program body
-		tpp::atom_definer AD(par0, TOP);
+		tpp::AtomDefiner AD(par0, TOP);
 		AD.proceed();
 		AD.log_scores();
 		AD.atom_align();
-		tpp::bond_definer BD(par0, TOP);
+		tpp::BondDefiner BD(par0, TOP);
 		BD.bond_align();
 		tpp::save_topology(TOP, cmdline.read("output_file").c_str());
 		tpp::save_lack(TOP, cmdline.read("lack_file").c_str());
@@ -271,7 +270,7 @@ int main(int argc, char * argv[]) {
 				<< format(
 						"Please, correct your charges according to sum: %1$8.3f.\n")
 						% sumcharge(TOP);
-	} catch (tpp::t_sql_exception &e) {
+	} catch (tpp::SqlException &e) {
 		e.fix_log();
 		cerr << "TPP_SQL_EXCEPTION FROM: " << e["procname"] << endl;
 		cerr << "more info see in log-file." << endl;

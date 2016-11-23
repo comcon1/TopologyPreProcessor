@@ -72,7 +72,7 @@ bool operator <(const spec4_ &a, const spec4_ &b) {
 //
 //	AtomDefiner implementation
 //
-void atom_definer::fill_nb() {
+void AtomDefiner::fill_nb() {
 	cout << "Comparing atom by elements.." << endl;
 	mysqlpp::Query qu = con->query();
 	MYSQLPP_RESULT res;
@@ -115,7 +115,7 @@ GROUP BY name") % anum % ffid;
 }
 
 /* ============BONDS====================*/
-void atom_definer::fill_bon() {
+void AtomDefiner::fill_bon() {
 
 	cout << "Comparing atom by bonds.." << endl;
 	mysqlpp::Query qu = con->query();
@@ -229,7 +229,7 @@ AND ( SELECT MIN( znuc ) FROM atoms WHERE atoms.name = bonds.j AND atoms.ffield 
 }
 
 /*=================ANGLES=========================*/
-void atom_definer::fill_ang() {
+void AtomDefiner::fill_ang() {
 
 	cout << "Comparing atom by angles.." << endl;
 	mysqlpp::Query qu = con->query();
@@ -344,7 +344,7 @@ WHERE angles.ffield = %1$d\n\
 }
 
 /*================DIHEDRALS=======================*/
-void atom_definer::fill_dih() {
+void AtomDefiner::fill_dih() {
 
 	cout << "Comparing atom by dihedrals.." << endl;
 	mysqlpp::Query qu = con->query();
@@ -466,7 +466,7 @@ WHERE dihedrals.ffield = %1$d\n\
 	cout << flush;
 }
 
-void atom_definer::spread_atomid() {
+void AtomDefiner::spread_atomid() {
 	mysqlpp::Query qu = con->query();
 	MYSQLPP_RESULT res;
 	mysqlpp::Row row;
@@ -536,7 +536,7 @@ typedef struct {
 	string comment;
 } tempstruct_t;
 
-void atom_definer::atom_align() {
+void AtomDefiner::atom_align() {
 	cout << "Starting atom_alig.." << endl;
 	typedef multi_index_container<tempstruct_t,
 			indexed_by<
@@ -600,7 +600,7 @@ void atom_definer::atom_align() {
 }
 
 // count scores for znuc, atoms, bonds and dihedrals
-void atom_definer::count_scores() {
+void AtomDefiner::count_scores() {
 	map<int, int> tmp, tmp1, tmp2, tmp3;
 	map<int, int> tmpit;
 	scores.clear();
@@ -757,7 +757,7 @@ void atom_definer::count_scores() {
 	cout << " finished!" << endl;
 }
 
-void atom_definer::print_scores(std::ostream &os) {
+void AtomDefiner::print_scores(std::ostream &os) {
 	// PRINT SCORES
 	os << endl;
 	for (map<int, map<int, int> >::iterator it = scores.begin();
@@ -772,7 +772,7 @@ void atom_definer::print_scores(std::ostream &os) {
 	os << endl;
 }
 
-void atom_definer::log_scores() {
+void AtomDefiner::log_scores() {
 	ostringstream os;
 	print_scores(os);
 	runtime.log_write(os.str());
@@ -782,8 +782,8 @@ void atom_definer::log_scores() {
 /*
  * Standard constructor with DB connection
  */
-atom_definer::atom_definer(Parameters p_, Topology &tp_) :
-		db_base(p_), tp(tp_) {
+AtomDefiner::AtomDefiner(Parameters p_, Topology &tp_) :
+		DbBase(p_), tp(tp_) {
 	connect_db();
 	this->ffid = boost::lexical_cast<int>(par.read("ffid"));
 }
@@ -791,8 +791,8 @@ atom_definer::atom_definer(Parameters p_, Topology &tp_) :
 /*
  * Initial DB queries.
  */
-bool atom_definer::connect_db() {
-	db_base::connect_db();
+bool AtomDefiner::connect_db() {
+	DbBase::connect_db();
 
 	; // what do we need ?
 
@@ -802,7 +802,7 @@ bool atom_definer::connect_db() {
 /*
  * Main class method caller.
  */
-void atom_definer::proceed() {
+void AtomDefiner::proceed() {
 	try {
 		fill_nb();
 		if (par.exists("maxbonds"))
@@ -813,14 +813,14 @@ void atom_definer::proceed() {
 			fill_dih();
 		count_scores();
 		smart_fit();
-	} catch (t_sql_exception e) {
+	} catch (SqlException e) {
 		e.fix_log();
 		throw e;
 	}
 }
 
 
-void atom_definer::smart_cgnr() {
+void AtomDefiner::smart_cgnr() {
       // zero all charge groups
       for (AtomArray::iterator it = tp.atoms.begin(); it != tp.atoms.end(); ++it) {
           Atom nat = *it;
@@ -839,10 +839,10 @@ void atom_definer::smart_cgnr() {
           res = qu.store();
           if (!res) {
               Parameters params;
-              params.add("procname", "tpp::atom_definer::smart_cgnr");
+              params.add("procname", "tpp::AtomDefiner::smart_cgnr");
               params.add("error", "SQL query error");
               params.add("sql_error", qu.error() );
-              throw t_sql_exception("SQL query failed!", params);
+              throw SqlException("SQL query failed!", params);
           }
           runtime.log_write("OK!\n");
           cout << " finished.\n" <<
@@ -962,7 +962,7 @@ void atom_definer::smart_cgnr() {
       }
 }
 
-void atom_definer::smart_fit() {
+void AtomDefiner::smart_fit() {
 
       // make zero-scored copy of scores map
       map<int, map<int, int> > sf_scores (scores);
@@ -993,10 +993,10 @@ WHERE  (not atom_patterns.group = 1) and (atoms.ffield = %1$d)") % this->ffid;
       res = qu.store();
       if (!res) {
         Parameters params;
-        params.add("procname", "tpp::atom_definer::smartfit");
+        params.add("procname", "tpp::AtomDefiner::smartfit");
         params.add("error", "SQL query error");
         params.add("sql_error", qu.error() );
-        throw t_sql_exception("SQL query failed!", params);
+        throw SqlException("SQL query failed!", params);
       }
       runtime.log_write("OK!\n");
       cout << " finished." << endl;
@@ -1030,7 +1030,7 @@ WHERE  (not atom_patterns.group = 1) and (atoms.ffield = %1$d)") % this->ffid;
           score_subit = score_it->second.find( row["atom_ids"] );
           if ( score_subit == score_it->second.end() ) {
             Parameters params;
-            params.add("procname", "tpp::atom_definer::smartfit");
+            params.add("procname", "tpp::AtomDefiner::smartfit");
             params.add("error", string("SMART atom pattern #") +
                 lexical_cast<string>(row["apid"]) + " in DB is for invalid atom type!");
             throw Exception("SMARTS-DB ERROR!", params);

@@ -7,7 +7,7 @@ namespace tpp
 {
 
 //
-//	Auxilary classses
+//	Auxilary classses for AtomDefiner
 //
 
 // structures for 2 3 and 4 different elements
@@ -128,68 +128,65 @@ public:
 /**
  * \brief Class that proceed (mb produces?) atom type definition.
  */
-class atom_definer: public db_base {
- private:
-  Topology &tp;
+class AtomDefiner: public DbBase {
+public:
 
-  /**
-   * atom ID -> { atomtype ID -> score }
-   */
-  std::map<int, std::map<int, int> > scores;
+	AtomDefiner(Parameters, Topology &);
+	void log_scores();
+	void proceed();
+	void atom_align();
+private:
+	Topology &tp;
 
-  /**
-   * Function fill *scores* map according to `atom_patterns`
-   * table of the database.
-   */
-  void smart_fit();
 
-  /*
-   * ID -> {atomtype ID}
-   */
-  std::map<int, std::set<int> > nb_suite;
+	std::map<int, std::map<int, int> > scores; //! atom ID -> { atomtype ID -> score }
 
-  /**
-   * Function matches atomtypes according only to atomic number.
-   * Result is filling *nb_suite* map.
-   */
-  void fill_nb();
+	/**
+	 * Function fill *scores* map according to `atom_patterns`
+	 * table of the database.
+	 */
+	void smart_fit();
 
-  /**
-   * Summarize scores from different x_suite maps.
-   * Weight coefficients of every property in atomtype definition are applied
-   * here. Coef-s are defined at the top of this header in TPP_XXX defines.
-   */
-  void count_scores();
+	//! ID -> {atomtype ID}
+	std::map<int, std::set<int> > nb_suite;
 
-  /**
-   * << WHAT IS THIS ?? >>
-   * To spread scores found for bonded type (name-type) to all nb types
-   * (uname) that corresponds to this bonded type.
-   * Makes sense only if fill_bon/ang/dih are used.
-   */
-  void spread_atomid();
+	/**
+	 * Function matches atomtypes according only to atomic number.
+	 * Result is filling *nb_suite* map.
+	 */
+	void fill_nb();
 
-  std::map<spec2, std::set<spec2_> > bon_suite;
-  std::map<spec3, std::set<spec3_> > ang_suite;
-  std::map<spec4, std::set<spec4_> > dih_suite;
+	/**
+	 * Summarize scores from different x_suite maps.
+	 * Weight coefficients of every property in atomtype definition are applied
+	 * here. Coef-s are defined at the top of this header in TPP_XXX defines.
+	 */
+	void count_scores();
 
-  short  ffid; // id of current forcefield
-  void fill_bon();
-  void fill_ang();
-  void fill_dih();
-  void print_scores(std::ostream &os);
-  void smart_cgnr();
+	/**
+	 * << WHAT IS THIS ?? >>
+	 * To spread scores found for bonded type (name-type) to all nb types
+	 * (uname) that corresponds to this bonded type.
+	 * Makes sense only if fill_bon/ang/dih are used.
+	 */
+	void spread_atomid();
 
- protected:
-  virtual bool connect_db();
+	std::map<spec2, std::set<spec2_> > bon_suite;
+	std::map<spec3, std::set<spec3_> > ang_suite;
+	std::map<spec4, std::set<spec4_> > dih_suite;
 
- public:
+	short ffid; // id of current forcefield
+	void fill_bon();
+	void fill_ang();
+	void fill_dih();
+	void print_scores(std::ostream &os);
+	void smart_cgnr();
 
-  atom_definer(Parameters, Topology &);
-  void log_scores();
-  void proceed();
-  void atom_align();
+protected:
+	virtual bool connect_db();
+
 };
+// of atom definer
 } // of namespace tpp
 
 #endif

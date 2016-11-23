@@ -25,49 +25,52 @@
 namespace tpp {
 
   //! Exception to be used when something goes wrong on sql level.
-  class t_sql_exception : public Exception {
+  class SqlException : public Exception {
     public:
     virtual void fix_log() const; 
-    t_sql_exception(const char *s, Parameters &p): Exception(s, p) { ; }
+    SqlException(const char *s, Parameters &p): Exception(s, p) { ; }
   };
 
   /**
    *
-   *  \brief Class that encapsulates working with databases.
+   *  \brief Class that encapsulates basic working with databases.
    *
    */
-  class db_base {
+  class DbBase {
     protected:
       mysqlpp::Connection *con;
       Parameters par;
       virtual bool connect_db();
     public:
       // need parameters 'host','user','dbname','password','port','ffname'
-      db_base(Parameters p);
-      virtual ~db_base() { delete con; }
+      DbBase(Parameters p);
+      virtual ~DbBase() { delete con; }
   };
  
   /**
-   * \brief Class that accepts information about DB and FF.
+   * \brief Class that accepts information about DB and Force Field (FF).
    */
-  class db_info: public db_base {
+  class DbInfo: public DbBase {
 
     protected:
-      virtual bool connect_db();
+      bool connect_db() override;
       int ffid;
       std::string ffname;
       std::string ffdesc;
       std::string ffinclude;
       std::string ffrev;
 
+      //! Protected method for gathering force field information.
       void getFFdata();
       void getDBdata();
 
     public:
-      db_info(Parameters);
+      DbInfo(Parameters);
       int get_ffid() { return ffid; }
       std::string get_ffinclude() { return ffinclude; }
       std::string get_ffrev() { return ffrev; }
+
+      //! Function that gives string statistics about current force field.
       std::string get_statistics();
 
   };
