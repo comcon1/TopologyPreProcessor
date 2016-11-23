@@ -1,10 +1,10 @@
-#include "db_scanner.hpp"
 #include "exceptions.hpp"
 #include "runtime.hpp"
 
 #include <algorithm>
 
 #include <boost/format.hpp>
+#include <db_base.hpp>
 
 using boost::format;
 

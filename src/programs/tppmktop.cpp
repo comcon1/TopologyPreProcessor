@@ -9,7 +9,10 @@
 #include "exceptions.hpp"
 #include "runtime.hpp"
 #include "topio.hpp"
-#include "db_scanner.hpp"
+#include "db_base.hpp"
+#include "atom_definer.hpp"
+#include "bond_definer.hpp"
+
 
 #include <boost/program_options/variables_map.hpp>
 #include <boost/program_options/errors.hpp>

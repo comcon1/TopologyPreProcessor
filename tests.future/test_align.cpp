@@ -1,6 +1,6 @@
+#include "../include/db_base.hpp"
 #include "global.hpp"
 #include "topio.hpp"
-#include "db_scanner.hpp"
 
 using namespace tpp;
 using namespace ut;

@@ -1,15 +1,17 @@
-#include "mysql.h"
-
+#include "bond_definer.hpp"
 #include "runtime.hpp"
-
-#include "boost/multi_index_container.hpp"
-#include "db_scanner.hpp"
 #include "tppnames.hpp"
+#include "db_base.hpp"
+
+#include <mysql.h>
+#include <boost/multi_index_container.hpp>
+
 #include <openbabel/obconversion.h>
 #include <openbabel/obiter.h>
 
 #include <boost/format.hpp>
 #include <boost/lexical_cast.hpp>
+
 
 //#define CDB
 
