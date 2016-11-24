@@ -75,7 +75,7 @@ void atom_definer::smart_cgnr() throw (Exception) {
               cout << ( format("\b\b\b\b\b%1$4d.") % (int)co ) << flush;
           }
           // Applying patterns from small size to big size
-          TPP_INDEX curCG = 1;
+          TppIndex curCG = 1;
           for(std::map<int, vector<string> >::iterator it 
                   = sized_patterns.begin(); it != sized_patterns.end(); 
                   ++it) {
@@ -118,8 +118,8 @@ void atom_definer::smart_cgnr() throw (Exception) {
           { // independent block of CGR renumbering
             cout << endl << "Renumbering CGNR according to human-readable style.." << flush;
             int current_cgr = 1;
-            std::set<TPP_INDEX> done_atoms;
-            std::set<TPP_INDEX> _tempset;
+            std::set<TppIndex> done_atoms;
+            std::set<TppIndex> _tempset;
             for(AtomArray::iterator it = tp.atoms.begin();
                     it != tp.atoms.end(); ++it) {
                 if (done_atoms.count(it->index)) continue;
@@ -135,7 +135,7 @@ void atom_definer::smart_cgnr() throw (Exception) {
 #ifdef CDB
                     cerr << it->c_gnr << " " << tp.atoms.get<2>().count(it->c_gnr) << endl;
 #endif
-                    TPP_INDEX oldcgnr = it->c_gnr;
+                    TppIndex oldcgnr = it->c_gnr;
                     _tempset.clear();
                     for (AtomArray::nth_index_iterator<2>::type cit = tp.atoms.get<2>().lower_bound(oldcgnr);
                         cit != tp.atoms.get<2>().upper_bound(oldcgnr); ++cit) {
@@ -144,7 +144,7 @@ void atom_definer::smart_cgnr() throw (Exception) {
                         // modifying c_gnr in a separate cycle !! (Index Policy
                         // Needs: see multi_index documentation.. )
                     }
-                    for (set<TPP_INDEX>::iterator ii = _tempset.begin(); ii != _tempset.end(); ++ii) {
+                    for (set<TppIndex>::iterator ii = _tempset.begin(); ii != _tempset.end(); ++ii) {
                         AtomArray::iterator cit = tp.atoms.find(*ii);
                         BOOST_CHECK( cit != tp.atoms.end() );
                         Atom cur0 = *cit;

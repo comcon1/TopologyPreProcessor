@@ -34,131 +34,234 @@
 //
 #define TPP_GMX_EXTERNAL
 #define TPP_MAX_ATOM_NUM 200
-#define TPP_INDEX unsigned
 #define TPP_MAX_FREQ_NUM 600
 #define TPP_MAX_BONDS 4
 
+/** \namespace tpp is used for scoping TPP specific variables.
+ *
+ */
 namespace tpp {
-	// atom and atom_array definition
-	typedef boost::numeric::ublas::bounded_vector<double, 3> Point;
+
+        // namespace aliases
+
+        namespace bub = boost::numeric::ublas;
+        namespace bmi = boost::multi_index;
+
+        // typedef aliases
+
+	typedef bub::bounded_vector<double, 3> Point; //!< type of space coordinate
+        typedef unsigned TppIndex; //!< alias for type of atom indexing in molecule array
 
 	/**
-	 *	\brief This class describes atoms!
+	 *	\brief This class describes atom properties in the topology or
+         *	molecular structure.
 	 *
 	 */
 	struct Atom {
-		TPP_INDEX index; //!< place in vector array
-		TPP_INDEX oldindex; //!< This surely means something!
-		std::string atom_type; //!< This surely means something!
-		std::string atom_type2; //!< This surely means something!
-		std::string atom_name; //!< This surely means something!
-		std::string old_aname; //!< This surely means something!
+		TppIndex index; //!< place in vector array
+		TppIndex oldindex; //!< index in its initial array (make sense when renumbering)
+		std::string atom_type; //!< non-bonded atom type (e.g. opls_136)
+		std::string atom_type2; //!< bonded atom type (e.g. CT)
+		std::string atom_name; //!< atom name unique for the residue
+		std::string old_aname; //!< atom name in the original molecule (make sense wher renumbering)
 		unsigned char ncharge; //!< nuclear charge
-		std::string res_name; //!< This surely means something!
-		std::string comment; //!< This surely means something!
-		unsigned char mol_id; //!< This surely means something!
-		Point coord; //!< This surely means something!
-		boost::array<TPP_INDEX, TPP_MAX_BONDS> connects; //!< This surely means something!
-		unsigned char num_connects; //!< This surely means something!
-		double charge; //!< This surely means something!
-		double mass;TPP_INDEX c_gnr; //!< This surely means something!
+		std::string res_name; //!< residue name
+		std::string comment; //!< free string
+		unsigned char mol_id; //!< TODO: i do not remember if we really need this field ..
+		Point coord; //!< atom coordinates
+		boost::array<TppIndex, TPP_MAX_BONDS> connects; //!< array of atom connectivity
+		unsigned char num_connects; //!< atom valency
+		double charge; //!< atom partial charge
+		double mass; //!< atom mass (in a.u.)
+                TppIndex c_gnr; //!< charge group!
 		std::string qmname; //!< This surely means something!
 	};
-
-	typedef boost::multi_index::multi_index_container<Atom,
-			boost::multi_index::indexed_by<boost::multi_index::ordered_unique<boost::multi_index::member<Atom, TPP_INDEX, &Atom::index> >, // key index (like array)
-			boost::multi_index::ordered_non_unique<boost::multi_index::member<Atom, std::string, &Atom::atom_name> >, // key by name
-			boost::multi_index::ordered_non_unique<boost::multi_index::member<Atom, TPP_INDEX, &Atom::c_gnr> > // key by charge group
+        
+        /** \brief Container of atoms indexed by index, name or charge group.
+         *
+         *   It is important to locate atom by name and by index. Locating by
+         *   charge group if questionable (may be should be removed).
+         */
+	typedef bmi::multi_index_container<Atom,
+			bmi::indexed_by<bmi::ordered_unique<bmi::member<Atom, TppIndex, &Atom::index> >, 
+                        // key index (like array)
+			bmi::ordered_non_unique<bmi::member<Atom, std::string, &Atom::atom_name> >, 
+                        // key by name
+			bmi::ordered_non_unique<bmi::member<Atom, TppIndex, &Atom::c_gnr> > 
+                        // key by charge group
 			> > AtomArray;
 
-	/// This enumeration surely relates to input somehow
+	/**
+         * \brief This enumeration specifies format of the input data.
+         *
+         * Input data can be in coordinate format (like PDB) or can be read
+         * from output of QM programs (GAMOPT).
+         */
 	typedef enum {
-		TPP_IF_PDB = 0,
-		TPP_IF_GRO = 1,
-		TPP_IF_G96 = 2,
-		TPP_IF_GAMOPT = 3,
-		TPP_IF_GAMHESS = 4,
-		TPP_IF_GAMSP = 5
+		TPP_IF_PDB = 0,       //!< Input in Protein Data Bank (PDB) format 
+		TPP_IF_GRO = 1,       //!< Input in GROMOS short format (GRO)
+		TPP_IF_G96 = 2,       //!< Input in GROMOS "double precision" format (G96)
+		TPP_IF_GAMOPT = 3,    //!< GAMESS optimization output as an input
+		TPP_IF_GAMHESS = 4,   //!< GAMESS hessian output as an input
+		TPP_IF_GAMSP = 5      //!< GAMESS singlepoint output as an input
 	} InputFormat;
 
-	/// This enumeration surely relates to output somehow
+	/**
+         * \brief This enumeration the output format
+         *
+         *  Note, that OutputFormat is used for structure only. 
+         *  Topolgy output is not set by this enum.
+         */
 	typedef enum {
-		TPP_OF_PDB = 0, TPP_OF_GRO = 2, TPP_OF_G96 = 3, TPP_OF_GAMIN = 4
+		TPP_OF_PDB = 0,       //!< Output in Protein Data Bank (PDB) format         
+                TPP_OF_GRO = 2,       //!< Output in GROMOS short format (GRO)
+                TPP_OF_G96 = 3,       //!< Output in GROMOS "double precision" format (G96)
+                TPP_OF_GAMIN = 4      //!< Output in GAMESS input format for further QM
 	} OutputFormat;
 
-	/// internal coordinates
+	/// Type of internal coordinate
 	typedef enum {
-		TPP_IC_BON = 1, TPP_IC_ANG = 2, TPP_IC_DIH = 3, TPP_IC_CHIR = 4
+		TPP_IC_BON  = 1,      //!< Valence bond
+                TPP_IC_ANG  = 2,      //!< Valence angle
+                TPP_IC_DIH  = 3,      //!< Dihedral angle
+                TPP_IC_CHIR = 4       //!< TODO: what it is? Chirality definition?
 	} IntCoordType;
 
-	/// M... some other coordinates?..
+	/** \brief Separate internal coordinate includes
+         *
+         * Includes information about atoms forming coordinate, type of the
+         * coordinate and reference to corresponding tpp::TopCoord element
+         * associated with this coordinate.
+         */
 	typedef struct {
-		IntCoordType type;
-		TPP_INDEX i, j, k, l;
-		std::string defname;
-	} IntCoord;
+		IntCoordType type;    //!< type of the coordinate
+		TppIndex i,  //!< atom index No.1 (for e.g. bond type only i and j make sense)
+                         j,  //!< atom index No.2
+                         k,  //!< atom index No.3
+                         l;  //!< atom index No.4
+		std::string defname;  //!< reference to top::TopCoord element
+	} IntCoord;                    
 
+        /// Array of internal coordinates
 	typedef std::vector<IntCoord> InternalsArray;
 
-	/// topology parameters definition
+	/** \brief Parameters of potential function associated with internal coordinate 
+         *
+         * Here we do not use all possible potentials but only that which we
+         * operate.
+         * TODO: rename to TopCoordType
+         */
 	typedef enum {
-		TPP_TTYPE_BON = 1,
-		TPP_TTYPE_ANG = 2,
-		TPP_TTYPE_RBDIH = 3,
-		TPP_TTYPE_IMPDIH = 4,
-		TPP_TTYPE_SYMDIH = 5,
-		TPP_TTYPE_PAIR = 6,
-		TPP_TTYPE_EXCL = 7,
-		TPP_TTYPE_SPECIMP = 8
+		TPP_TTYPE_BON = 1,     //!< bond with square potential
+		TPP_TTYPE_ANG = 2,     //!< angle with square potential 
+		TPP_TTYPE_RBDIH = 3,   //!< dihedral with Ryckaert-Belleman potential
+		TPP_TTYPE_IMPDIH = 4,  //!< dihedral with square potential
+		TPP_TTYPE_SYMDIH = 5,  //!< dihedral with proper potential (gmx proper)
+		TPP_TTYPE_PAIR = 6,    //!< turn pair on
+		TPP_TTYPE_EXCL = 7,    //!< turn exclusion on (not used yet)
+		TPP_TTYPE_SPECIMP = 8  //!< special improper type (TODO: do we need it?)
 	} TopologyType;
 
-	/// Some coordinates, it seems like
+	/** \brief Potential parameter set for similar internal coordinates.
+         *
+         *  This structure defines parameter set for some interaction types. It
+         *  corresponds to a separate definition in .prm file (CHARMM) or in ffbonded.itp file (GMX).
+         *
+         * TODO: rename in some way
+         */
 	struct TopCoord {
-		long int dbid;
-		std::string defname;
-		TopologyType type;
-		short f; //!< f = -1 (means parameter lack)
-		double c0, c1, c2, c3, c4, c5;/*
+		long int dbid;         //!< ID in corresponding SQL table
+		std::string defname;   //!< define that will be reference topology in future .itp
+		TopologyType type;     //!< type of the parameter set
+		short f; //!< f = -1 (means parameter lack). Other correspond to ftype in GMX notation
+
+                /** \brief c0..c5 values parametrize the potential interaction
+                 * function. 
+                 *
+                 * c0-5 values have different meaning for different TopCoord::type values:
+                 *
+                 * TPP_TTYPE_BON: equilibrium bond length (c0), bond spring constant (c11)
+                 * TPP_TTYPE_ANG: equilibrium angle (c0), angle spring constant (c1)
+                 * TPP_TTYPE_RBDIH: c0..c5 means coefficients in RB
+                 * TPP_TTYPE_IMPDIH: equilibrium angle (c0), angle spring constant (c1)
+                 * TPP_TTYPE_SYMDIH: equilibrium angle (c0), potential
+                 *          repeating coeff. (c1), potential amplitude (c2)
+                 * other: c0..c5 means nothing
+                 */
+		double c0, c1, c2, c3, c4, c5;
+                
+                /*
 		 t_top_coord(): defname(""), type(1),f(-1),c0(0),c1(0),c2(0),c3(0),c4(0),c5(0) {;}
-		 t_top_coord(const t_top_coord &_t): defname(_t.defname), type(_t.type),f(_t.f),c0(_t.c0),c1(_t.c1),c2(_t.c2),c3(_t.c3),c4(_t.c4),c5(_t.c5) {;}  */
+		 t_top_coord(const t_top_coord &_t): defname(_t.defname), type(_t.type),f(_t.f),c0(_t.c0),c1(_t.c1),c2(_t.c2),c3(_t.c3),c4(_t.c4),c5(_t.c5) {;} 
+                 */
 	};
 
+        /** \brief Single record combining interaction function for exact atoms
+         * of the molecule.
+         *
+         * TopElement::defname defines interaction described in TopCoord
+         * i,j,k,l defines atom types. For pair interaction only i and j make
+         * sense. For tri-centered interactions only i,j and k make sense.
+         *
+         */
 	struct TopElement {
-		std::string defname;TPP_INDEX i, j, k, l;
+		std::string defname;
+                TppIndex i, j, k, l;
 	};
 
-	/// DEFINITIONS CONTAINER
+	/** \brief Container of interaction potential definitions
+         *
+         * Array can be ordered by interaction type (alphabetically), type of
+         * interaction (TopCoord::type) and by GMX interaction type f.
+         */
 	typedef boost::multi_index::multi_index_container<
 			TopCoord,
 			boost::multi_index::indexed_by<
-			boost::multi_index::ordered_unique<
-			boost::multi_index::member<TopCoord, std::string, &TopCoord::defname> >, // key by defname
-			boost::multi_index::ordered_non_unique<
-			boost::multi_index::member<TopCoord, TopologyType, &TopCoord::type> >, // key by directive
-			boost::multi_index::ordered_non_unique<boost::multi_index::member<TopCoord, short, &TopCoord::f> > // key by function
-			> > TopMap;
+			 boost::multi_index::ordered_unique<
+			   boost::multi_index::member<TopCoord, std::string, &TopCoord::defname> 
+                         >, // key by defname
+			 boost::multi_index::ordered_non_unique<
+			   boost::multi_index::member<TopCoord, TopologyType, &TopCoord::type> 
+                         >, // key by directive
+			 boost::multi_index::ordered_non_unique<
+                           boost::multi_index::member<TopCoord, short, &TopCoord::f> 
+                         > // key by function
+			> 
+                > TopMap;
 
-	typedef boost::multi_index::multi_index_container< /* TOPOLOGY CONTAINER */
+        /** \brief Container of exact interactions
+         *
+         * Array can easily be ordered by interaction types (defname)
+         *
+         */
+	typedef boost::multi_index::multi_index_container< 
 			TopElement,
 			boost::multi_index::indexed_by<
-			boost::multi_index::sequenced<>, // array key
-			boost::multi_index::ordered_non_unique<
-			boost::multi_index::member<TopElement, std::string, &TopElement::defname> > > // key by defname
-	> TopArray;
+			  boost::multi_index::sequenced<>, // array key
+			  boost::multi_index::ordered_non_unique<
+			    boost::multi_index::member<TopElement, std::string, &TopElement::defname> 
+                          > 
+                        > // key by defname
+ 	        > TopArray;
 
-	// internal topology definition
+	/** \brief Internal molecule topology definition.
+         *
+         * This class describes both molecular structure and mechanical
+         * structure (topology). Now supports single residue.
+         *
+         */
 	class Topology {
 	public:
-		TopMap parameters;
-		TopArray elements;
-		AtomArray atoms;
-		OpenBabel::OBMol mol;
+		TopMap parameters;     //!< interaction potentials definitions 
+		TopArray elements;     //!< map internal coordinates to definitions
+		AtomArray atoms;       //!< atoms (nb params & structure)
+		OpenBabel::OBMol mol;  //!< corresponding OBMol object
 
-		unsigned short nrexcl;
-		std::string ffinclude;
-		std::string ffinfo;
-		std::string res_name;
-		std::string name;
+		unsigned short nrexcl; //!< number of exclusions (see gmx manual)
+		std::string ffinclude; //!< string for mother parameters include for TOP-file
+		std::string ffinfo;    //!< information about the force field
+		std::string res_name;  //!< residue name (short & caps)
+		std::string name;      //!< molecule name (long)
 
 		/* serialization support */
 
@@ -175,7 +278,7 @@ namespace tpp {
 		}
 	};
 
-
+        //TODO: DO WE NEED IT?
 	typedef std::vector<double*> t_optimize_list; /// optimize constant list
 
 }
