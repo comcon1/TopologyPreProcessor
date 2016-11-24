@@ -1,7 +1,7 @@
 #ifndef TPP_TESTCASE_H
 #define TPP_TESTCASE_H
 
-#include "db_scanner.hpp"
+#include "db_base.hpp"
 
 namespace tpp {
 

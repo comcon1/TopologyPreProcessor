@@ -23,11 +23,7 @@
 
 namespace p_o = boost::program_options;
 using tpp::cmdline;
-using tpp::PARAM_ADD;
-using tpp::PARAM_DEL;
-using tpp::PARAM_READ;
-using tpp::PARAM_EXISTS;
-using tpp::t_input_param;
+
 using boost::format;
 using std::cout;
 using std::cerr;
@@ -57,20 +53,20 @@ int main(int argc, char * argv[]) {
             p_o::notify(vars);
             if ( (vars.count("verbose") > 1) || (vars.count("ignore-index") > 1) ) throw 1;
 
-            PARAM_ADD(cmdline, "verbose_flag", vars.count("verbose") ? "on" : "off" );
-            PARAM_ADD(cmdline, "hex_flag",     vars.count("hex") ? "on" : "off" );
-            PARAM_ADD(cmdline, "ignore_index", vars.count("ignore-index") ? "off" : "on" );
+            cmdline.add("verbose_flag", vars.count("verbose") ? "on" : "off" );
+            cmdline.add("hex_flag",     vars.count("hex") ? "on" : "off" );
+            cmdline.add("ignore_index", vars.count("ignore-index") ? "off" : "on" );
 
             if (vars.count("ignore-index") == 1) {
                 cout << "Non-ignoring of indexes is a DANGEROUS MODE!" << endl;
             }
             if (vars.count("help") == 1) helpscreen();
             if (vars.count("input") == 1) {
-                PARAM_ADD(cmdline, "input_file", vars["input"].as<std::string>() );
+                cmdline.add("input_file", vars["input"].as<std::string>() );
             }
             else throw 1;
             if (vars.count("output") == 1) {
-                PARAM_ADD(cmdline, "output_file", vars["output"].as<std::string>() );
+            	cmdline.add("output_file", vars["output"].as<std::string>() );
             }
             else throw 1;
         }
@@ -90,7 +86,7 @@ int main(int argc, char * argv[]) {
 	// starting work with input and output files
 	//
 
-    if (PARAM_READ(cmdline, "verbose_flag") == "on") {
+    if (cmdline.read("verbose_flag") == "on") {
         cout << format ("\
 **********************************************************************\n\
 *   Biology faculty, Department of biophysics, Erg Research Group    *\n\
@@ -118,13 +114,13 @@ int main(int argc, char * argv[]) {
     // INPUT analysing
     tpp::InputFormat iform;
     tpp::OutputFormat oform;
-    string::size_type ind = PARAM_READ(cmdline, "input_file").find(".",0);
+    string::size_type ind = cmdline.read("input_file").find(".", 0);
     if ( ind == string::npos) {
         cerr << "ERROR:\n";
         cerr << "Couldn't determine format of input file. Please specify extension.\n";
         return 1;
     }
-    string subs = PARAM_READ(cmdline, "input_file").substr(ind+1);
+    string subs = cmdline.read("input_file").substr(ind+1);
     if (subs == "pdb") iform = tpp::TPP_IF_PDB;
     else if (subs == "gro") iform = tpp::TPP_IF_GRO;
     else if (subs == "g96") iform = tpp::TPP_IF_G96;
@@ -135,7 +131,7 @@ int main(int argc, char * argv[]) {
         return 1;
     }
 
-    if (PARAM_READ(cmdline, "verbose_flag") == "on") {
+    if (cmdline.read("verbose_flag") == "on") {
         switch (iform) {
         case   tpp::TPP_IF_PDB:
             cout << "Input file format: Protein Data Bank." << endl;
@@ -153,13 +149,13 @@ int main(int argc, char * argv[]) {
     }
 
     // OUTPUT analysing
-    ind = PARAM_READ(cmdline, "output_file").find(".",0);
+    ind = cmdline.read("output_file").find(".",0);
     if ( ind == string::npos) {
         cerr << "ERROR:\n";
         cerr << "Couldn't determine format of output file. Please specify extension.\n";
         return 1;
     }
-    subs = PARAM_READ(cmdline, "output_file").substr(ind+1);
+    subs = cmdline.read("output_file").substr(ind+1);
     if (subs == "pdb") oform = tpp::TPP_OF_PDB;
     else if (subs == "gro") oform = tpp::TPP_OF_GRO;
     else if (subs == "g96") oform = tpp::TPP_OF_G96;
@@ -169,7 +165,7 @@ int main(int argc, char * argv[]) {
         return 1;
     }
 
-    if (PARAM_READ(cmdline, "verbose_flag") == "on") {
+    if (cmdline.read("verbose_flag") == "on") {
         switch (oform) {
         case   tpp::TPP_OF_PDB:
             cout << "Output file format: Protein Data Bank." << endl;
@@ -186,10 +182,10 @@ int main(int argc, char * argv[]) {
     // main program body, using modules
     try {
         tpp::Topology topology;
-        tpp::load_struct_fname (topology, iform, PARAM_READ(cmdline, "input_file").c_str() );
+        tpp::load_struct_fname (topology, iform, cmdline.read("input_file").c_str() );
         ublas::vector<unsigned> tail1 = tpp::generate_long_tail1(topology.mol);
         topology.atoms = tpp::mol_renum1(topology.mol, topology.atoms, tail1 );
-        tpp::save_struct (topology, oform, PARAM_READ(cmdline, "output_file").c_str() );
+        tpp::save_struct (topology, oform, cmdline.read("output_file").c_str() );
     } catch (tpp::Exception e) {
         cerr << "  TPP_EXCEPTION FROM: " << e["procname"] << endl;
         cerr << "  With following error: " << e["error"] << endl;

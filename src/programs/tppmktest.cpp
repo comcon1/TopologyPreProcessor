@@ -1,11 +1,11 @@
 #include "topio.hpp"
-#include "db_scanner.hpp"
 #include "testcase.hpp"
 
 #include <boost/program_options/variables_map.hpp>
 #include <boost/program_options/errors.hpp>
 #include <boost/program_options/options_description.hpp>
 #include <boost/program_options/parsers.hpp>
+#include "../../include/db_base.hpp"
 
 namespace p_o = boost::program_options;
 using tpp::cmdline;

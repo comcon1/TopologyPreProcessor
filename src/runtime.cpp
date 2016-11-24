@@ -8,10 +8,14 @@ using std::string;
 
 namespace tpp {
 
-t_input_params cmdline;
-t_runtime runtime("log", "cash");
+// Global varibales. THEY ARE BAD
+Parameters cmdline;
+Runtime runtime("log", "cash");
+//
+
+
 // runtime constructor
-t_runtime::t_runtime(const char *logn, const char *cashn) {
+Runtime::Runtime(const char *logn, const char *cashn) {
 	log = fopen(logn, "a+");
 	BOOST_REQUIRE(log);
 	cash = fopen(cashn, "a+b");
@@ -26,20 +30,20 @@ t_runtime::t_runtime(const char *logn, const char *cashn) {
 }
 
 // write string into log
-void t_runtime::log_write(const char *s) {
+void Runtime::log_write(const char *s) {
 	fputs(s, log);
 	fflush(log);
 }
 
 // write block into cash \0 is not implemented as end-of-string
-void t_runtime::cash_write(const char *s, unsigned c) {
+void Runtime::cash_write(const char *s, unsigned c) {
 	for (int i = 0; i < c; i++)
 		fputc(s[i], cash);
 	fflush(cash);
 }
 
 // finishing write
-t_runtime::~t_runtime() {
+Runtime::~Runtime() {
 	log_write(
 			string("\nLog terminated at ")
 					+ boost::lexical_cast<string>(boost::posix_time::second_clock::local_time())

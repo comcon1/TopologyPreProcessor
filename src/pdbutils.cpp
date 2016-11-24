@@ -62,14 +62,14 @@ string an2str(int a, string def) {
 string mc_numerer(int id) {
 	char *rrr = new char[4];
 	if ((id > 255)
-			|| ((PARAM_READ(cmdline, "hex_flag") == "off") && (id > 99))) {
-		t_input_params params;
-		PARAM_ADD(params, "procname", "tpp::mc_numerer");
-		PARAM_ADD(params, "error",
+			|| ( (cmdline.read("hex_flag") == "off") && (id > 99))) {
+		Parameters params;
+		params.add("procname", "tpp::mc_numerer");
+		params.add("error",
 				string("Too many atoms to number. Try to turn HEX mode. "));
 		throw Exception("Bad connection atoms", params);
 	}
-	if (PARAM_READ(cmdline, "hex_flag") == "on") {
+	if (cmdline.read("hex_flag") == "on") {
 		sprintf(rrr, "%X", id);
 	} else {
 		sprintf(rrr, "%d", id);
@@ -115,9 +115,9 @@ bool BondMatrix::check() {
 				++it)
 			os << (*it) << ",";
 		os << " - This atoms are isolated" << endl;
-		t_input_params params;
-		PARAM_ADD(params, "procname", "tpp::BondMatrix::check");
-		PARAM_ADD(params, "error", os.str());
+		Parameters params;
+		params.add("procname", "tpp::BondMatrix::check");
+		params.add("error", os.str());
 		throw Exception("Bad connection atoms", params);
 	}
 	return true;
@@ -194,7 +194,7 @@ ublas::vector<int> generate_long_tail1(OBMol &mol, std::set<unsigned> &excluded,
 		std::ostringstream os;
 		os << subrange(tail_long, 1, tail_long.size()) << std::flush;
 		runtime.log_write(os.str());
-		if ((PARAM_READ(cmdline, "verbose_flag") == "on")
+		if ((cmdline.read("verbose_flag") == "on")
 				&& (tail_long.size() > 1)) {
 			cout << "At. subchain: " << os.str() << endl;
 		}
@@ -437,9 +437,9 @@ std::pair<matrix<int>, matrix<int> > top_neig(OBMol &X, matrix<int> M, int a,
 	S(0) = neig.size1();
 	S(1) = neig.size2();
 	if (S(1) > 27) {
-		t_input_params params;
-		PARAM_ADD(params, "procname", "tpp::top_neig");
-		PARAM_ADD(params, "error",
+		Parameters params;
+		params.add("procname", "tpp::top_neig");
+		params.add("error",
 				(string("Too many neighbours of atom ")
 						+ lexical_cast<string>(a)).c_str());
 		throw Exception("Bad connection atoms", params);
@@ -461,9 +461,9 @@ std::pair<matrix<int>, matrix<int> > top_neig(OBMol &X, matrix<int> M, int a,
 			else if (X.GetAtom(neig(p, q))->GetAtomicNum() == 16)
 				funct(p, 6) = funct(p, 6) + 1;
 			else { /*
-			 t_input_params params;
-			 PARAM_ADD(params, "procname", "tpp::top_neig");
-			 PARAM_ADD(params, "error", (
+			 Parameters params;
+			 params.add("procname", "tpp::top_neig");
+			 params.add("error", (
 			 string("Strange atom, algorythm can't work with atom #")+
 			 lexical_cast<string>(X.GetAtom(neig(p,q))->GetAtomicNum())+ ", ID=" +
 			 lexical_cast<string>(neig(p,q))

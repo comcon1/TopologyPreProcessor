@@ -9,7 +9,7 @@ using boost::lexical_cast;
 namespace tpp {
 
 
-  string ttc_name_generator::getName() {
+  string TTCNameGenerator::getName() {
     string a("");
     switch (instance.type) {
       case TPP_TTYPE_BON:     a = getBondName(); break;
@@ -23,19 +23,19 @@ namespace tpp {
     return a;
   }
 
-  ttc_name_generator &ttc_name_generator::set_btypes(array<string,4> vs) {
+  TTCNameGenerator &TTCNameGenerator::set_btypes(array<string,4> vs) {
     btypes = vs;
     return (*this);
   }
 
-  string ttc_name_generator::getBondName() {
+  string TTCNameGenerator::getBondName() {
     string a("dfTPP_bon_");
     int first = btypes[0] > btypes[1] ? 0 : 1;
     a += btypes[first] + "_" + btypes[!first] + "_" + lexical_cast<string>(instance.dbid);
     return a;
   }
 
-  string ttc_name_generator::getAngleName() {
+  string TTCNameGenerator::getAngleName() {
     string a("dfTPP_ang_");
     int first = btypes[0] > btypes[2] ? 0 : 2;
     int third = first ? 0 : 2;
@@ -44,7 +44,7 @@ namespace tpp {
     return a;
   }
 
-  string ttc_name_generator::getDihedralName() {
+  string TTCNameGenerator::getDihedralName() {
     string a("dfTPP_dih_");
     if (btypes[0] > btypes[3]) 
       a += btypes[0] + "_" + btypes[1] + "_" + btypes[2] + "_" + btypes[3];

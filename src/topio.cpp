@@ -91,9 +91,9 @@ void mol_to_atoms(Topology &tp) {
     }
     res = tp.atoms.insert(cur0);
     if (!res.second) {
-               t_input_params params;
-               PARAM_ADD(params, "procname", "tpp::mol_to_atoms");
-               PARAM_ADD(params, "error", "PDB parsing error. Repeated index.");
+               Parameters params;
+               params.add("procname", "tpp::mol_to_atoms");
+               params.add("error", "PDB parsing error. Repeated index.");
                throw Exception("..something to log..", params);
     }
   }
@@ -206,7 +206,7 @@ void save_topology_rtp(Topology &tp, const char *fname) {
 }
 
 void save_topology(Topology &tp, const char *fname) {
-  bool ncf = (PARAM_READ(cmdline, "nocalculate_flag") == "on");
+  bool ncf = cmdline.read("nocalculate_flag") == "on";
   // test if file exists
   runtime.log_write(string("Trying to write topology into '")+fname+"'.\n");
   fstream out(fname, ios::out);
@@ -425,7 +425,7 @@ Error in parsing file '%1%' catched:  \n\
         cout << "*\n\
 ---------------------------------\n\
 * - the point of error\n";
-       t_input_params pars0;
+       Parameters pars0;
        PARAM_ADD(pars0, "error", "Parsing error");
        throw Exception("GAMESS output parsing error!", pars0);
  }
@@ -501,8 +501,8 @@ Error in parsing file '%1%' catched:  \n\
 * - the point of error\n";
         cout << "Parsed parameters: " << endl;
         cout << lex::outs.str() << endl;
-       t_input_params pars0;
-       PARAM_ADD(pars0, "error", "Parsing error");
+       Parameters pars0;
+       pars0.add("error", "Parsing error");
        throw Exception("Topology lack parsing error!", pars0);
  }
  return;
@@ -657,8 +657,8 @@ Error in parsing file '%1%' catched:  \n\
 * - the point of error\n";
         cout << "Parsed parameters: " << endl;
         cout << lex::outs.str() << endl;
-       t_input_params pars0;
-       PARAM_ADD(pars0, "error", "Parsing error");
+       Parameters pars0;
+       pars0.add("error", "Parsing error");
        throw Exception("Topology parsing error!", pars0);
  }
  {
@@ -686,10 +686,10 @@ void load_struct_fname(Topology &tp, InputFormat ifm, const char *fname) {
   if (!inf.is_open()) { 
     BOOST_CHECK(0);
     runtime.log_write("Fail to open file for read.\n");
-    t_input_params params;
-    PARAM_ADD(params, "procname", "tpp::load_struct");
-    PARAM_ADD(params, "error", "invalid filename");
-    PARAM_ADD(params, "filename", fname);
+    Parameters params;
+    params.add( "procname", "tpp::load_struct");
+    params.add("error", "invalid filename");
+    params.add("filename", fname);
     Exception e("Can't open specified file for read.", params);
     e.fix_log();
     throw e;
@@ -727,9 +727,9 @@ void load_struct_stream(Topology &tp, InputFormat ifm, std::istream *inf) {
   runtime.log_write("Reading by OpenBabel..");
   OBMol mol;
   if ( (!conv.Read(&mol)) || (!mol.NumAtoms()) ) {
-               t_input_params params;
-               PARAM_ADD(params, "procname", "tpp::load_struct");
-               PARAM_ADD(params, "error", "OpenBabel: parsing error");
+               Parameters params;
+               params.add("procname", "tpp::load_struct");
+               params.add("error", "OpenBabel: parsing error");
                throw Exception("Can't read file format.", params);
   }
   runtime.log_write("OK.\n");
@@ -746,7 +746,7 @@ void load_struct_stream(Topology &tp, InputFormat ifm, std::istream *inf) {
      Atom cur0;
      float __x,__y,__z;
      strc = 0;
-     bool ignoreIndexFlag = (PARAM_READ(cmdline, "ignore_index") == "on");
+     bool ignoreIndexFlag = (cmdline.read("ignore_index") == "on");
      inf->clear();
      inf->seekg(0);
      while (! inf->eof() ) {
@@ -776,17 +776,17 @@ void load_struct_stream(Topology &tp, InputFormat ifm, std::istream *inf) {
 
          if ( res < 8 ) {
                BOOST_CHECK(0);
-               t_input_params params;
-               PARAM_ADD(params, "procname", "tpp::load_struct");
-               PARAM_ADD(params, "error", "PDB parsing error");
-               PARAM_ADD(params, "line", lexical_cast<string>(strc).c_str());
+               Parameters params;
+               params.add("procname", "tpp::load_struct");
+               params.add("error", "PDB parsing error");
+               params.add("line", lexical_cast<string>(strc).c_str());
                throw Exception("Invalid ATOM string in your PDB file.", params);
          }
          
 //         cerr << strc << ")";
          cur0.old_aname = string(NAM);
          cur0.atom_name = string(NAM);
-         if (PARAM_EXISTS(cmdline, "rtpoutput_file")) {
+         if (cmdline.exists("rtpoutput_file")) {
              // need to replace 1H2 to H21
              if ((NAM[0] >= 48) && (NAM[0] <= 57))
                  cur0.atom_name = cur0.old_aname.substr(1) + cur0.old_aname.substr(0,1);
@@ -805,10 +805,10 @@ void load_struct_stream(Topology &tp, InputFormat ifm, std::istream *inf) {
 
          if (! at_it.second) {
                runtime.log_write("ERROR: bad insertingo..\n");
-               t_input_params params;
-               PARAM_ADD(params, "procname", "tpp::load_struct");
-               PARAM_ADD(params, "error", "PDB parsing error");
-               PARAM_ADD(params, "line", lexical_cast<string>(strc).c_str());
+               Parameters params;
+               params.add("procname", "tpp::load_struct");
+               params.add("error", "PDB parsing error");
+               params.add("line", lexical_cast<string>(strc).c_str());
                throw Exception("Repeat index or something else.", params);
          }
 
@@ -856,9 +856,9 @@ void load_struct_stream(Topology &tp, InputFormat ifm, std::istream *inf) {
   }
 
      if ( tp.atoms.empty() ) {
-               t_input_params params;
-               PARAM_ADD(params, "procname", "tpp::load_struct");
-               PARAM_ADD(params, "error", "no atoms");
+               Parameters params;
+               params.add("procname", "tpp::load_struct");
+               params.add("error", "no atoms");
                throw Exception("No atoms in structure file or bad format.", params);
      } else {
        runtime.log_write(string("Successfully readed ")+lexical_cast<string>(tp.atoms.size())+ " atoms!\n");
@@ -874,10 +874,10 @@ void load_struct_stream(Topology &tp, InputFormat ifm, std::istream *inf) {
   if (!out.is_open()) { 
     runtime.log_write("Fail to open file for write.\n");
     BOOST_CHECK(0);
-    t_input_params params;
-    PARAM_ADD(params, "procname", "tpp::load_struct");
-    PARAM_ADD(params, "error", "invalid filename");
-    PARAM_ADD(params, "filename", fname);
+    Parameters params;
+    params.add("procname", "tpp::load_struct");
+    params.add("error", "invalid filename");
+    params.add("filename", fname);
     throw Exception("Can't open specified file for write.", params);
   }
   switch (ofm) {

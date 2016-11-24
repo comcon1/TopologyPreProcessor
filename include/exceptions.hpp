@@ -20,11 +20,11 @@ namespace tpp{
 	class Exception {
 		protected:
 			std::string mesg;
-		    t_input_params pars;
+			Parameters pars;
 	  public:
 	   Exception();
 	   virtual ~Exception();
-	   Exception(const char *, t_input_params &);
+	   Exception(const char *, Parameters &);
 	   Exception(const char *s);
 	   virtual std::string operator [] (const char *s) const;
 	   virtual std::string operator [] (const std::string &s) const;
@@ -41,7 +41,7 @@ namespace tpp{
 	 */
 	class DbException: public Exception {
 	  public:
-		DbException(const char *a, t_input_params &b);
+		DbException(const char *a, Parameters &b);
 	    virtual void fix_log() const;
 	};
 
