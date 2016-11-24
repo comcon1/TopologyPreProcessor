@@ -46,7 +46,7 @@ bool BondDefiner::connect_db() {
 
 	// get ffid
 	mysqlpp::Query qu = con->query();
-	MYSQLPP_RESULT res;
+	QueryResult res;
 	mysqlpp::Row row;
 	qu
 			<< format(
@@ -111,7 +111,7 @@ bool BondDefiner::connect_db() {
 // special functions))
 void BondDefiner::fill_bonds() {
 	mysqlpp::Query qu = con->query();
-	MYSQLPP_RESULT res;
+	QueryResult res;
 	mysqlpp::Row row;
 	string query;
 	int co = 0;
@@ -163,7 +163,7 @@ WHERE (bonds.ffield = %3$d) AND \
 	tpc.c0 = (res.num_rows() > 0) ? res.at(0)["c1"] : 0.00;
 	tpc.c1 = (res.num_rows() > 0) ? res.at(0)["c2"] : 0.00;
 	tpc.dbid = (res.num_rows() > 0) ? res.at(0)["id"] : -1;
-	tel.defname = ttc_name_generator(tpc).set_btypes( {typ1,typ2}).getName();
+	tel.defname = TTCNameGenerator(tpc).set_btypes( {typ1,typ2}).getName();
 	tpc.defname = tel.defname;
 	tp.elements.push_back(tel);
 	tp.parameters.insert(tpc);
@@ -208,7 +208,7 @@ WHERE (bonds.ffield = %3$d) AND \
 
 void BondDefiner::fill_angles() {
 	mysqlpp::Query qu = con->query();
-	MYSQLPP_RESULT res;
+	QueryResult res;
 	mysqlpp::Row row;
 	string query;
 	int co = 0;
@@ -263,7 +263,7 @@ WHERE (angles.ffield = %4$d) AND \
 	tpc.c0 = (res.num_rows() > 0) ? res.at(0)["c1"] : 0.00;
 	tpc.c1 = (res.num_rows() > 0) ? res.at(0)["c2"] : 0.00;
 	tpc.dbid = (res.num_rows() > 0) ? res.at(0)["id"] : -1;
-	tel.defname = ttc_name_generator(tpc).set_btypes( {typ1,typ2,typ3}).getName();
+	tel.defname = TTCNameGenerator(tpc).set_btypes( {typ1,typ2,typ3}).getName();
 	tpc.defname = tel.defname;
 	tp.elements.push_back(tel);
 	tp.parameters.insert(tpc);
@@ -311,7 +311,7 @@ void BondDefiner::fill_special() {
 
 void BondDefiner::fill_dihedrals() {
 	mysqlpp::Query qu = con->query();
-	MYSQLPP_RESULT res;
+	QueryResult res;
 	mysqlpp::Row row;
 	string query;
 	int co = 0;
@@ -417,7 +417,7 @@ WHERE (dihedrals.ffield = %5$d) AND \
 		}
 
 	}
-	tel.defname = ttc_name_generator(tpc).set_btypes( {typ1,typ2,typ3,typ4}).getName();
+	tel.defname = TTCNameGenerator(tpc).set_btypes( {typ1,typ2,typ3,typ4}).getName();
 	tpc.defname = tel.defname;
 	tp.elements.push_back(tel);
 	tp.parameters.insert(tpc);
@@ -474,7 +474,7 @@ void BondDefiner::fill_impropers() {
 					% this->ffid;
 	runtime.log_write("Loading IMPROPER patterns from DB..");
 	cout << "IMPROPER patterns are loading. Please wait.." << flush;
-	MYSQLPP_RESULT res;
+	QueryResult res;
 	res = qu.store();
 	if (!res) {
 		Parameters params;

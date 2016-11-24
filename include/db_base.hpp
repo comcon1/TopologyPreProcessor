@@ -7,7 +7,6 @@
 #ifndef TPP_DBSCANNER_H
 #define TPP_DBSCANNER_H
 
-#include "global.hpp"
 #include "core.hpp"
 #include "exceptions.hpp"
 
@@ -30,6 +29,8 @@ namespace tpp {
     virtual void fix_log() const; 
     SqlException(const char *s, Parameters &p): Exception(s, p) { ; }
   };
+
+  typedef mysqlpp::StoreQueryResult QueryResult; /// for brevity
 
   /**
    *

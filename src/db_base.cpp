@@ -1,5 +1,6 @@
 #include "db_base.hpp"
 
+#include "global.hpp" // for magic number macro
 #include "exceptions.hpp"
 #include "runtime.hpp"
 
@@ -15,7 +16,6 @@ using std::cout;
 using std::cerr;
 using std::vector;
 using std::ostringstream;
-
 
 namespace tpp {
 
@@ -60,7 +60,7 @@ namespace tpp {
     }
 
     mysqlpp::Query qu = this->con->query();
-    MYSQLPP_RESULT res;
+    QueryResult res;
     mysqlpp::Row row;
     ostringstream os; 
 
@@ -118,7 +118,7 @@ namespace tpp {
 
   void DbInfo::getFFdata() {
     mysqlpp::Query qu = this->con->query();
-    MYSQLPP_RESULT res;
+    QueryResult res;
     mysqlpp::Row row;
     // get ffid
     this->ffname = par.read("ffname");
@@ -158,7 +158,7 @@ namespace tpp {
   string DbInfo::get_statistics() {
 
     mysqlpp::Query qu = this->con->query();
-    MYSQLPP_RESULT res;
+    QueryResult res;
     mysqlpp::Row row;
 
     qu << format("\

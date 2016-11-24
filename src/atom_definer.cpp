@@ -75,7 +75,7 @@ bool operator <(const spec4_ &a, const spec4_ &b) {
 void AtomDefiner::fill_nb() {
 	cout << "Comparing atom by elements.." << endl;
 	mysqlpp::Query qu = con->query();
-	MYSQLPP_RESULT res;
+	QueryResult res;
 	mysqlpp::Row row;
 	mysqlpp::Row::size_type co;
 	set<int> tmpv;
@@ -119,7 +119,7 @@ void AtomDefiner::fill_bon() {
 
 	cout << "Comparing atom by bonds.." << endl;
 	mysqlpp::Query qu = con->query();
-	MYSQLPP_RESULT res;
+	QueryResult res;
 	mysqlpp::Row row;
 	mysqlpp::Row::size_type co;
 	set<spec2_> tmpv, tmpv1;
@@ -233,7 +233,7 @@ void AtomDefiner::fill_ang() {
 
 	cout << "Comparing atom by angles.." << endl;
 	mysqlpp::Query qu = con->query();
-	MYSQLPP_RESULT res;
+	QueryResult res;
 	mysqlpp::Row row;
 	mysqlpp::Row::size_type co;
 	set<spec3_> tmpv, tmpv1;
@@ -348,7 +348,7 @@ void AtomDefiner::fill_dih() {
 
 	cout << "Comparing atom by dihedrals.." << endl;
 	mysqlpp::Query qu = con->query();
-	MYSQLPP_RESULT res;
+	QueryResult res;
 	mysqlpp::Row row;
 	mysqlpp::Row::size_type co;
 	set<spec4_> tmpv, tmpv1;
@@ -468,7 +468,7 @@ WHERE dihedrals.ffield = %1$d\n\
 
 void AtomDefiner::spread_atomid() {
 	mysqlpp::Query qu = con->query();
-	MYSQLPP_RESULT res;
+	QueryResult res;
 	mysqlpp::Row row;
 	map<int, map<int, int> >::iterator score_it;
 	map<int, int>::iterator score_subit;
@@ -543,7 +543,7 @@ void AtomDefiner::atom_align() {
 					ordered_unique<member<tempstruct_t, int, &tempstruct_t::id> > > > AtomMapper;
 	AtomMapper atom_mapper;
 	mysqlpp::Query qu = con->query();
-	MYSQLPP_RESULT res;
+	QueryResult res;
 	mysqlpp::Row row;
 	mysqlpp::Row::size_type co;
 	qu
@@ -835,7 +835,7 @@ void AtomDefiner::smart_cgnr() {
                   WHERE ffield = %1$d and flag = 1") % this->ffid;
           runtime.log_write("Loading CGNR patterns from DB..");
           cout << "CHARGEGROUP patterns are loading. Please wait.." << flush;
-          MYSQLPP_RESULT res;
+          QueryResult res;
           res = qu.store();
           if (!res) {
               Parameters params;
@@ -973,7 +973,7 @@ void AtomDefiner::smart_fit() {
       // next work with copied sf_scores
       runtime.log_write("Starting curious SMART-fitting procedure.\n");
       mysqlpp::Query qu = con->query();
-      MYSQLPP_RESULT res;
+      QueryResult res;
       mysqlpp::Row    row;
       mysqlpp::Row::size_type co;
       OBSmartsPattern pat;

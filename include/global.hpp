@@ -1,6 +1,7 @@
 /** \file global.hpp
  *
- *	\brief This file should be consumed by some other utility file.
+ *	\brief This file is used to interact with AutoMake toolchain. It should be
+ *	incluided whenever conditional compilation is used.
  *
  *	Well, a relict of  its former glory, isnt't?
  */
@@ -31,8 +32,5 @@ std::ostream& operator<< (std::ostream& out, const std::vector<T>& v) {
     return out;
 }
 
-
-#define MYSQLPP_RESULT mysqlpp::StoreQueryResult
-//#define MYSQLPP_RESULT mysqlpp::Result
 
 #endif
