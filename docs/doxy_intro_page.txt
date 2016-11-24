@@ -1,0 +1,15 @@
+ /*! \mainpage Topology Preparator
+
+ A number of utilies to work with atoms and their topologies.
+ 
+  Project dependencies:
+  - openababel for operations on pdb files
+  - boost::program options for parsing command line arguments
+  - mysql++ for operations with MySql database.
+  - booost::spirit for some dark magic
+ 
+  Project optional dependencies:
+  - booost::unit test (unclear if its  workable, though)
+  - GAMESS for some quantum chemistry stuff
+ 
+ */
