@@ -13,7 +13,7 @@
 #include "runtime.hpp"
 #include "paramset.hpp"
 #include "pdbutils.hpp"
-#include "topio.hpp"
+#include "structio.hpp"
 
 #include <boost/program_options/variables_map.hpp>
 #include <boost/program_options/errors.hpp>
@@ -182,10 +182,11 @@ int main(int argc, char * argv[]) {
     // main program body, using modules
     try {
         tpp::Topology topology;
-        tpp::load_struct_fname (topology, iform, cmdline.read("input_file").c_str() );
+        tpp::StructureIO io;
+        io.loadFromFile(topology, iform, cmdline.read("input_file").c_str() );
         ublas::vector<unsigned> tail1 = tpp::generate_long_tail1(topology.mol);
         topology.atoms = tpp::mol_renum1(topology.mol, topology.atoms, tail1 );
-        tpp::save_struct (topology, oform, cmdline.read("output_file").c_str() );
+        io.saveToFile(topology, oform, cmdline.read("output_file").c_str() );
     } catch (tpp::Exception e) {
         cerr << "  TPP_EXCEPTION FROM: " << e["procname"] << endl;
         cerr << "  With following error: " << e["error"] << endl;

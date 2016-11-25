@@ -9,6 +9,7 @@
 #include "exceptions.hpp"
 #include "runtime.hpp"
 #include "topio.hpp"
+#include "structio.hpp"
 #include "db_base.hpp"
 #include "atom_definer.hpp"
 #include "bond_definer.hpp"
@@ -225,12 +226,12 @@ int main(int argc, char * argv[]) {
 	// program body, using modules
 	try {
 		tpp::Topology TOP;
+                tpp::StructureIO sio;
 		// setting up common topology parameters
 		TOP.res_name = cmdline.read("input_file").substr(0, 3);
 		TOP.nrexcl = 3;
 		// ;-)
-		tpp::load_struct_fname(TOP, iform,
-				cmdline.read("input_file").c_str());
+		sio.loadFromFile(TOP, iform, cmdline.read("input_file").c_str());
 		// customization of 2-nd level parameters
 		tpp::Parameters par0;
 		par0.add("host", cmdline.read("sqlserver"));

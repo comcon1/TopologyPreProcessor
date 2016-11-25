@@ -4,6 +4,7 @@
  *	incluided whenever conditional compilation is used.
  *
  *	Well, a relict of  its former glory, isnt't?
+ *	TODO: may be remove?
  */
 
 #ifndef TPP_GLOBAL_H
