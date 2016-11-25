@@ -7,6 +7,7 @@
 #include <boost/format.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/numeric/conversion/cast.hpp>
+#include <boost/algorithm/string.hpp>
 
 #include <openbabel/obconversion.h>
 #include <openbabel/obiter.h>
@@ -95,71 +96,113 @@ namespace tpp {
       // ---------------------------------------
       switch(ifm) {
         case TPP_IF_PDB: {
-                  char *s0  = new char[300], *SEL = new char[7], *NAM = new char[5], *RES = new char[5], *qat = new char[2]; 
-                  int  res, strc, incrementalIndex = 0;
+                  char *s0  = new char[300];
+                  string curString, field, _aName, _rName, _qName;
+                  int  fieldCounter, strc, incrementalIndex = 0;
                   std::pair<AtomArray::iterator, bool> at_it;
                   Atom cur0;
-                  float __x,__y,__z;
+                  float __x, __y, __z;
                   strc = 0;
                   bool ignoreIndexFlag = (cmdline.read("ignore_index") == "on");
                   inf->clear();
                   inf->seekg(0);
                   while (! inf->eof() ) {
                     inf->getline(s0, 300);
+                    curString = string(s0);
                     strc++;
-                    //         cerr << strc << "|";
 
-                    res = 0;
-                    res += sscanf(s0, "%6s", SEL);
-                    //         cerr << SEL << ".";
-                    if ( strcmp(SEL, "ATOM") && strcmp(SEL, "HETATM") ) continue;
+                    fieldCounter = 0;
+                    _qName = "un";
 
-                    res += sscanf(s0 + 6, "%5u", &(cur0.oldindex));
-                    cur0.index = ignoreIndexFlag ? 65535 : cur0.oldindex;
-                    //         cur0.atom_id = lexical_cast<unsigned>(strcpy(s0, 
-                    res += sscanf(s0 + 11, "%5s",  NAM);
-                    res += sscanf(s0 + 16, "%4s",  RES);
-                    // pass chain letter 21 -> 23
-                    res += sscanf(s0 + 23,"%4u", &(cur0.mol_id) );
-                    res += sscanf(s0 + 30, "%f", &__x );
-                    res += sscanf(s0 + 38, "%f", &__y );
-                    res += sscanf(s0 + 46, "%f", &__z );
+                    // ATOM | HETATM field
+                    field = curString.substr(0,6);
+                    boost::trim( field );
+                    if ( (field != "ATOM") && (field != "HETATM") ) 
+                      continue;
+                    fieldCounter++;
+                    try {
+                      // Atom index
+                      field = curString.substr(6,5); 
+                      boost::trim(field);
+                      cur0.oldindex = lexical_cast<unsigned>(field);
+                      cur0.index = ignoreIndexFlag ? 65535 : cur0.oldindex;
+                      fieldCounter += (field.size() > 0);
+                      // Atom name
+                      field = curString.substr(11,5);
+                      boost::trim( field );
+                      fieldCounter += (field.size() > 0);
+                      _aName = field;
+                      // Residue name
+                      field = curString.substr(16,4);
+                      boost::trim( field );
+                      fieldCounter += (field.size() > 0);
+                      _rName = field;
+                      // pass chain letter 21 -> 23
+                      // Molecule number
+                      field = curString.substr(23,4);
+                      boost::trim(field);
+                      cur0.mol_id = lexical_cast<unsigned char>(field);
+                      fieldCounter += (field.size() > 0);
+                      // Coordinates
+                      field = curString.substr(30,8);
+                      boost::trim(field);
+                      __x = lexical_cast<float>(field);
+                      fieldCounter += (field.size() > 0);
+                      field = curString.substr(38,8);
+                      boost::trim(field);
+                      __y = lexical_cast<float>(field);
+                      fieldCounter += (field.size() > 0);
+                      field = curString.substr(46,8);
+                      boost::trim(field);
+                      __z = lexical_cast<float>(field);
+                      fieldCounter += (field.size() > 0);
+                    } catch (const boost::bad_lexical_cast& e ) {
+                        std::cerr << "** Caught bad lexical cast with error: " << e.what() << std::endl;
+                        std::cerr << curString << std::endl;
+                        Parameters params;
+                        params.add("classname", "StructIO");
+                        params.add("procname", "loadFromStream");
+                        params.add("error", "PDB parsing error");
+                        params.add("line", lexical_cast<string>(strc).c_str());
+                        throw Exception("Failed to extract numbers from the ATOM string.", params);
+                    }
+                    // Chemical atom
+                    if (curString.size() > 76) {
+                      field = curString.substr(76,2);
+                      boost::trim( field );
+                      fieldCounter += (field.size() > 0);
+                      _qName = field;
+                    }
 
-                    strcpy(qat, "un");
-                    if (strlen(s0) > 76)
-                      res += sscanf(s0 + 76, "%2s", qat);
-
-                    if ( res < 8 ) {
-                      BOOST_CHECK(0);
+                    // internal check
+                    if ( fieldCounter < 8 ) {
                       Parameters params;
-                      params.add("procname", "tpp::load_struct");
+                      params.add("procname", "StructIO::loadFromStream");
                       params.add("error", "PDB parsing error");
                       params.add("line", lexical_cast<string>(strc).c_str());
                       throw Exception("Invalid ATOM string in your PDB file.", params);
                     }
 
-                    //         cerr << strc << ")";
-                    cur0.old_aname = string(NAM);
-                    cur0.atom_name = string(NAM);
+                    cur0.old_aname = string(_aName);
+                    cur0.atom_name = string(_aName);
                     if (cmdline.exists("rtpoutput_file")) {
                       // need to replace 1H2 to H21
-                      if ((NAM[0] >= 48) && (NAM[0] <= 57))
+                      if (isdigit(_aName[0]))
                         cur0.atom_name = cur0.old_aname.substr(1) + cur0.old_aname.substr(0,1);
                     }
-                    cur0.res_name  = string(RES);
-                    cur0.qmname    = string(qat);
+                    cur0.res_name  = string(_rName);
+                    cur0.qmname    = string(_qName);
                     cur0.coord(0)  = numeric_cast<double>(__x);
                     cur0.coord(1)  = numeric_cast<double>(__y);
                     cur0.coord(2)  = numeric_cast<double>(__z);
-                    cur0.comment   = string("QMname: ") + qat;
+                    cur0.comment   = string("QMname: ") + _qName;
 
                     runtime.log_write( (format("%s - %s: %d(%d) [%8.3f,%8.3f,%8.3f] %s \n") % cur0.res_name % cur0.atom_name 
                           % cur0.oldindex % cur0.index % cur0.coord(0) % cur0.coord(1) % cur0.coord(2) % cur0.comment).str() );
                     at_it = tp.atoms.insert( cur0 );
-                    //         cerr << strc << "@";
 
                     if (! at_it.second) {
-                      runtime.log_write("ERROR: bad insertingo..\n");
+                      runtime.log_write("ERROR: bad inserting..\n");
                       Parameters params;
                       params.add("procname", "tpp::load_struct");
                       params.add("error", "PDB parsing error");
@@ -172,11 +215,10 @@ namespace tpp {
                       cur0.index = incrementalIndex;
                       tp.atoms.replace(at_it.first, cur0);
                     }
-                    //         cerr << strc << "$";
 
                   } // end-while
-                  delete[] s0; delete[] SEL; delete[] NAM; delete[] RES;
-                  /* FINISH PARSIGN PDB */
+                  delete[] s0;
+                  /* FINISH PARSING PDB */
                 } // end-case PDB
                          break;
         case TPP_IF_G96:   molToAtoms(tp); // #TODO 1 
@@ -218,7 +260,10 @@ namespace tpp {
       } else {
         runtime.log_write(string("Successfully readed ")+lexical_cast<string>(tp.atoms.size())+ " atoms!\n");
       }
-    } catch(Exception e) { e.fix_log(); throw e;  }
+    } catch(const Exception &e) { 
+      e.fix_log(); 
+      throw e;  
+    }
   } // end loadFromStream
 
   void StructureIO::saveToFile(Topology &tp, OutputFormat ofm, const char *fname) {
