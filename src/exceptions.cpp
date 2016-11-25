@@ -20,18 +20,18 @@ Exception::~Exception()
 
 }
 
-Exception::Exception(const char *, Parameters &) {
-	using std::cerr;
-    if (pars.exists("fatal")) {
-      cerr << "TPP was abnormally terminated at " << boost::posix_time::second_clock::local_time() << "\n";
-      cerr << boost::format("Position: %1% -> %2% \n") % pars.read("classname") % pars.read("procname");
-      cerr << mesg << std::endl;
-      cerr << "Saving log and cache files..";
-      runtime.~Runtime(); // TODO remoce explicit destructor call
-      cerr << "Ok.\n";
-      cerr << "---------------------------------------------------------\n";
-      exit(1);
-    }
+Exception::Exception(const char *_mesg, Parameters &_pars): mesg(_mesg), pars(_pars) {
+  using std::cerr;
+  if (pars.exists("fatal")) {
+    cerr << "TPP was abnormally terminated at " << boost::posix_time::second_clock::local_time() << "\n";
+    cerr << boost::format("Position: %1% -> %2% \n") % pars.read("classname") % pars.read("procname");
+    cerr << mesg << std::endl;
+    cerr << "Saving log and cache files..";
+    runtime.~Runtime(); // TODO remoce explicit destructor call
+    cerr << "Ok.\n";
+    cerr << "---------------------------------------------------------\n";
+    exit(1);
+  }
 }
 
 Exception::Exception(const char *s): mesg(s){
