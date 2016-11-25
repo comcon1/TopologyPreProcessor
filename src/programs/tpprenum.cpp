@@ -187,7 +187,7 @@ int main(int argc, char * argv[]) {
         ublas::vector<unsigned> tail1 = tpp::generate_long_tail1(topology.mol);
         topology.atoms = tpp::mol_renum1(topology.mol, topology.atoms, tail1 );
         io.saveToFile(topology, oform, cmdline.read("output_file").c_str() );
-    } catch (tpp::Exception e) {
+    } catch (const tpp::Exception &e) {
         cerr << "  TPP_EXCEPTION FROM: " << e["procname"] << endl;
         cerr << "  With following error: " << e["error"] << endl;
         cerr << "  more info see in log-file." << endl;
