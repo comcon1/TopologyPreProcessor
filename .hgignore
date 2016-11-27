@@ -37,5 +37,8 @@ syntax: regexp
 
 ^.*\.sw[po]$
 ^.*\.o$
+^.*\.pdb$
+^.*\log$
+^.*\cash$
 ^.*\.orig$
 

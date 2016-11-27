@@ -144,7 +144,7 @@ namespace tpp {
     qu.reset();
     qu << format("select `value` from `properties` WHERE `keyword`='%1$srev'") % this->ffname;
     res = qu.store();
-    if ( (!res) || (!res.at(0)) ) {
+    if ( (!res) || res.size() == 0 || (!res.at(0)) ) {
         Parameters params;
         params.add("procname", "tpp::atom_definer::connect_db");
         params.add("error", "SQL query error");

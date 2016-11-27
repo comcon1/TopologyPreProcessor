@@ -226,7 +226,7 @@ int main(int argc, char * argv[]) {
 	// program body, using modules
 	try {
 		tpp::Topology TOP;
-                tpp::StructureIO sio;
+        tpp::StructureIO sio;
 		// setting up common topology parameters
 		TOP.res_name = cmdline.read("input_file").substr(0, 3);
 		TOP.nrexcl = 3;

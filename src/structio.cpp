@@ -45,7 +45,7 @@ namespace tpp {
       BOOST_CHECK(0);
       runtime.log_write("Fail to open file for read.\n");
       Parameters params;
-      params.add( "procname", "tpp::load_struct");
+      params.add("procname", "tpp::load_struct");
       params.add("error", "invalid filename");
       params.add("filename", fname);
       Exception e("Can't open specified file for read.", params);
