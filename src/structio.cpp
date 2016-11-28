@@ -123,48 +123,59 @@ namespace tpp {
                     try {
                       // Atom index
                       field = curString.substr(6,5); 
-                      boost::trim(field);
+                      boost::trim(field); std::cerr << field << std::endl;
                       cur0.oldindex = lexical_cast<unsigned>(field);
                       cur0.index = ignoreIndexFlag ? 65535 : cur0.oldindex;
                       fieldCounter += (field.size() > 0);
                       // Atom name
                       field = curString.substr(11,5);
-                      boost::trim( field );
+                      boost::trim( field ); std::cerr << field << std::endl;
                       fieldCounter += (field.size() > 0);
                       _aName = field;
                       // Residue name
                       field = curString.substr(16,4);
-                      boost::trim( field );
+                      boost::trim( field ); std::cerr << field << std::endl;
                       fieldCounter += (field.size() > 0);
                       _rName = field;
                       // pass chain letter 21 -> 23
                       // Molecule number
                       field = curString.substr(23,4);
-                      boost::trim(field);
-                      cur0.mol_id = lexical_cast<unsigned char>(field);
+                      boost::trim(field); std::cerr << field << std::endl;
+                      cur0.mol_id = numeric_cast<unsigned char>( lexical_cast<unsigned>(field) );
                       fieldCounter += (field.size() > 0);
                       // Coordinates
                       field = curString.substr(30,8);
-                      boost::trim(field);
+                      boost::trim(field); std::cerr << field << std::endl;
                       __x = lexical_cast<float>(field);
                       fieldCounter += (field.size() > 0);
                       field = curString.substr(38,8);
-                      boost::trim(field);
+                      boost::trim(field); std::cerr << field << std::endl;
                       __y = lexical_cast<float>(field);
                       fieldCounter += (field.size() > 0);
                       field = curString.substr(46,8);
-                      boost::trim(field);
+                      boost::trim(field); std::cerr << field << std::endl;
                       __z = lexical_cast<float>(field);
                       fieldCounter += (field.size() > 0);
-                    } catch (const boost::bad_lexical_cast& e ) {
-                        std::cerr << "** Caught bad lexical cast with error: " << e.what() << std::endl;
-                        std::cerr << curString << std::endl;
-                        Parameters params;
-                        params.add("classname", "StructIO");
-                        params.add("procname", "loadFromStream");
-                        params.add("error", "PDB parsing error");
-                        params.add("line", lexical_cast<string>(strc).c_str());
-                        throw Exception("Failed to extract numbers from the ATOM string.", params);
+                    } catch (const boost::bad_lexical_cast& e) {
+                      std::cerr << "** Caught bad lexical cast with error: " << e.what() << std::endl;
+                      std::cerr << format("** Last field read: [%1$s]") % field << std::endl;
+                      std::cerr << curString << std::endl;
+                      Parameters params;
+                      params.add("classname", "StructIO");
+                      params.add("procname", "loadFromStream");
+                      params.add("error", "PDB parsing error");
+                      params.add("line", lexical_cast<string>(strc).c_str());
+                      throw Exception("Failed to extract numbers from the ATOM string.", params);
+                    } catch (const boost::bad_numeric_cast &e) {
+                      std::cerr << "** Caught bad numeric cast with error: " << e.what() << std::endl;
+                      std::cerr << format("** Last field read: [%1$s]") % field << std::endl;
+                      std::cerr << curString << std::endl;
+                      Parameters params;
+                      params.add("classname", "StructIO");
+                      params.add("procname", "loadFromStream");
+                      params.add("error", "PDB numeric conversion error");
+                      params.add("line", lexical_cast<string>(strc).c_str());
+                      throw Exception("Some of ATOM indexes is out of bonds.", params);
                     }
                     // Chemical atom
                     if (curString.size() > 76) {
