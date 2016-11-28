@@ -12,7 +12,7 @@ namespace tpp
 class BondDefiner: public DbBase {
 public:
 
-	BondDefiner(Parameters, Topology &);
+	BondDefiner(Parameters, Topology &, bool v);
 	virtual ~BondDefiner();
 	void bond_align();
 	void log_needed_bonds();
@@ -24,6 +24,8 @@ private:
 	short ffid;
 	bool genpairs;
 	std::ofstream qalcfile;
+
+	bool verbose;
 
 	// methods
 	bool connect_db() override;

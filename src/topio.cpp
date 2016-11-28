@@ -66,6 +66,21 @@ using OpenBabel::OBMolAtomIter;
 using OpenBabel::OBAtomAtomIter;
 using namespace phoenix;
 
+static const char * top_comment =
+"; ----------------------------------------------\n"
+"; TPP - topology generator version " PACKAGE_VERSION " \n"
+"; created by Erg Research Group\n"
+"; MSU, Biology Faculty, Department of Biophysics\n"
+"; ----------------------------------------------\n"
+"; ATTENTION! Do not forget to use the proper version\n"
+"; of the force field fork (not less than revision). \n"
+"; Watch for corresponding force field at: \n"
+";            bitbucket.com/comcon1\n"
+"; ----------------------------------------------\n"
+"; Please ascertain that the topology is valid. We \n"
+"; do not guarantee that. If you find that something\n"
+"; is wrong, please report us to " PACKAGE_BUGREPORT "\n";
+
 
 void save_topology_rtp(Topology &tp, const char *fname) {
   // test if file exists
@@ -173,8 +188,8 @@ void save_topology_rtp(Topology &tp, const char *fname) {
   out.close();
 }
 
-void save_topology(Topology &tp, const char *fname) {
-  bool ncf = cmdline.read("nocalculate_flag") == "on";
+void save_topology(Topology &tp, const char *fname, bool ncf) {
+  //bool ncf = cmdline.read("nocalculate_flag") == "on";
   // test if file exists
   runtime.log_write(string("Trying to write topology into '")+fname+"'.\n");
   fstream out(fname, ios::out);

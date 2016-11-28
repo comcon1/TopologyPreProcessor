@@ -9,7 +9,6 @@ using std::string;
 namespace tpp {
 
 // Global varibales. THEY ARE BAD
-Parameters cmdline;
 Runtime runtime("log", "cash");
 //
 

@@ -29,8 +29,8 @@ namespace tpp {
 using namespace OpenBabel;
 
 // common place procedures...
-BondDefiner::BondDefiner(Parameters _par, Topology &_tp) :
-		DbBase(_par), tp(_tp) {
+BondDefiner::BondDefiner(Parameters _par, Topology &_tp, bool v) :
+		DbBase(_par), tp(_tp), verbose(v) {
 	connect_db();
 }
 
@@ -68,7 +68,7 @@ bool BondDefiner::connect_db() {
 	}
 	ffid = res.at(0)["id"];
 	genpairs = (bool) (res.at(0)["generate_pairs"]);
-	if (genpairs && (cmdline.read("verbose_flag") == "on")) {
+	if (genpairs && verbose) {
 		cout << "1-4 pair generation is required for FF." << endl;
 	}
 	qu.reset();
@@ -147,7 +147,7 @@ WHERE (bonds.ffield = %3$d) AND \
 			ostringstream os;
 			os << format("Bond not found between %1$s and %2$s!") % typ1 % typ2;
 			runtime.log_write(os.str());
-			if (cmdline.read("verbose_flag") == "on") {
+			if (verbose) {
 				cout << "[LACK] " << os.str() << endl;
 			}
 		}
@@ -246,7 +246,7 @@ WHERE (angles.ffield = %4$d) AND \
 			ostringstream os;
 			os << format("Angle not found between %1$s, %2$s and %3$s!") % typ1 % typ2 % typ3;
 			runtime.log_write(os.str());
-			if (cmdline.read("verbose_flag") == "on") {
+			if (verbose) {
 				cout << "[LACK] " << os.str() << endl;
 			}
 		}
@@ -411,7 +411,7 @@ WHERE (dihedrals.ffield = %5$d) AND \
 			ostringstream os;
 			os << format("Dihedral not found between %1$s, %2$s, %3$s and %4$s!") % typ1 % typ2 % typ3 % typ4;
 			runtime.log_write(os.str());
-			if (cmdline.read("verbose_flag") == "on") {
+			if (verbose) {
 				cout << "[LACK] " << os.str() << endl;
 			}
 		}

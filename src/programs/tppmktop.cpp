@@ -22,7 +22,6 @@
 #include <boost/format.hpp>
 
 namespace p_o = boost::program_options;
-using tpp::cmdline;
 using tpp::Parameters;
 
 using boost::format;
@@ -59,6 +58,7 @@ int main(int argc, char * argv[]) {
 			"max-bonds,m",
 			"Maximize amount of bonds, angles and dihedrals by selecting other atom-types.")(
 			"verbose,v", "Verbose mode")("help,h", "Print this message");
+	Parameters cmdline;
 	try {
 		try { // parsing boost::program_options
 			p_o::store(p_o::parse_command_line(argc, argv, desc), vars);
@@ -226,7 +226,7 @@ int main(int argc, char * argv[]) {
 	// program body, using modules
 	try {
 		tpp::Topology TOP;
-        tpp::StructureIO sio;
+    tpp::StructureIO sio(false, vars.count("rtp-output")); // it seems that ignore index has no meaning here
 		// setting up common topology parameters
 		TOP.res_name = cmdline.read("input_file").substr(0, 3);
 		TOP.nrexcl = 3;
@@ -259,9 +259,11 @@ int main(int argc, char * argv[]) {
 		AD.proceed();
 		AD.log_scores();
 		AD.atom_align();
-		tpp::BondDefiner BD(par0, TOP);
+		tpp::BondDefiner BD(par0, TOP, vars.count("verbose"));
 		BD.bond_align();
-		tpp::save_topology(TOP, cmdline.read("output_file").c_str());
+		tpp::save_topology(TOP,
+		                   cmdline.read("output_file").c_str(),
+		                   cmdline.read("nocalculate_flag") == "on");
 		tpp::save_lack(TOP, cmdline.read("lack_file").c_str());
 		if (cmdline.exists("rtpoutput_file")) {
 			tpp::save_topology_rtp(TOP,

@@ -23,9 +23,18 @@ namespace tpp {
       */
       void molToAtoms(Topology &);
 
+      bool ignoreIndexFlag;
+      bool rtpoutput_file;
+
     public:
 
-      StructureIO();
+      /**
+       * \brief The default constructor.
+       *
+       * \param
+       * \param
+       */
+      StructureIO(bool ignoreIndex, bool rtpout);
 
       /** \brief Loading structure from std::istream
       *

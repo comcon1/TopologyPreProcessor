@@ -6,10 +6,6 @@
 namespace tpp {
 
 
-extern Parameters cmdline; /// GLOBAL VARIABLES ARE BAD
-
-// -- for example for command line :)
-
 	/**
 	 * 	\brief Some logging\ debug class, probably?
 	 *

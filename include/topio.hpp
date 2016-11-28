@@ -1,3 +1,9 @@
+/** \file topio.hpp
+ *
+ *  \brief This file handles loading and saving topologies. Desperately need comments.
+ *
+ */
+
 #ifndef TPP_TOPIO_H
 #define TPP_TOPIO_H
 
@@ -6,22 +12,16 @@
 
 namespace tpp {
 
-  static const char * top_comment =
-  "; ----------------------------------------------\n" 
-  "; TPP - topology generator version " PACKAGE_VERSION " \n"
-  "; created by Erg Research Group\n"
-  "; MSU, Biology Faculty, Department of Biophysics\n"
-  "; ----------------------------------------------\n"
-  "; ATTENTION! Do not forget to use the proper version\n"
-  "; of the force field fork (not less than revision). \n"
-  "; Watch for corresponding force field at: \n"
-  ";            bitbucket.com/comcon1\n"
-  "; ----------------------------------------------\n"
-  "; Please ascertain that the topology is valid. We \n"
-  "; do not guarantee that. If you find that something\n"
-  "; is wrong, please report us to " PACKAGE_BUGREPORT "\n";
 
-  void save_topology(Topology &, const char *) ;
+  /**
+   *  \brief Hm. Writes topology to file, I guess?
+   *
+   *  \param top topology to be written
+   *  \param fname output file name
+   *  \param ncf ???
+   *
+   */
+  void save_topology(Topology & top, const char * fname, bool ncf) ;
 
   void save_topology_rtp(Topology &, const char *);
 

@@ -22,7 +22,6 @@
 #include <boost/format.hpp>
 
 namespace p_o = boost::program_options;
-using tpp::cmdline;
 
 using boost::format;
 using std::cout;
@@ -31,176 +30,182 @@ using std::endl;
 using std::string;
 using namespace boost::numeric;
 
-void helpscreen();
+void print_help();
+void print_info();
+
+string extension(const std::string& filename){
+  string::size_type ind = filename.find(".", 0);
+  if (ind == string::npos) {
+       return "";
+  }
+  return filename.substr(ind + 1);
+}
 
 int main(int argc, char * argv[]) {
+  string progname("Execution rules for TPPRENUM ");
+  progname += PACKAGE_VERSION;
+  p_o::options_description desc(progname);
+  p_o::variables_map vars;
+  desc.add_options()
+      ("input,i",
+          p_o::value<std::string>(),
+          "Input filename (any format)")
+      ("output,o",
+          p_o::value<std::string>(),
+          "Output filename (any format)")
+      ("hex,x",
+          p_o::value<bool>()->default_value(false)->implicit_value(false),
+          "Hexadecimal numbering of main chain")
+      ("verbose,v",
+          p_o::value<bool>()->default_value(false)->implicit_value(false),
+          "Verbose mode")
+      ("ignore-index,g",  // TODO:this should be without negation!
+          p_o::value<bool>()->default_value(false)->implicit_value(false),
+          "Don't ignore index")
+      ("rtpoutput-file,r",
+          p_o::value<bool>()->default_value(false)->implicit_value(false),
+          "????") // TODO: add description
+      ("help,h", "Print this message")
+      ;
+  try {
+    p_o::store(p_o::parse_command_line(argc, argv, desc), vars);
+    p_o::notify(vars);
 
-    string progname("Execution rules for TPPRENUM ");
-    progname += PACKAGE_VERSION;
-    p_o::options_description desc(progname);
-    p_o::variables_map vars;
-    desc.add_options()
-    ("input,i",p_o::value<std::string>(),"Input filename (any format)")
-    ("output,o",p_o::value<std::string>(),"Output filename (any format)")
-    ("hex,x","Hexadecimal numbering of main chain")
-    ("verbose,v","Verbose mode")
-    ("ignore-index,g","Don't ignore index")
-    ("help,h", "Print this message")
-    ;
-    try {
-        try { // блок вылавливания исключений boost::program_options
-            p_o::store(p_o::parse_command_line(argc, argv, desc), vars);
-            p_o::notify(vars);
-            if ( (vars.count("verbose") > 1) || (vars.count("ignore-index") > 1) ) throw 1;
-
-            cmdline.add("verbose_flag", vars.count("verbose") ? "on" : "off" );
-            cmdline.add("hex_flag",     vars.count("hex") ? "on" : "off" );
-            cmdline.add("ignore_index", vars.count("ignore-index") ? "off" : "on" );
-
-            if (vars.count("ignore-index") == 1) {
-                cout << "Non-ignoring of indexes is a DANGEROUS MODE!" << endl;
-            }
-            if (vars.count("help") == 1) helpscreen();
-            if (vars.count("input") == 1) {
-                cmdline.add("input_file", vars["input"].as<std::string>() );
-            }
-            else throw 1;
-            if (vars.count("output") == 1) {
-            	cmdline.add("output_file", vars["output"].as<std::string>() );
-            }
-            else throw 1;
-        }
-        catch (boost::program_options::error &e) {
-            throw 1;
-        }
+    if (vars.count("help"))
+    {
+      print_help();
+      return 0;
     }
-    catch (int ExC) {
-        if (ExC) {
-            cerr << format("\nTPPRENUM %1% : Error in input parameters.\n\n") % VERSION;
-            cerr << desc;
-        }
-        return(ExC);
+
+    bool verbose = vars["verbose"].as<bool>();
+    bool hex_flag = vars["hex"].as<bool>();
+    bool ignore_index = !vars["ignore-index"].as<bool>(); // for some reason, this flag is inverted
+    bool rtp_file = !vars["rtpoutput-file"].as<bool>();
+
+    if (! ignore_index) {
+      cout << "Non-ignoring of indexes is a DANGEROUS MODE!" << endl; // Double negation, confusing
     }
+
+    string input_file =vars["input"].as<std::string>();
+    string output_file = vars["output"].as<std::string>();
+
     //
-	// finished analysing
-	// starting work with input and output files
-	//
+    // finished parsing base cmd
+    // starting work with input and output files
+    //
 
-    if (cmdline.read("verbose_flag") == "on") {
-        cout << format ("\
-**********************************************************************\n\
-*   Biology faculty, Department of biophysics, Erg Research Group    *\n\
-*   Moscow, Lomonosov's Moscow State University                      *\n\
-*   for more info, see homepage  http://erg.biophys.msu.ru/          *\n\
-*                                                                    *\n\
-*   Authors:       comcon1, dr.zoidberg, piton                       *\n\
-*                                                                    *\n\
-*   Product:       program  TPPRENUM-%1$-6s                          *\n\
-*                                                                    *\n\
-*    PDB renumbering utility. The renumbering relies on the longest  *\n\
-* bonded atomic sequence search. Atom names will be also modified.   *\n\
-* You need to run TPPRENUM when atoms in your PDB file are posed in  *\n\
-* chaotic order.                                                     *\n\
-*                                                                    *\n\
-*   Modified:     %2$-19s                                *\n\
-**********************************************************************\n\
-\n\n") % PACKAGE_VERSION % CONFIGURE_CDATE;
+    if (verbose) {
+      print_info();
     } else {
-        cout << format("Starting TPPRENUM-%1$s program.\n") % VERSION;
+      cout << format("Starting TPPRENUM-%1$s program.\n") % VERSION;
     }
-
-
 
     // INPUT analysing
     tpp::InputFormat iform;
     tpp::OutputFormat oform;
-    string::size_type ind = cmdline.read("input_file").find(".", 0);
-    if ( ind == string::npos) {
-        cerr << "ERROR:\n";
-        cerr << "Couldn't determine format of input file. Please specify extension.\n";
-        return 1;
-    }
-    string subs = cmdline.read("input_file").substr(ind+1);
-    if (subs == "pdb") iform = tpp::TPP_IF_PDB;
-    else if (subs == "gro") iform = tpp::TPP_IF_GRO;
-    else if (subs == "g96") iform = tpp::TPP_IF_G96;
-    else if ( (subs == "log") || (subs == "out") ) iform = tpp::TPP_IF_GAMSP;
+    string in_ext = extension(input_file);
+    if (in_ext == "pdb")
+      iform = tpp::TPP_IF_PDB;
+    else if (in_ext == "gro")
+      iform = tpp::TPP_IF_GRO;
+    else if (in_ext == "g96")
+      iform = tpp::TPP_IF_G96;
+    else if ((in_ext == "log") || (in_ext == "out"))
+      iform = tpp::TPP_IF_GAMSP;
     else {
-        cerr << "ERROR:\n";
-        cerr << "Couldn't determine format of input file. Please specify other extension.\n";
-        return 1;
+      cerr << "ERROR:\n";
+      cerr << "Couldn't determine format of input file. "
+              "Unknown extension: \"" << in_ext <<"\" "
+              "Please specify other extension.\n";
+      return 1;
     }
 
-    if (cmdline.read("verbose_flag") == "on") {
-        switch (iform) {
-        case   tpp::TPP_IF_PDB:
-            cout << "Input file format: Protein Data Bank." << endl;
-            break;
-        case   tpp::TPP_IF_GRO:
-            cout << "Input file format: GROmacs structure." << endl;
-            break;
-        case   tpp::TPP_IF_G96:
-            cout << "Input file format: Gromos 96 structure." << endl;
-            break;
-        case tpp::TPP_IF_GAMSP:
-            cout << "Input file format: GAMess output." << endl;
-            break;
-        };
+    if (verbose) {
+      cout<<tpp::in_fmt_descr(iform)<<endl;
     }
 
     // OUTPUT analysing
-    ind = cmdline.read("output_file").find(".",0);
-    if ( ind == string::npos) {
-        cerr << "ERROR:\n";
-        cerr << "Couldn't determine format of output file. Please specify extension.\n";
-        return 1;
-    }
-    subs = cmdline.read("output_file").substr(ind+1);
-    if (subs == "pdb") oform = tpp::TPP_OF_PDB;
-    else if (subs == "gro") oform = tpp::TPP_OF_GRO;
-    else if (subs == "g96") oform = tpp::TPP_OF_G96;
+    string out_ext = extension(output_file);
+    if (out_ext == "pdb")
+      oform = tpp::TPP_OF_PDB;
+    else if (out_ext == "gro")
+      oform = tpp::TPP_OF_GRO;
+    else if (out_ext == "g96")
+      oform = tpp::TPP_OF_G96;
     else {
-        cerr << "ERROR:\n";
-        cerr << "Couldn't determine format of output file. Please specify other extension.\n";
-        return 1;
+      cerr << "ERROR:\n";
+      cerr << "Couldn't determine format of output file."
+              "Unknown extension: \"" << out_ext <<"\""
+              " Please specify other extension.\n";
+      return 1;
     }
 
-    if (cmdline.read("verbose_flag") == "on") {
-        switch (oform) {
-        case   tpp::TPP_OF_PDB:
-            cout << "Output file format: Protein Data Bank." << endl;
-            break;
-        case   tpp::TPP_OF_GRO:
-            cout << "Output file format: GROmacs structure." << endl;
-            break;
-        case   tpp::TPP_OF_G96:
-            cout << "Output file format: Gromos 96 structure." << endl;
-            break;
-        };
+    if (verbose) {
+      cout<< tpp::out_fmt_descr(oform)<<endl;
     }
+    //
+    // Main program body
+    //
+    tpp::Topology topology;
+    tpp::StructureIO io(ignore_index, rtp_file);
+    io.loadFromFile(topology, iform, input_file.c_str());
 
-    // main program body, using modules
-    try {
-        tpp::Topology topology;
-        tpp::StructureIO io;
-        io.loadFromFile(topology, iform, cmdline.read("input_file").c_str() );
-        ublas::vector<unsigned> tail1 = tpp::generate_long_tail1(topology.mol);
-        topology.atoms = tpp::mol_renum1(topology.mol, topology.atoms, tail1 );
-        io.saveToFile(topology, oform, cmdline.read("output_file").c_str() );
-    } catch (const tpp::Exception &e) {
-        cerr << "  TPP_EXCEPTION FROM: " << e["procname"] << endl;
-        cerr << "  With following error: " << e["error"] << endl;
-        cerr << "  more info see in log-file." << endl;
-        return 2;
-    }
-    cout << "TPPRENUM finished normally!" << endl;
-    return 0;
+    ublas::vector<unsigned> tail1 = tpp::generate_long_tail1(topology.mol, verbose);
+    topology.atoms = tpp::mol_renum1(topology.mol, topology.atoms, tail1, hex_flag);
+    io.saveToFile(topology, oform, output_file.c_str());
+  } // of global try
+  catch (boost::program_options::error & e) {
+    cerr << format("\nTPPRENUM %1% : Error in input parameters.\n\n") % VERSION;
+    cerr << desc;
+    return 1;
+  }
+  catch (const tpp::Exception &e) {
+    cerr << "  TPP_EXCEPTION FROM: " << e["procname"] << endl;
+    cerr << "  With following error: " << e["error"] << endl;
+    cerr << "  more info see in log-file." << endl;
+    return 2;
+  }
+  catch(std::exception& e)
+  {
+    cerr<<"  TPP crashed with std::exception:"<<e.what()<<endl;
+    return 3;
+  }
+  catch(...)
+  {
+    cerr<<"  TPP crashed with unknown type of exception!"<<endl;
+    return 3;
+  }
+  cout << "TPPRENUM finished normally!" << endl;
+  return 0;
+}
+
+/// Prints brief information.
+void print_info()
+{
+  cout << format ("\
+   **********************************************************************\n\
+   *   Biology faculty, Department of biophysics, Erg Research Group    *\n\
+   *   Moscow, Lomonosov's Moscow State University                      *\n\
+   *   for more info, see homepage  http://erg.biophys.msu.ru/          *\n\
+   *                                                                    *\n\
+   *   Authors:       comcon1, dr.zoidberg, piton                       *\n\
+   *                                                                    *\n\
+   *   Product:       program  TPPRENUM-%1$-6s                          *\n\
+   *                                                                    *\n\
+   *    PDB renumbering utility. The renumbering relies on the longest  *\n\
+   * bonded atomic sequence search. Atom names will be also modified.   *\n\
+   * You need to run TPPRENUM when atoms in your PDB file are posed in  *\n\
+   * chaotic order.                                                     *\n\
+   *                                                                    *\n\
+   *   Modified:     %2$-19s                                *\n\
+   **********************************************************************\n\
+   \n\n") % PACKAGE_VERSION % CONFIGURE_CDATE;
 }
 
 /*!
  * \brief Prints program info and usage to stdout.
  */
-void helpscreen()
+void print_help()
 {
     cout << format("\n\
 --------------------------------*****---------------------------------\n\

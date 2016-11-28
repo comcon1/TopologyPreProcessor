@@ -31,13 +31,14 @@ namespace tpp {
   using OpenBabel::OBMolAtomIter;
   using OpenBabel::OBAtomAtomIter;
 
-  StructureIO::StructureIO() {
+  StructureIO::StructureIO(bool ign, bool rtp) : ignoreIndexFlag(ign), rtpoutput_file(rtp){
     // TODO: some interface stuff
     ;
   } 
 
 
-  void StructureIO::loadFromFile(Topology &tp, InputFormat ifm, const char *fname) {
+  void StructureIO::loadFromFile(Topology &tp, InputFormat ifm,
+                                 const char *fname)  {
     // test if file exists
     runtime.log_write(string("Trying to read structure from '")+fname+"'.\n");
     fstream inf(fname, ios::in);
@@ -103,7 +104,6 @@ namespace tpp {
                   Atom cur0;
                   float __x, __y, __z;
                   strc = 0;
-                  bool ignoreIndexFlag = (cmdline.read("ignore_index") == "on");
                   inf->clear();
                   inf->seekg(0);
                   while (! inf->eof() ) {
@@ -185,7 +185,7 @@ namespace tpp {
 
                     cur0.old_aname = string(_aName);
                     cur0.atom_name = string(_aName);
-                    if (cmdline.exists("rtpoutput_file")) {
+                    if (rtpoutput_file) {
                       // need to replace 1H2 to H21
                       if (isdigit(_aName[0]))
                         cur0.atom_name = cur0.old_aname.substr(1) + cur0.old_aname.substr(0,1);
