@@ -38,6 +38,7 @@ syntax: regexp
 ^.*\.sw[po]$
 ^.*\.o$
 ^.*\.pdb$
+^.*\.itp$
 ^.*\log$
 ^.*\cash$
 ^.*\.orig$

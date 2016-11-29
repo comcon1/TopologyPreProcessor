@@ -12,12 +12,22 @@ namespace tpp
 class BondDefiner: public DbBase {
 public:
 
-	BondDefiner(Parameters, Topology &, bool v);
-	virtual ~BondDefiner();
+  /// Calculation settings.
+  struct Settings{
+    std::string ffname; /// forcefield name
+    bool noqalculate; /// What an interesting word, 'noqalculate'
+    bool verbose; /// print additional info
+  };
+
+	BondDefiner(const DbBase::Settings& s1,
+	            const BondDefiner::Settings& s2,
+	            Topology &);
+	~BondDefiner();
 	void bond_align();
 	void log_needed_bonds();
 
 private:
+	BondDefiner::Settings bondSettings;
 	InternalsArray bonds;
 	Topology &tp;
 	std::map<std::string, std::string> namemap; //! map of uname -> name

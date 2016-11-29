@@ -30,7 +30,8 @@ namespace tpp {
     SqlException(const char *s, Parameters &p): Exception(s, p) { ; }
   };
 
-  typedef mysqlpp::StoreQueryResult QueryResult; /// for brevity
+  /// for brevity
+  typedef mysqlpp::StoreQueryResult QueryResult;
 
   /**
    *
@@ -38,14 +39,25 @@ namespace tpp {
    *
    */
   class DbBase {
-    protected:
-      mysqlpp::Connection *con;
-      Parameters par;
-      virtual bool connect_db();
+
     public:
-      // need parameters 'host','user','dbname','password','port','ffname'
-      DbBase(Parameters p);
-      virtual ~DbBase() { delete con; }
+      /// Database connection settings.
+      struct Settings
+      {
+        std::string host;
+        std::string user;
+        std::string password;
+        unsigned port;
+        std::string dbname;
+      };
+
+      DbBase(const Settings& settings);
+      virtual ~DbBase();
+
+    protected:
+      Settings settings;
+      mysqlpp::Connection *con;
+      virtual bool connect_db();
   };
  
   /**
@@ -66,7 +78,7 @@ namespace tpp {
       void getDBdata();
 
     public:
-      DbInfo(Parameters);
+      DbInfo(const Settings& set, const std::string& ffn);
       int get_ffid() { return ffid; }
       std::string get_ffinclude() { return ffinclude; }
       std::string get_ffrev() { return ffrev; }

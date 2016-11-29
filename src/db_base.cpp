@@ -15,6 +15,7 @@ using std::endl;
 using std::cout;
 using std::cerr;
 using std::vector;
+using std::to_string;
 using std::ostringstream;
 
 namespace tpp {
@@ -34,9 +35,13 @@ namespace tpp {
   /*
    * Standard constructor with DB connection
    */
-  DbBase::DbBase(Parameters p_):
-       par(p_), con(new mysqlpp::Connection(false)) {
-         ;
+  DbBase::DbBase(const Settings& set) :
+       settings(set), con(new mysqlpp::Connection(false)) {
+
+  }
+
+  DbBase::~DbBase(){
+    delete con;
   }
 
   /*
@@ -44,10 +49,10 @@ namespace tpp {
    */
   bool DbBase::connect_db()  {
     con->connect(
-        par.read("dbname").c_str(),
-        (par.read("host")+string(":")+par.read("port")).c_str(),
-        par.read("user").c_str(),
-        par.read("password").c_str()
+        settings.dbname.c_str(),
+        (settings.host + ":" + to_string(settings.port)).c_str(),
+        settings.user.c_str(),
+        settings.password.c_str()
         );
 
     // connection established
@@ -100,10 +105,11 @@ namespace tpp {
     return true;
   }
 
-  /*
-   * Initializing DB-INFO class.
-   */
-  DbInfo::DbInfo(Parameters p): DbBase(p) {
+  //
+  // DB INFO implementation
+  //
+
+  DbInfo::DbInfo(const Settings& sets, const std::string& ffn): DbBase(sets), ffname(ffn) {
     this->connect_db();
   }
 
@@ -121,7 +127,6 @@ namespace tpp {
     QueryResult res;
     mysqlpp::Row row;
     // get ffid
-    this->ffname = par.read("ffname");
     qu << format("SELECT `id`,`include`,`desc` FROM `forcefield` WHERE name='%1$s'") % this->ffname.c_str();
     res = qu.store();
     if (!res) {
@@ -189,7 +194,7 @@ Total statistics:\n\
 
     //TODO: this query does not show last INSERT events. Should fix.
     qu.reset();
-    qu << format("show table status from `%1$s`") % par.read("dbname");
+    qu << format("show table status from `%1$s`") % settings.dbname;
     res = qu.store();
     if ( (!res) || (!res.at(0)) ) {
         Parameters params;

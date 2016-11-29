@@ -31,132 +31,199 @@ using std::cerr;
 using std::endl;
 
 using std::string;
-void helpscreen();
+void printHelp();
+void printInfo();
+
 double sumcharge(const tpp::Topology &);
 
+string extension(const std::string& filename){
+  string::size_type ind = filename.find(".", 0);
+  if (ind == string::npos) {
+       return "";
+  }
+  return filename.substr(ind + 1);
+}
+
 int main(int argc, char * argv[]) {
-	string progname("Execution rules for TPPMKTOP ");
-	progname = progname + VERSION;
-	p_o::options_description desc(progname);
-	p_o::variables_map vars;
-	desc.add_options()("input,i", p_o::value<std::string>(),
-			"Input filename (any format)")("output,o",
-			p_o::value<std::string>(), "Output filename (itp format)")(
-			"rtp-output,r", p_o::value<std::string>(),
-			"Output filename (rtp format)")("forcefield,f",
-			p_o::value<std::string>(), "Forcefield name")
+  string progname("Execution rules for TPPMKTOP ");
+  progname = progname + VERSION;
+  p_o::options_description desc(progname);
+  p_o::variables_map vars;
+  desc.add_options()
+        ("input,i", p_o::value<std::string>(), "Input filename (any format)")
+        ("output,o", p_o::value<std::string>(), "Output filename (itp format)")
+        ("rtp-output,r", p_o::value<std::string>()->default_value(""), "Output filename (rtp format)")
+        ("forcefield,f", p_o::value<std::string>(), "Forcefield name")
+        ("lack-file,l",
+            p_o::value<std::string>()->default_value("lack.itp"),
+            "Topology lack filename (default 'lack.itp')")
+        ("sqlserver,s",
+            p_o::value<std::string>()->default_value("localhost"),
+            "Mysql-server adress (default 'localhost')")
+        ("sqlport,t",
+            p_o::value<unsigned>()->default_value(3306),
+            "Server port (default '3306')")
+        ("sqluser,u",
+            p_o::value<std::string>()->default_value("tppuser"),
+            "Database username (default 'tppuser')")
+        ("sqlpassword,p",
+            p_o::value<std::string>()->default_value("estatic"),
+            "Mysql-password (default 'estatic')")
+        ("nocalculate,n",
+            p_o::value<bool>()->default_value(false)->implicit_value(false),
+            "Create final topology (don't create lack-file)")
+        ("max-bonds,m",
+            p_o::value<bool>()->default_value(false)->implicit_value(false),
+            "Maximize amount of bonds, angles and dihedrals by selecting other atom-types.")
+        ("verbose,v",
+            p_o::value<bool>()->default_value(false)->implicit_value(false),
+            "Verbose mode")
+        ("help,h", "Print this message");
+  try {
+    p_o::store(p_o::parse_command_line(argc, argv, desc), vars);
+    p_o::notify(vars);
 
-	("lack-file,l", p_o::value<std::string>(),
-			"Topology lack filename (default 'lack.itp')")("sqlserver,s",
-			p_o::value<std::string>(),
-			"Mysql-server adress (default 'localhost')")("sqlport,t",
-			p_o::value<unsigned>(), "Mysql-server port (default '3306')")(
-			"sqluser,u", p_o::value<std::string>(),
-			"Mysql-user (default 'tppuser')")("sqlpassword,p",
-			p_o::value<std::string>(), "Mysql-password (default 'estatic')")(
-			"nocalculate,n", "Create final topology (don't create lack-file)")(
-			"max-bonds,m",
-			"Maximize amount of bonds, angles and dihedrals by selecting other atom-types.")(
-			"verbose,v", "Verbose mode")("help,h", "Print this message");
-	Parameters cmdline;
-	try {
-		try { // parsing boost::program_options
-			p_o::store(p_o::parse_command_line(argc, argv, desc), vars);
-			p_o::notify(vars);
+    if (vars.count("help")){
+      printHelp();
+      return 0;
+    }
 
-			// boolean options
-			if ((vars.count("verbose") > 1) || (vars.count("nocalculate") > 1)
-					|| (vars.count("max-bonds") > 1))
-				throw 1;
-			cmdline.add("verbose_flag",
-					vars.count("verbose") ? "on" : "off");
-			cmdline.add("nocalculate_flag",
-					vars.count("nocalculate") ? "on" : "off");
-			if (vars.count("max-bonds"))
-				cmdline.add("max-bonds", "on");
-			if (vars.count("help") == 1)
-				helpscreen();
+    string input_file = vars["input"].as<string>();
+    string output_file = vars["output"].as<string>();
+    string forcefield = vars["forcefield"].as<string>();
+    string lackfile = vars["lack-file"].as<string>();
+    string rtpout = vars["rtp-output"].as<string>();
 
-			// main string options
-			if (vars.count("input") == 1) {
-				cmdline.add("input_file",
-						vars["input"].as<std::string>());
-			} else
-				throw 1;
-			if (vars.count("output") == 1) {
-				cmdline.add("output_file",
-						vars["output"].as<std::string>());
-			} else
-				throw 1;
-			if (vars.count("forcefield") == 1) {
-				cmdline.add("forcefield",
-						vars["forcefield"].as<std::string>());
-			} else
-				throw 1;
-			// optional parameters
-			if (vars.count("lack-file") == 1) {
-				cmdline.add("lack_file",
-						vars["lack-file"].as<std::string>());
-			} else if (vars.count("lack-file") == 0) {
-				cmdline.add("lack_file", "lack.itp");
-			} else
-				throw 1;
-			if (vars.count("rtp-output") == 1) {
-				cmdline.add("rtpoutput_file",
-						vars["rtp-output"].as<std::string>());
-			} else if (vars.count("rtp-output") > 0) {
-				throw 1;
-			}
-			// SQL parameters
-			if (vars.count("sqlserver") == 1) {
-				cmdline.add("sqlserver",
-						vars["sqlserver"].as<std::string>());
-			} else if (vars.count("sqlserver") == 0) {
-				cmdline.add("sqlserver", "localhost");
-			} else
-				throw 1;
-			if (vars.count("sqluser") == 1) {
-				cmdline.add("sqluser",
-						vars["sqluser"].as<std::string>());
-			} else if (vars.count("sqluser") == 0) {
-				cmdline.add("sqluser", "tppuser");
-			} else
-				throw 1;
-			if (vars.count("sqlport") == 1) {
-				unsigned o = vars["sqlport"].as<unsigned>();
-				cmdline.add("sqlport",
-						boost::lexical_cast<string>(
-								vars["sqlport"].as<unsigned>()));
-			} else if (vars.count("sqlport") == 0) {
-				cmdline.add("sqlport", "3306");
-			} else
-				throw 1;
-			if (vars.count("sqlpassword") == 1) {
-				cmdline.add("sqlpassword",
-						vars["sqlpassword"].as<std::string>());
-			} else if (vars.count("sqlpassword") == 0) {
-				cmdline.add("sqlpassword", "estatic");
-			} else
-				throw 1;
-		} catch (boost::program_options::error &e) {
-			throw 1;
-		}
-	} catch (int ExC) {
-		if (ExC) {
-			cerr
-					<< format(
-							"\nTPPMKTOP %1% : Error in input parameters.\n\n") % VERSION;
-			cerr << desc;
-		}
-		return (ExC);
-	}
-	// finish analysing
-	// starting work with input and output files
+    tpp::DbBase::Settings      baseSettings;
+    tpp::AtomDefiner::Settings atomSettings;
+    tpp::BondDefiner::Settings bondSettings;
 
-	if (cmdline.read("verbose_flag") == "on") {
-		cout
-				<< format(
-						"\
+    bool verbose = vars["verbose"].as<bool>();
+
+    bondSettings.verbose = verbose;
+    bondSettings.noqalculate = vars["nocalculate"].as<bool>();
+    bondSettings.ffname = forcefield;
+
+    atomSettings.maxbonds = vars["max-bonds"].as<bool>();
+    atomSettings.maxdihedrals = atomSettings.maxbonds;
+    atomSettings.maxangles = atomSettings.maxbonds;
+
+    baseSettings.host     = vars["sqlserver"].as<string>();
+    baseSettings.user     = vars["sqluser"].as<string>();
+    baseSettings.password = vars["sqlpassword"].as<string>();
+    baseSettings.port     = vars["sqlport"].as<unsigned>();
+    baseSettings.dbname   = "tppforcefield"; // TODO remove hard code
+
+    // finish analysing
+    // starting work with input and output files
+
+    if (verbose) {
+      printInfo();
+    } else {
+      cout << format("Starting %1$s program.\n") % "TPPMKTOP";
+    }
+    // INPUT analysing
+    tpp::InputFormat iform;
+    string in_ext = extension(input_file);
+    if (in_ext == "pdb")
+      iform = tpp::TPP_IF_PDB;
+    else if (in_ext == "gro")
+      iform = tpp::TPP_IF_GRO;
+    else if (in_ext == "g96")
+      iform = tpp::TPP_IF_G96;
+    else if ((in_ext == "log") || (in_ext == "out"))
+      iform = tpp::TPP_IF_GAMSP;
+    else {
+      cerr << "ERROR:\n";
+      cerr << "Couldn't determine format of input file. "
+              "Unknown extension: \"" << in_ext <<"\" "
+              "Please specify other extension.\n";
+      return 1;
+    }
+    if (verbose) {
+       cout<<tpp::in_fmt_descr(iform)<<endl;
+     }
+
+  if (bondSettings.noqalculate) {
+    cout << "TPPMKTOP will try to make full-determined topology!" << endl;
+  }
+
+  // Main  program body
+
+    tpp::Topology TOP;
+    tpp::StructureIO sio(false, rtpout.size() > 0); // it seems that ignore index has no meaning here
+    // setting up common topology parameters
+    TOP.res_name = input_file.substr(0, 3);
+    TOP.nrexcl = 3;
+    // ;-)
+    sio.loadFromFile(TOP, iform, input_file.c_str());
+    // customization of 2-nd level parameters
+
+
+    // initial DB queries
+    tpp::DbInfo DI(baseSettings, forcefield);
+    atomSettings.ffid = DI.get_ffid();
+    TOP.ffinclude = DI.get_ffinclude().c_str();
+    TOP.ffinfo = forcefield + " revision " + DI.get_ffrev();
+    //
+    if (verbose) {
+      cout << DI.get_statistics();
+    }
+    // starting program body
+    tpp::AtomDefiner AD(baseSettings, atomSettings, TOP);
+    AD.proceed();
+    AD.log_scores();
+    AD.atom_align();
+    tpp::BondDefiner BD(baseSettings, bondSettings, TOP);
+    BD.bond_align();
+    tpp::save_topology(TOP, output_file.c_str(), bondSettings.noqalculate);
+    tpp::save_lack(TOP, lackfile.c_str());
+    if (rtpout.size() > 0)
+    {
+      tpp::save_topology_rtp(TOP, rtpout.c_str());
+    }
+    cout << format("Please, correct your charges according to sum: %1$8.3f.\n") % sumcharge(TOP);
+  } // of global try
+  catch (tpp::SqlException &e) {
+    e.fix_log();
+    cerr << "TPP_SQL_EXCEPTION FROM: " << e["procname"] << endl;
+    cerr << "more info see in log-file." << endl;
+    return 3;
+  } catch (tpp::DbException &e) {
+    e.fix_log();
+    cerr << "TPP_DB_EXCEPTION FROM: " << e["procname"] << endl;
+    cerr << "more info see in log-file." << endl;
+    return 2;
+  }
+  catch (boost::program_options::error & e) {
+    cerr << format("\nTPPRENUM %1% : Error in input parameters.\n\n") % VERSION;
+    cerr << desc;
+    return 1;
+  }
+  catch (const tpp::Exception &e) {
+    cerr << "  TPP_EXCEPTION FROM: " << e["procname"] << endl;
+    cerr << "  With following error: " << e["error"] << endl;
+    cerr << "  more info see in log-file." << endl;
+    return 2;
+  }
+  catch(std::exception& e)
+  {
+    cerr<<"  TPP crashed with std::exception:"<<e.what()<<endl;
+    return 3;
+  }
+  catch(...)
+  {
+    cerr<<"  TPP crashed with unknown type of exception!"<<endl;
+    return 3;
+  }
+
+  cout << "TPPMKTOP finished normally!" << endl;
+  return 0;
+}
+
+void printInfo(){
+  cout << format(
+            "\
 **********************************************************************\n\
 *   Biology faculty, Department of biophysics, Erg Research Group    *\n\
 *   Moscow, Lomonosov's Moscow State University                      *\n\
@@ -172,131 +239,14 @@ int main(int argc, char * argv[]) {
 *                                                                    *\n\
 * Configured:     %2$-19s                                *\n\
 **********************************************************************\n\
-\n\n") % PACKAGE_VERSION % CONFIGURE_CDATE;
-	} else {
-		cout << format("Starting %1$s program.\n") % "TPPMKTOP";
-	}
-
-	// INPUT analysing
-	tpp::InputFormat iform;
-	string::size_type ind = cmdline.read("input_file").find(".", 0);
-	if (ind == string::npos) {
-		cerr << "ERROR:\n";
-		cerr
-				<< "Couldn't determine format of input file. Please specify extension.\n";
-		return 1;
-	}
-	string subs = cmdline.read("input_file").substr(ind + 1);
-	if (subs == "pdb")
-		iform = tpp::TPP_IF_PDB;
-	else if (subs == "gro")
-		iform = tpp::TPP_IF_GRO;
-	else if (subs == "g96")
-		iform = tpp::TPP_IF_G96;
-	else if ((subs == "log") || (subs == "out"))
-		iform = tpp::TPP_IF_GAMSP;
-	else {
-		cerr << "ERROR:\n";
-		cerr
-				<< "Couldn't determine format of input file. Please specify other extension.\n";
-		return 1;
-	}
-
-	if (cmdline.read("verbose_flag") == "on") {
-		switch (iform) {
-		case tpp::TPP_IF_PDB:
-			cout << "Input file format: Protein Data Bank." << endl;
-			break;
-		case tpp::TPP_IF_GRO:
-			cout << "Input file format: GROmacs structure." << endl;
-			break;
-		case tpp::TPP_IF_G96:
-			cout << "Input file format: Gromos 96 structure." << endl;
-			break;
-		case tpp::TPP_IF_GAMSP:
-			cout << "Input file format: GAMess output." << endl;
-			break;
-		};
-	}
-
-	if (cmdline.exists("nocalculate")) {
-		cout << "TPPMKTOP will try to make full-determined topology!" << endl;
-	}
-
-	// program body, using modules
-	try {
-		tpp::Topology TOP;
-    tpp::StructureIO sio(false, vars.count("rtp-output")); // it seems that ignore index has no meaning here
-		// setting up common topology parameters
-		TOP.res_name = cmdline.read("input_file").substr(0, 3);
-		TOP.nrexcl = 3;
-		// ;-)
-		sio.loadFromFile(TOP, iform, cmdline.read("input_file").c_str());
-		// customization of 2-nd level parameters
-		tpp::Parameters par0;
-		par0.add("host", cmdline.read("sqlserver"));
-		par0.add("dbname", "tppforcefield");
-		par0.add("user", cmdline.read("sqluser"));
-		par0.add("password", cmdline.read("sqlpassword"));
-		par0.add("port", cmdline.read("sqlport"));
-		par0.add("ffname", cmdline.read("forcefield"));
-		if (cmdline.exists("max-bonds")) {
-			par0.add("maxbonds", "on");
-			par0.add("maxangles", "on");
-			par0.add("maxdihedrals", "on");
-		}
-		// initial DB queries
-		tpp::DbInfo DI(par0);
-		par0.add("ffid", boost::lexical_cast<string>(DI.get_ffid()));
-		TOP.ffinclude = DI.get_ffinclude().c_str();
-		TOP.ffinfo = par0.read("ffname") + " revision " + DI.get_ffrev();
-		//
-		if (cmdline.read("verbose_flag") == "on") {
-			cout << DI.get_statistics();
-		}
-		// starting program body
-		tpp::AtomDefiner AD(par0, TOP);
-		AD.proceed();
-		AD.log_scores();
-		AD.atom_align();
-		tpp::BondDefiner BD(par0, TOP, vars.count("verbose"));
-		BD.bond_align();
-		tpp::save_topology(TOP,
-		                   cmdline.read("output_file").c_str(),
-		                   cmdline.read("nocalculate_flag") == "on");
-		tpp::save_lack(TOP, cmdline.read("lack_file").c_str());
-		if (cmdline.exists("rtpoutput_file")) {
-			tpp::save_topology_rtp(TOP,
-					cmdline.read("rtpoutput_file").c_str());
-		}
-		cout
-				<< format(
-						"Please, correct your charges according to sum: %1$8.3f.\n")
-						% sumcharge(TOP);
-	} catch (tpp::SqlException &e) {
-		e.fix_log();
-		cerr << "TPP_SQL_EXCEPTION FROM: " << e["procname"] << endl;
-		cerr << "more info see in log-file." << endl;
-		return 3;
-	} catch (tpp::DbException &e) {
-		e.fix_log();
-		cerr << "TPP_DB_EXCEPTION FROM: " << e["procname"] << endl;
-		cerr << "more info see in log-file." << endl;
-		return 2;
-	} catch (tpp::Exception &e) {
-		e.fix_log();
-		cerr << "TPP_EXCEPTION FROM: " << e["procname"] << endl;
-		cerr << "more info see in log-file." << endl;
-		return 1;
-	}
-
-	cout << "TPPMKTOP finished normally!" << endl;
+\n\n")
+            % PACKAGE_VERSION % CONFIGURE_CDATE;
 }
 
-void helpscreen() {
-	cout
-			<< format(
-					"\n\
+void printHelp() {
+  cout
+      << format(
+          "\n\
 --------------------------------*****---------------------------------\n\
                                           ERG Research Group,         \n\
                                           Department of biophysics,   \n\
@@ -334,16 +284,16 @@ following topology file more obvious.\n\
 \n\
 --------------------------------*****---------------------------------\n\
 ")
-					% PACKAGE_VERSION % CONFIGURE_CDATE % __VERSION__
-					% BOOST_LIB_VERSION % BABEL_VERSION % BABEL_DATADIR << endl;
-	throw 0;
+          % PACKAGE_VERSION % CONFIGURE_CDATE % __VERSION__ % BOOST_LIB_VERSION
+          % BABEL_VERSION % BABEL_DATADIR << endl;
+  throw 0;
 }
 
 double sumcharge(const tpp::Topology &tp) {
-	double sum = 0.0;
-	for (tpp::AtomArray::iterator it = tp.atoms.begin();
-			it != tp.atoms.end(); ++it) {
-		sum += it->charge;
-	}
-	return sum;
+  double sum = 0.0;
+  for (tpp::AtomArray::iterator it = tp.atoms.begin(); it != tp.atoms.end();
+      ++it) {
+    sum += it->charge;
+  }
+  return sum;
 }
