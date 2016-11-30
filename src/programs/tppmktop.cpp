@@ -50,10 +50,18 @@ int main(int argc, char * argv[]) {
   p_o::options_description desc(progname);
   p_o::variables_map vars;
   desc.add_options()
-        ("input,i", p_o::value<std::string>(), "Input filename (any format)")
-        ("output,o", p_o::value<std::string>(), "Output filename (itp format)")
-        ("rtp-output,r", p_o::value<std::string>()->default_value(""), "Output filename (rtp format)")
-        ("forcefield,f", p_o::value<std::string>(), "Forcefield name")
+        ("input,i",
+            p_o::value<std::string>()->required(),
+            "Input filename (any format)")
+        ("output,o",
+            p_o::value<std::string>()->required(),
+            "Output filename (itp format)")
+        ("rtp-output,r",
+            p_o::value<std::string>()->default_value(""),
+            "Output filename (rtp format)")
+        ("forcefield,f",
+            p_o::value<std::string>()->required(),
+            "Forcefield name")
         ("lack-file,l",
             p_o::value<std::string>()->default_value("lack.itp"),
             "Topology lack filename (default 'lack.itp')")

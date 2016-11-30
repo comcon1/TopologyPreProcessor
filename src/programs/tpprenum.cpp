@@ -48,10 +48,10 @@ int main(int argc, char * argv[]) {
   p_o::variables_map vars;
   desc.add_options()
       ("input,i",
-          p_o::value<std::string>(),
+          p_o::value<std::string>()->required(),
           "Input filename (any format)")
       ("output,o",
-          p_o::value<std::string>(),
+          p_o::value<std::string>()->required(),
           "Output filename (any format)")
       ("hex,x",
           p_o::value<bool>()->default_value(false)->implicit_value(false),
