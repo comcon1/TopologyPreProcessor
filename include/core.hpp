@@ -36,6 +36,7 @@
 #define TPP_MAX_ATOM_NUM 200
 #define TPP_MAX_FREQ_NUM 600
 #define TPP_MAX_BONDS 4
+#define TPP_MAX_LONGTAIL_DEEP 50
 
 /** \namespace tpp is used for scoping TPP specific variables.
  *
