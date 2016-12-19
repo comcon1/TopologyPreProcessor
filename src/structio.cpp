@@ -14,27 +14,27 @@
 
 #include <cctype>
 
+using std::string;
+using std::pair;
+using std::ios;
+using std::fstream;
+
+using boost::numeric_cast;
+using boost::lexical_cast;
+using boost::format;
+
+using OpenBabel::OBConversion;
+using OpenBabel::OBMol;
+using OpenBabel::OBMolAtomIter;
+using OpenBabel::OBAtomAtomIter;
 
 namespace tpp {
 
-  using std::string;
-  using std::pair;
-  using std::ios;
-  using std::fstream;
-
-  using boost::numeric_cast;
-  using boost::lexical_cast;
-  using boost::format;
-
-  using OpenBabel::OBConversion;
-  using OpenBabel::OBMol;
-  using OpenBabel::OBMolAtomIter;
-  using OpenBabel::OBAtomAtomIter;
 
   StructureIO::StructureIO(bool ign, bool rtp) : ignoreIndexFlag(ign), rtpoutput_file(rtp){
     // TODO: some interface stuff
     ;
-  } 
+  }
 
 
   void StructureIO::loadFromFile(Topology &tp, InputFormat ifm,
@@ -42,7 +42,7 @@ namespace tpp {
     // test if file exists
     runtime.log_write(string("Trying to read structure from '")+fname+"'.\n");
     fstream inf(fname, ios::in);
-    if (!inf.is_open()) { 
+    if (!inf.is_open()) {
       BOOST_CHECK(0);
       runtime.log_write("Fail to open file for read.\n");
       Parameters params;
@@ -117,43 +117,43 @@ namespace tpp {
                     // ATOM | HETATM field
                     field = curString.substr(0,6);
                     boost::trim( field );
-                    if ( (field != "ATOM") && (field != "HETATM") ) 
+                    if ( (field != "ATOM") && (field != "HETATM") )
                       continue;
                     fieldCounter++;
                     try {
                       // Atom index
-                      field = curString.substr(6,5); 
-                      boost::trim(field); std::cerr << field << std::endl;
+                      field = curString.substr(6,5);
+                      boost::trim(field);
                       cur0.oldindex = lexical_cast<unsigned>(field);
                       cur0.index = ignoreIndexFlag ? 65535 : cur0.oldindex;
                       fieldCounter += (field.size() > 0);
                       // Atom name
                       field = curString.substr(11,5);
-                      boost::trim( field ); std::cerr << field << std::endl;
+                      boost::trim( field );
                       fieldCounter += (field.size() > 0);
                       _aName = field;
                       // Residue name
                       field = curString.substr(16,4);
-                      boost::trim( field ); std::cerr << field << std::endl;
+                      boost::trim( field );
                       fieldCounter += (field.size() > 0);
                       _rName = field;
                       // pass chain letter 21 -> 23
                       // Molecule number
                       field = curString.substr(23,4);
-                      boost::trim(field); std::cerr << field << std::endl;
+                      boost::trim(field);
                       cur0.mol_id = numeric_cast<unsigned char>( lexical_cast<unsigned>(field) );
                       fieldCounter += (field.size() > 0);
                       // Coordinates
                       field = curString.substr(30,8);
-                      boost::trim(field); std::cerr << field << std::endl;
+                      boost::trim(field);
                       __x = lexical_cast<float>(field);
                       fieldCounter += (field.size() > 0);
                       field = curString.substr(38,8);
-                      boost::trim(field); std::cerr << field << std::endl;
+                      boost::trim(field);
                       __y = lexical_cast<float>(field);
                       fieldCounter += (field.size() > 0);
                       field = curString.substr(46,8);
-                      boost::trim(field); std::cerr << field << std::endl;
+                      boost::trim(field);
                       __z = lexical_cast<float>(field);
                       fieldCounter += (field.size() > 0);
                     } catch (const boost::bad_lexical_cast& e) {
@@ -208,7 +208,7 @@ namespace tpp {
                     cur0.coord(2)  = numeric_cast<double>(__z);
                     cur0.comment   = string("QMname: ") + _qName;
 
-                    runtime.log_write( (format("%s - %s: %d(%d) [%8.3f,%8.3f,%8.3f] %s \n") % cur0.res_name % cur0.atom_name 
+                    runtime.log_write( (format("%s - %s: %d(%d) [%8.3f,%8.3f,%8.3f] %s \n") % cur0.res_name % cur0.atom_name
                           % cur0.oldindex % cur0.index % cur0.coord(0) % cur0.coord(1) % cur0.coord(2) % cur0.comment).str() );
                     at_it = tp.atoms.insert( cur0 );
 
@@ -232,9 +232,9 @@ namespace tpp {
                   /* FINISH PARSING PDB */
                 } // end-case PDB
                          break;
-        case TPP_IF_G96:   molToAtoms(tp); // #TODO 1 
+        case TPP_IF_G96:   molToAtoms(tp); // #TODO 1
                            break;
-        case TPP_IF_GRO:   molToAtoms(tp); // #TODO 2 
+        case TPP_IF_GRO:   molToAtoms(tp); // #TODO 2
                            break;
         case TPP_IF_GAMOPT: ;
         case TPP_IF_GAMHESS: ;
@@ -247,7 +247,7 @@ namespace tpp {
       // setting up residue name
       if ( strutil::trim(tp.atoms.begin()->res_name) != "") {
         tp.res_name = tp.atoms.begin()->res_name;
-        // checking res_name correctness    
+        // checking res_name correctness
         for (int i=0; i<tp.res_name.size(); ++i) {
           if (!isalnum(tp.res_name[i])) {
             runtime.log_write("Incorrect residue name in PDB file, using 'RES' instead.\n");
@@ -271,9 +271,9 @@ namespace tpp {
       } else {
         runtime.log_write(string("Successfully readed ")+lexical_cast<string>(tp.atoms.size())+ " atoms!\n");
       }
-    } catch(const Exception &e) { 
-      e.fix_log(); 
-      throw e;  
+    } catch(const Exception &e) {
+      e.fix_log();
+      throw e;
     }
   } // end loadFromStream
 
@@ -282,7 +282,7 @@ namespace tpp {
     // test if file exists
     runtime.log_write(string("Trying to write structure into '")+fname+"'.\n");
     fstream out(fname, ios::out);
-    if (!out.is_open()) { 
+    if (!out.is_open()) {
       runtime.log_write("Fail to open file for write.\n");
       BOOST_CHECK(0);
       Parameters params;
@@ -296,7 +296,7 @@ namespace tpp {
         out << format("TITLE  Written by TPP: %1$s (topoplogy for residue %2$-4s)\n") % tp.name % tp.res_name;
         for (AtomArray::iterator it = tp.atoms.begin(); it != tp.atoms.end(); ++it) {
           out << format("%1$-6s%2$5d %3$4s%4$4s %5$c%6$4d    %7$8.3f%8$8.3f%9$8.3f  0.00  0.00          %10$2s\n")
-            % "ATOM" % (int)it->index % it->atom_name % tp.res_name % 'A' 
+            % "ATOM" % (int)it->index % it->atom_name % tp.res_name % 'A'
             % (int)it->mol_id % it->coord(0) % it->coord(1) % it->coord(2) % it->qmname;
         }
         out << "END\n";
@@ -339,8 +339,8 @@ namespace tpp {
       cur0.coord(2) = it->GetZ();
       cur0.mol_id   = 1;
       cur0.res_name = it->GetResidue()->GetName();
-      cur0.atom_name = string("") + it->GetType(); 
-      cur0.atom_type = string("") + it->GetType(); 
+      cur0.atom_name = string("") + it->GetType();
+      cur0.atom_type = string("") + it->GetType();
       cur0.charge = it->GetPartialCharge();
       cur0.mass = it->GetAtomicMass();
       cur0.ncharge = it->GetAtomicNum();
