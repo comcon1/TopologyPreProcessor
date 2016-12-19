@@ -9,6 +9,7 @@
 
 #include "core.hpp"
 #include "global.hpp"
+#include "logger.h"
 #include "exceptions.hpp"
 #include "runtime.hpp"
 #include "paramset.hpp"
@@ -42,6 +43,7 @@ string extension(const std::string& filename){
 }
 
 int main(int argc, char * argv[]) {
+  tpp::initiate_logging("test.log");
   string progname("Execution rules for TPPRENUM ");
   progname += PACKAGE_VERSION;
   p_o::options_description desc(progname);
@@ -83,7 +85,7 @@ int main(int argc, char * argv[]) {
     bool rtp_file = !vars["rtpoutput-file"].as<bool>();
 
     if (! ignore_index) {
-      cout << "Non-ignoring of indexes is a DANGEROUS MODE!" << endl; // Double negation, confusing
+      TPPI << "Non-ignoring of indexes is a DANGEROUS MODE!" << endl; // Double negation, confusing
     }
 
     string input_file =vars["input"].as<std::string>();
@@ -97,7 +99,7 @@ int main(int argc, char * argv[]) {
     if (verbose) {
       print_info();
     } else {
-      cout << format("Starting TPPRENUM-%1$s program.\n") % VERSION;
+      TPPI << format("Starting TPPRENUM-%1$s program.") % VERSION;
     }
 
     // INPUT analysing
@@ -121,7 +123,7 @@ int main(int argc, char * argv[]) {
     }
 
     if (verbose) {
-      cout<<tpp::in_fmt_descr(iform)<<endl;
+      TPPI<<tpp::in_fmt_descr(iform);
     }
 
     // OUTPUT analysing
@@ -133,15 +135,15 @@ int main(int argc, char * argv[]) {
     else if (out_ext == "g96")
       oform = tpp::TPP_OF_G96;
     else {
-      cerr << "ERROR:\n";
-      cerr << "Couldn't determine format of output file."
+      TPPE << "ERROR:\n"
+           << "Couldn't determine format of output file."
               "Unknown extension: \"" << out_ext <<"\""
-              " Please specify other extension.\n";
+              " Please specify other extension.";
       return 1;
     }
 
     if (verbose) {
-      cout<< tpp::out_fmt_descr(oform)<<endl;
+      TPPI<< tpp::out_fmt_descr(oform);
     }
     //
     // Main program body
@@ -160,22 +162,22 @@ int main(int argc, char * argv[]) {
     return 1;
   }
   catch (const tpp::Exception &e) {
-    cerr << "  TPP_EXCEPTION FROM: " << e["procname"] << endl;
-    cerr << "  With following error: " << e["error"] << endl;
-    cerr << "  more info see in log-file." << endl;
+    TPPE << "  TPP_EXCEPTION FROM: " << e["procname"] << endl
+         << "  With following error: " << e["error"] << endl
+         << "  more info see in log-file.";
     return 2;
   }
   catch(std::exception& e)
   {
-    cerr<<"  TPP crashed with std::exception:"<<e.what()<<endl;
+    TPPE<<"  TPP crashed with std::exception:"<<e.what();
     return 3;
   }
   catch(...)
   {
-    cerr<<"  TPP crashed with unknown type of exception!"<<endl;
+    TPPE<<"  TPP crashed with unknown type of exception!";
     return 3;
   }
-  cout << "TPPRENUM finished normally!" << endl;
+  TPPI << "TPPRENUM finished normally!" << endl;
   return 0;
 }
 

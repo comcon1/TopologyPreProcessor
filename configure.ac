@@ -155,7 +155,7 @@ fi
 
 
 # Override LIBS to make program-specific linking in AM
-LIBS="-lopenbabel -lboost_program_options"
+LIBS="-lpthread -lboost_system -lboost_thread  -lboost_log_setup  -lboost_log -lopenbabel -lboost_program_options"
 
 #TODO: make compiler flags conditional
 CXXFLAGS="-g"
