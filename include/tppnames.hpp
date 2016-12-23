@@ -1,8 +1,7 @@
-#ifndef TPP_TOPIO_H
-#define TPP_TOPIO_H
+#ifndef TPP_TPPNAMES_H
+#define TPP_TPPNAMES_H
 
 #include "core.hpp"
-
 
 namespace tpp {
 
@@ -12,9 +11,9 @@ namespace tpp {
   template<typename T>
   class NameGenerator {
     protected:
-     T instance;
+     const T &instance;
     public:
-     NameGenerator(T &i): instance(i) {;}
+     NameGenerator(const T &i): instance(i) {;}
      virtual ~NameGenerator() {};
      virtual std::string getName() = 0;
   };
@@ -33,7 +32,7 @@ namespace tpp {
 
     public:
 
-      TTCNameGenerator(TopCoord &i): NameGenerator<TopCoord>(i) {;}
+      TTCNameGenerator(const TopCoord &i): NameGenerator<TopCoord>(i) {;}
 
       /**
        * Add information about bonding types
@@ -43,6 +42,26 @@ namespace tpp {
       /**
        * getName calls private subfunctions in depend on i.f
        */
+      virtual std::string getName();
+  };
+
+  /** \brief Class for naming atoms.
+   *
+   */
+  class AtomNameGenerator: NameGenerator<Atom> {
+    protected:
+      unsigned heavyNum = 0;
+      unsigned lightNum = 1;
+      bool hexFlag = false;
+      const char* defaultAtomName = "X";
+      std::string an2str(int);
+    public:
+      AtomNameGenerator(tpp::Atom &i): NameGenerator<tpp::Atom>(i) {;}
+      AtomNameGenerator &setNums(unsigned h, unsigned l, bool f) {
+        heavyNum = h;
+        lightNum = l;
+        return *this;
+      }
       virtual std::string getName();
   };
 

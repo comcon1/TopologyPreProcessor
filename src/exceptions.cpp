@@ -1,87 +1,83 @@
 #include "exceptions.hpp"
-#include "runtime.hpp"
+#include "logger.h"
 
+#include <exception>
 #include <boost/format.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/lexical_cast.hpp>
 
-using namespace tpp;
+using std::endl;
+using boost::format;
+using std::string;
 
+namespace tpp {
 
+  //
+  Exception::Exception(): mesg("Undefined exception.") {
 
-//
-// Exception methods
-//
-Exception::Exception(): mesg("Undefined exception.") {
-
-}
-
-Exception::~Exception()
-{
-
-}
-
-Exception::Exception(const char *_mesg, Parameters &_pars): mesg(_mesg), pars(_pars) {
-  using std::cerr;
-  if (pars.exists("fatal")) {
-    cerr << "TPP was abnormally terminated at " << boost::posix_time::second_clock::local_time() << "\n";
-    cerr << boost::format("Position: %1% -> %2% \n") % pars.read("classname") % pars.read("procname");
-    cerr << mesg << std::endl;
-    cerr << "Saving log and cache files..";
-    runtime.~Runtime(); // TODO remoce explicit destructor call
-    cerr << "Ok.\n";
-    cerr << "---------------------------------------------------------\n";
-    exit(1);
   }
-}
 
-Exception::Exception(const char *s): mesg(s){
+  Exception::~Exception()
+  {
 
-}
+  }
 
-std::string Exception::operator [](const char *s) const {
-	return std::string(pars.read(s));
-}
+  Exception::Exception(const char *_mesg, Parameters &_pars): mesg(_mesg), pars(_pars) {
+    if (pars.exists("fatal")) {
+      TPPE << format("TPP was abnormally terminated at) %s ") % boost::lexical_cast<string>(boost::posix_time::second_clock::local_time());
+      TPPE << format("Position: %1% -> %2%") % pars.read("classname") % pars.read("procname");
+      TPPE << mesg;
+      std::terminate();
+    }
+  }
 
-std::string Exception::operator [](const std::string &s) const {
-	return std::string(pars.read(s));
-}
+  Exception::Exception(const char *s): mesg(s){
 
+  }
 
-void Exception::fix_log() const {
-	std::ostringstream os;
-	os << "TPP catched exception!\n";
-	os << boost::format("***** from %1% -> %2%\n") % pars.read("classname")
-					% pars.read("procname");
-	os << boost::format("***** ===[ %1% ]===\n") % pars.read("error");
-	if (pars.exists("line"))
-		os << "***** parsing line: #" << pars.read("line") << std::endl;
-	os << "***** " << mesg << std::endl;
-	runtime.log_write(os.str());
-}
+  std::string Exception::operator [](const char *s) const {
+          return std::string(pars.read(s));
+  }
 
-//
-//	DBExceptionmethods
-//
-DbException::DbException(const char *a, Parameters &b): Exception(a,b)
-{
-
-}
+  std::string Exception::operator [](const std::string &s) const {
+          return std::string(pars.read(s));
+  }
 
 
-void DbException::fix_log() const {
-	using std::endl;
+  void Exception::fix_log() const {
+          std::ostringstream os;
+          os << "TPP catched exception!\n";
+          os << format("***** from %1% -> %2%\n") % pars.read("classname")
+                                          % pars.read("procname");
+          os << format("***** ===[ %1% ]===\n") % pars.read("error");
+          if (pars.exists("line"))
+                  os << "***** parsing line: #" << pars.read("line") << std::endl;
+          os << "***** " << mesg << std::endl;
+          TPPE << os.str();
+  }
 
-	std::ostringstream os;
-	os << "TPP catched exception!\n";
-	os << boost::format("***** from %1% -> %2%\n")
-					% pars.read("classname")
-					% pars.read("procname");
-	os << boost::format("***** ===[ %1% ]===\n") % pars.read("error");
-	if (pars.exists("line"))
-		os << "***** parsing line: #" << pars.read("line") << endl;
-	os << "***** SQL error: #" << pars.read("sql_error") << endl;
-	os << "***** SQL query: #" << pars.read("sql_query") << endl;
-	os << "***** " << mesg << endl;
-	runtime.log_write(os.str());
+  //
+  //	DBExceptionmethods
+  //
+  DbException::DbException(const char *a, Parameters &b): Exception(a,b)
+  {
+
+  }
+
+
+  void DbException::fix_log() const {
+          std::ostringstream os;
+          os << "TPP catched exception!\n";
+          os << format("***** from %1% -> %2%\n")
+                                          % pars.read("classname")
+                                          % pars.read("procname");
+          os << format("***** ===[ %1% ]===\n") % pars.read("error");
+          if (pars.exists("line"))
+                  os << "***** parsing line: #" << pars.read("line") << endl;
+          os << "***** SQL error: #" << pars.read("sql_error") << endl;
+          os << "***** SQL query: #" << pars.read("sql_query") << endl;
+          os << "***** " << mesg << endl;
+          TPPE << os.str();
+  }
 
 }

@@ -36,19 +36,19 @@
 #define TPP_MAX_ATOM_NUM 200
 #define TPP_MAX_FREQ_NUM 600
 #define TPP_MAX_BONDS 4
-#define TPP_MAX_LONGTAIL_DEEP 50
+#define TPP_MAX_LONGTAIL_DEEP 10
 
 /** \namespace tpp is used for scoping TPP specific variables.
  *
  */
 namespace tpp {
 
-        // namespace aliases
+  // namespace aliases
 
-        namespace bub = boost::numeric::ublas;
-        namespace bmi = boost::multi_index;
+  namespace bub = boost::numeric::ublas;
+  namespace bmi = boost::multi_index;
 
-        // typedef aliases
+  // typedef aliases
 
   typedef bub::bounded_vector<double, 3> Point; //!< type of space coordinate
         typedef unsigned TppIndex; //!< alias for type of atom indexing in molecule array
@@ -77,7 +77,7 @@ namespace tpp {
                 TppIndex c_gnr; //!< charge group!
     std::string qmname; //!< This surely means something!
   };
-        
+
         /** \brief Container of atoms indexed by index, name or charge group.
          *
          *   It is important to locate atom by name and by index. Locating by
@@ -183,7 +183,7 @@ namespace tpp {
     short f; //!< f = -1 (means parameter lack). Other correspond to ftype in GMX notation
 
                 /** \brief c0..c5 values parametrize the potential interaction
-                 * function. 
+                 * function.
                  *
                  * c0-5 values have different meaning for different TopCoord::type values:
                  *
@@ -196,7 +196,7 @@ namespace tpp {
                  * other: c0..c5 means nothing
                  */
     double c0, c1, c2, c3, c4, c5;
-                
+
                 /*
      t_top_coord(): defname(""), type(1),f(-1),c0(0),c1(0),c2(0),c3(0),c4(0),c5(0) {;}
      t_top_coord(const t_top_coord &_t): defname(_t.defname), type(_t.type),f(_t.f),c0(_t.c0),c1(_t.c1),c2(_t.c2),c3(_t.c3),c4(_t.c4),c5(_t.c5) {;}
@@ -231,7 +231,7 @@ namespace tpp {
          boost::multi_index::member<TopCoord, TopologyType, &TopCoord::type>
                          >, // key by directive
        boost::multi_index::ordered_non_unique<
-                           boost::multi_index::member<TopCoord, short, &TopCoord::f> 
+                           boost::multi_index::member<TopCoord, short, &TopCoord::f>
                          > // key by function
       >
                 > TopMap;
@@ -247,7 +247,7 @@ namespace tpp {
         boost::multi_index::sequenced<>, // array key
         boost::multi_index::ordered_non_unique<
           boost::multi_index::member<TopElement, std::string, &TopElement::defname>
-                          > 
+                          >
                         > // key by defname
            > TopArray;
 

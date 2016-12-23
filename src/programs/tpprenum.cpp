@@ -11,7 +11,6 @@
 #include "global.hpp"
 #include "logger.h"
 #include "exceptions.hpp"
-#include "runtime.hpp"
 #include "paramset.hpp"
 #include "pdbutils.hpp"
 #include "structio.hpp"
@@ -43,7 +42,7 @@ string extension(const std::string& filename){
 }
 
 int main(int argc, char * argv[]) {
-  tpp::initiate_logging("test.log");
+  tpp::initiate_logging("tpprenum.log");
   string progname("Execution rules for TPPRENUM ");
   progname += PACKAGE_VERSION;
   p_o::options_description desc(progname);
@@ -152,8 +151,10 @@ int main(int argc, char * argv[]) {
     tpp::StructureIO io(ignore_index, rtp_file);
     io.loadFromFile(topology, iform, input_file.c_str());
 
-    ublas::vector<unsigned> tail1 = tpp::generate_long_tail1(topology.mol, verbose);
-    topology.atoms = tpp::mol_renum1(topology.mol, topology.atoms, tail1, hex_flag);
+    tpp::Renumberer rnr(topology.mol, verbose);
+    std::vector<unsigned> tail1 = rnr.findLongestChain();
+    topology.atoms = rnr.molRenumber(topology.atoms, tail1, hex_flag);
+
     io.saveToFile(topology, oform, output_file.c_str());
   } // of global try
   catch (boost::program_options::error & e) {
