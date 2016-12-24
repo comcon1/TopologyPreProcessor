@@ -26,7 +26,7 @@ int main(int argc, char * argv[]) {
  desc.add_options()
 	 ("input,i",p_o::value<std::string>(),"Input topology (itp format)")
 	 ("output,o",p_o::value<std::string>(),"Output topology (itp format)")
-	 ("hessian,e",p_o::value<std::string>(),"Input GAMESS-log (gamout format)")	 
+	 ("hessian,e",p_o::value<std::string>(),"Input GAMESS-log (gamout format)")
 	 ("lack-file,l",p_o::value<std::string>(),"Topology lack filename (default 'lack.itp')")
 	 ("verbose,v","Verbose mode")
 	 ("help,h", "Print this message")
@@ -35,12 +35,12 @@ int main(int argc, char * argv[]) {
     try { // u are ИДИОТ! boost::program_options
  	p_o::store(p_o::parse_command_line(argc, argv, desc), vars);
 	p_o::notify(vars);
-    
+
         // boolean options
-    if ( vars.count("verbose") > 1 ) 
+    if ( vars.count("verbose") > 1 )
       throw 1;
     PARAM_ADD(cmdline, "verbose_flag", vars.count("verbose") ? "on" : "off" );
-    
+
     if (vars.count("help") == 1) helpscreen();
         // main string options
 	if (vars.count("input") == 1) {
@@ -56,7 +56,7 @@ int main(int argc, char * argv[]) {
 		PARAM_ADD(cmdline, "lack_file", vars["lack-file"].as<std::string>() );
         } else throw 1;
     }
-    catch (boost::program_options::error &e) {throw 1;}
+    catch (const boost::program_options::error &e) {throw 1;}
  }
  catch (int ExC) {
 	 if (ExC) {
@@ -68,7 +68,7 @@ int main(int argc, char * argv[]) {
 // finish analysing
 // starting work with input and output files
 //
- 
+
 if (PARAM_READ(cmdline, "verbose_flag") == "on") {
 cout << format ("\
 **********************************************************************\n\
@@ -105,18 +105,18 @@ cout << format ("\
    cout << "Starting converting hessian into topology..." << endl;
    tpp::accept_hessian(TOP, mtx);
    cout << "Converting hessian into topology finished!\n" << flush;
-   for (tpp::t_top_map::iterator it = TOP.parameters.begin(); 
+   for (tpp::t_top_map::iterator it = TOP.parameters.begin();
    it != TOP.parameters.end(); ++it) {
      tpp::t_top_coord par(*it);
-     par.f = (it->type == tpp::TPP_TTYPE_BON)   ? 1 : 
-            ( (it->type == tpp::TPP_TTYPE_ANG)   ? 1 : 
+     par.f = (it->type == tpp::TPP_TTYPE_BON)   ? 1 :
+            ( (it->type == tpp::TPP_TTYPE_ANG)   ? 1 :
             ( (it->type == tpp::TPP_TTYPE_RBDIH) ? 3 : 1 ) );
      TOP.parameters.replace(it, par);
    }
-     
-   tpp::save_topology (TOP, PARAM_READ(cmdline, "output_file").c_str() ); 
+
+   tpp::save_topology (TOP, PARAM_READ(cmdline, "output_file").c_str() );
  }
-  catch (tpp::t_exception e) {
+  catch (const tpp::t_exception &e) {
    e.fix_log();
    cerr << "TPP_EXCEPTION FROM: " << e["procname"] << endl;
    cerr << "more info see in log-file." << endl;

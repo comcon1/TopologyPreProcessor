@@ -2,7 +2,7 @@
 #include "exceptions.hpp"
 
 #include "strutil.h"
-#include "logger.h"
+#include "logger.hpp"
 
 #include <boost/format.hpp>
 #include <boost/lexical_cast.hpp>
@@ -325,7 +325,7 @@ namespace tpp {
     };
     out.close();
     // header
-    } catch (Exception e) {
+    } catch (const Exception &e) {
       e.fix_log();
       throw e;
     }

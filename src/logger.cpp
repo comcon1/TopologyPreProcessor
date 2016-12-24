@@ -1,4 +1,4 @@
-#include "logger.h"
+#include "logger.hpp"
 
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 #include <boost/log/trivial.hpp>
@@ -41,7 +41,7 @@ namespace tpp {
         << "]:  " << expr::smessage
         )
     );
-    logging::add_console_log(std::cout, 
+    logging::add_console_log(std::cout,
                     boost::log::keywords::format = "%Message%",
                     boost::log::keywords::filter = logging::trivial::severity >= boost::log::trivial::severity_level::info
                     );

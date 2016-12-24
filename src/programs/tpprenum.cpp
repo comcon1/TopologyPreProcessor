@@ -9,7 +9,7 @@
 
 #include "core.hpp"
 #include "global.hpp"
-#include "logger.h"
+#include "logger.hpp"
 #include "exceptions.hpp"
 #include "paramset.hpp"
 #include "pdbutils.hpp"
@@ -157,7 +157,7 @@ int main(int argc, char * argv[]) {
 
     io.saveToFile(topology, oform, output_file.c_str());
   } // of global try
-  catch (boost::program_options::error & e) {
+  catch (const boost::program_options::error & e) {
     cerr << format("\nTPPRENUM %1% : Error in input parameters.\n\n") % VERSION;
     cerr << desc;
     return 1;
@@ -168,7 +168,7 @@ int main(int argc, char * argv[]) {
          << "  more info see in log-file.";
     return 2;
   }
-  catch(std::exception& e)
+  catch(const std::exception& e)
   {
     TPPE<<"  TPP crashed with std::exception:"<<e.what();
     return 3;

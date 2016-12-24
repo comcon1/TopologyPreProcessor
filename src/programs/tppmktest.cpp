@@ -28,7 +28,7 @@ int main(int argc, char * argv[]) {
           ("input,i",p_o::value<std::string>(),"Input filename (PDB format)")
           ("testid,t",p_o::value<unsigned>(),"Test molecule ID (zero for all)")
           ("forcefield,f",p_o::value<std::string>(),"Forcefield name")
- 
+
           ("sqlserver,s",p_o::value<std::string>(),"Mysql-server adress (default 'localhost')")
           ("sqlport,t",p_o::value<unsigned>(),"Mysql-server port (default '3306')")
           ("sqluser,u",p_o::value<std::string>(),"Mysql-user (default 'tppuser')")
@@ -38,20 +38,20 @@ int main(int argc, char * argv[]) {
           ("help,h", "Print this message")
   ;
   try {
-     try { 
+     try {
         // parsing boost::program_options
   	p_o::store(p_o::parse_command_line(argc, argv, desc), vars);
         p_o::notify(vars);
-     
+
          // boolean option
-        if (vars.count("verbose") > 1)  
+        if (vars.count("verbose") > 1)
           throw 1;
         PARAM_ADD(cmdline, "verbose_flag", vars.count("verbose") ? "on" : "off" );
         // tests are performed in nocalculate only
         PARAM_ADD(cmdline, "nocalculate_flag",  "on" );
 
         if (vars.count("help") == 1) helpscreen();
-        
+
         // main string options
         if (vars.count("input") == 1) {
         	PARAM_ADD(cmdline, "input_file", vars["input"].as<std::string>() );
@@ -63,7 +63,7 @@ int main(int argc, char * argv[]) {
         	PARAM_ADD(cmdline, "forcefield", vars["forcefield"].as<std::string>() );
         } else throw 1;
 
-         
+
         // SQL parameters
         if (vars.count("sqlserver") == 1) {
         	PARAM_ADD(cmdline, "sqlserver", vars["sqlserver"].as<std::string>() );
@@ -87,7 +87,7 @@ int main(int argc, char * argv[]) {
         	PARAM_ADD(cmdline, "sqlpassword", "estatic" );
         } else throw 1;
      }
-     catch (boost::program_options::error &e) {throw 1;}
+     catch (const boost::program_options::error &e) {throw 1;}
   }
   catch (int ExC) {
           if (ExC) {
@@ -98,7 +98,7 @@ int main(int argc, char * argv[]) {
   }
   // finish analysing
   // starting work with input and output files
-  
+
   if (PARAM_READ(cmdline, "verbose_flag") == "on") {
   cout << format ("\
 **********************************************************************\n\
@@ -142,7 +142,7 @@ int main(int argc, char * argv[]) {
   }
 
   if (PARAM_READ(cmdline, "verbose_flag") == "on") {
-      cout << "Input file format: Protein Data Bank." << endl; 
+      cout << "Input file format: Protein Data Bank." << endl;
   }
 
   // program body, using modules
@@ -167,7 +167,7 @@ int main(int argc, char * argv[]) {
     PARAM_ADD(par0, "ffid", boost::lexical_cast<string>(DI.get_ffid()) );
     TOP.ffinclude = DI.get_ffinclude().c_str();
     TOP.ffinfo = PARAM_READ(par0, "ffname") + " revision " + DI.get_ffrev();
-    
+
     // verbose stat output
 
     if (PARAM_READ(cmdline, "verbose_flag") == "on") {
@@ -185,7 +185,7 @@ int main(int argc, char * argv[]) {
     // performs checks over the topology
 
     double charge = sumcharge(TOP);
-    
+
     cout << format("Processing molecule with total charge: %1$8.3f.\n") % charge;
 
     if ( abs(charge - (int) charge) > 1e-5) {
@@ -197,7 +197,7 @@ int main(int argc, char * argv[]) {
 
     // -- WRITE TESTCASE mode --
     cout << endl;
-    
+
     if (PARAM_EXISTS(cmdline, "input_file")) {
       cout << format("Generated topology will be written as a test case.\n") << endl;
 
@@ -213,25 +213,25 @@ int main(int argc, char * argv[]) {
     // -- PERFORM TEST mode --
 
   }
-  catch (tpp::t_sql_exception &e) {
+  catch (const tpp::t_sql_exception &e) {
     e.fix_log();
     cerr << "TPP_SQL_EXCEPTION FROM: " << e["procname"] << endl;
     cerr << "more info see in log-file." << endl;
     return 3;
   }
-  catch (tpp::t_db_exception &e) {
+  catch (const tpp::t_db_exception &e) {
     e.fix_log();
     cerr << "TPP_DB_EXCEPTION FROM: " << e["procname"] << endl;
     cerr << "more info see in log-file." << endl;
     return 2;
   }
-  catch (tpp::t_exception &e) {
+  catch (const tpp::t_exception &e) {
     e.fix_log();
     cerr << "TPP_EXCEPTION FROM: " << e["procname"] << endl;
     cerr << "more info see in log-file." << endl;
     return 1;
   }
-  
+
   cout << "TPPMKTOP finished normally!" << endl;
 }
 
@@ -271,7 +271,7 @@ void helpscreen()
       -h  print this message.                                         \n\
 \n\
 --------------------------------*****---------------------------------\n\
-") % PACKAGE_VERSION % CONFIGURE_CDATE % __VERSION__ % BOOST_LIB_VERSION 
+") % PACKAGE_VERSION % CONFIGURE_CDATE % __VERSION__ % BOOST_LIB_VERSION
    % BABEL_VERSION % BABEL_DATADIR << endl;
  throw 0;
 }

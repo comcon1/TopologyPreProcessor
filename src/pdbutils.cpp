@@ -1,6 +1,6 @@
 #include "pdbutils.hpp"
 #include "exceptions.hpp"
-#include "logger.h"
+#include "logger.hpp"
 #include "bond_matrix.hpp"
 #include "tppnames.hpp"
 

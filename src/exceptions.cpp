@@ -1,5 +1,5 @@
 #include "exceptions.hpp"
-#include "logger.h"
+#include "logger.hpp"
 
 #include <exception>
 #include <boost/format.hpp>

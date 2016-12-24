@@ -192,12 +192,12 @@ int main(int argc, char * argv[]) {
     }
     cout << format("Please, correct your charges according to sum: %1$8.3f.\n") % sumcharge(TOP);
   } // of global try
-  catch (tpp::SqlException &e) {
+  catch (const tpp::SqlException &e) {
     e.fix_log();
     cerr << "TPP_SQL_EXCEPTION FROM: " << e["procname"] << endl;
     cerr << "more info see in log-file." << endl;
     return 3;
-  } catch (tpp::DbException &e) {
+  } catch (const tpp::DbException &e) {
     e.fix_log();
     cerr << "TPP_DB_EXCEPTION FROM: " << e["procname"] << endl;
     cerr << "more info see in log-file." << endl;
@@ -214,7 +214,7 @@ int main(int argc, char * argv[]) {
     cerr << "  more info see in log-file." << endl;
     return 2;
   }
-  catch(std::exception& e)
+  catch(const std::exception& e)
   {
     cerr<<"  TPP crashed with std::exception:"<<e.what()<<endl;
     return 3;

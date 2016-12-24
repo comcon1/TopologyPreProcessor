@@ -601,13 +601,13 @@ void BondDefiner::bond_align() {
     fill_dihedrals();
     fill_impropers();
     fill_pairs();
-  } catch (DbException &e) {
+  } catch (const DbException &e) {
     e.fix_log();
     cout << "..something fails." << endl;
-  } catch (SqlException &e) {
+  } catch (const SqlException &e) {
     e.fix_log();
     cout << "..something fails." << endl;
-  } catch (Exception &e) {
+  } catch (const Exception &e) {
     e.fix_log();
     cout << "..something fails." << endl;
   }

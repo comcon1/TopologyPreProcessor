@@ -813,7 +813,7 @@ void AtomDefiner::proceed() {
       fill_dih();
     count_scores();
     smart_fit();
-  } catch (SqlException e) {
+  } catch (const SqlException &e) {
     e.fix_log();
     throw e;
   }
@@ -956,7 +956,7 @@ void AtomDefiner::smart_cgnr() {
             cout << "finished." << endl;
           } // ending CGNR renumbering block
 
-      } catch (Exception &et) {
+      } catch (const Exception &et) {
           cout << "-- CATCH AT SMART_CGNR! --" << endl;
           throw et;
       }

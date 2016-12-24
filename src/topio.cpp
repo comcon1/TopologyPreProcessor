@@ -86,7 +86,7 @@ void save_topology_rtp(Topology &tp, const char *fname) {
   // test if file exists
   runtime.log_write(string("Trying to write RTP-topology into '")+fname+"'.\n");
   fstream out(fname, ios::out);
-  if (!out.is_open()) { 
+  if (!out.is_open()) {
     runtime.log_write("Fail to open file for write.\n");
     BOOST_CHECK(0);
   }
@@ -113,7 +113,7 @@ void save_topology_rtp(Topology &tp, const char *fname) {
       for (TopArray::nth_index_iterator<1>::type it0 = tp.elements.get<1>().lower_bound(it->defname);
            it0 != tp.elements.get<1>().upper_bound(it->defname); ++it0)
         if (it->f == -1) {
-          out << format(" %1$-4s   %2$-4s   bndTPP_%3$s_%4$s \n") 
+          out << format(" %1$-4s   %2$-4s   bndTPP_%3$s_%4$s \n")
                   % tp.atoms.find((int)it0->i)->atom_name.c_str()
                   % tp.atoms.find((int)it0->j)->atom_name.c_str()
                   % tp.atoms.find((int)it0->i)->atom_type2.c_str()
@@ -128,7 +128,7 @@ void save_topology_rtp(Topology &tp, const char *fname) {
   // angles
   bool flag = true;
   for (TopMap::nth_index<2>::type::iterator it = tp.parameters.get<2>().lower_bound(-1);
-      it != tp.parameters.get<2>().upper_bound(-1); ++it)  
+      it != tp.parameters.get<2>().upper_bound(-1); ++it)
     if (it->type == TPP_TTYPE_ANG)
       for (TopArray::nth_index_iterator<1>::type it0 = tp.elements.get<1>().lower_bound(it->defname);
            it0 != tp.elements.get<1>().upper_bound(it->defname); ++it0) {
@@ -136,7 +136,7 @@ void save_topology_rtp(Topology &tp, const char *fname) {
           out << "\n[ angles ]\n";
           flag = false;
         }
-        out << format("%1$4s %2$4s %3$4s dhTPP_%4$s_%5$s_%6$s \n") 
+        out << format("%1$4s %2$4s %3$4s dhTPP_%4$s_%5$s_%6$s \n")
                 % tp.atoms.find((int)it0->i)->atom_name.c_str()
                 % tp.atoms.find((int)it0->j)->atom_name.c_str()
                 % tp.atoms.find((int)it0->k)->atom_name.c_str()
@@ -148,7 +148,7 @@ void save_topology_rtp(Topology &tp, const char *fname) {
   // dihedrals
   flag = true;
   for (TopMap::nth_index<2>::type::iterator it = tp.parameters.get<2>().lower_bound(-1);
-      it != tp.parameters.get<2>().upper_bound(-1); ++it)  
+      it != tp.parameters.get<2>().upper_bound(-1); ++it)
     if (it->type == TPP_TTYPE_RBDIH)
       for (TopArray::nth_index_iterator<1>::type it0 = tp.elements.get<1>().lower_bound(it->defname);
            it0 != tp.elements.get<1>().upper_bound(it->defname); ++it0) {
@@ -156,7 +156,7 @@ void save_topology_rtp(Topology &tp, const char *fname) {
           out << "\n[ dihedrals ]\n";
           flag = false;
         }
-        out << format("%1$4s %2$4s %3$4s %4$4s dhTPP_%5$s_%6$s_%7$s_%8$s \n") 
+        out << format("%1$4s %2$4s %3$4s %4$4s dhTPP_%5$s_%6$s_%7$s_%8$s \n")
                 % tp.atoms.find((int)it0->i)->atom_name.c_str()
                 % tp.atoms.find((int)it0->j)->atom_name.c_str()
                 % tp.atoms.find((int)it0->k)->atom_name.c_str()
@@ -177,7 +177,7 @@ void save_topology_rtp(Topology &tp, const char *fname) {
           out << "\n[ impropers ]\n";
           flag = false;
         }
-         out << format("%1$4s %2$4s %3$4s %4$4s %5$s \n") 
+         out << format("%1$4s %2$4s %3$4s %4$4s %5$s \n")
                 % tp.atoms.find((int)it0->i)->atom_name.c_str()
                 % tp.atoms.find((int)it0->j)->atom_name.c_str()
                 % tp.atoms.find((int)it0->k)->atom_name.c_str()
@@ -193,7 +193,7 @@ void save_topology(Topology &tp, const char *fname, bool ncf) {
   // test if file exists
   runtime.log_write(string("Trying to write topology into '")+fname+"'.\n");
   fstream out(fname, ios::out);
-  if (!out.is_open()) { 
+  if (!out.is_open()) {
     runtime.log_write("Fail to open file for write.\n");
     BOOST_CHECK(0);
   }
@@ -213,7 +213,7 @@ void save_topology(Topology &tp, const char *fname, bool ncf) {
         it != tp.parameters.get<1>().upper_bound(TPP_TTYPE_SYMDIH); ++it) {
     if ( (it->f != -1) ^  ncf ) {
       switch (it->type) {
-       case TPP_TTYPE_BON:   out << format("#define %1$-25s %2$1d %3$8.3f %4$9.2e ;1\n") 
+       case TPP_TTYPE_BON:   out << format("#define %1$-25s %2$1d %3$8.3f %4$9.2e ;1\n")
                               % it->defname % it->f % it->c0 % it->c1; break;
        case TPP_TTYPE_ANG:   out << format("#define %1$-25s %2$1d %3$6.1f %4$8.1f    ;2\n")
                              % it->defname % it->f % it->c0 % it->c1; break;
@@ -231,7 +231,7 @@ void save_topology(Topology &tp, const char *fname, bool ncf) {
   out << "\n[ atoms ]\n";
   for (AtomArray::iterator it = tp.atoms.begin(); it != tp.atoms.end(); ++it) {
     out << format("%1$3d  %2$-10s 1  %3$-4s  %4$-4s  %5$2d  %6$+6.3f  %7$10.6f ; [%8$3s] %9$s\n") %
-           (int)(it->index) % it->atom_type.c_str() % tp.res_name.c_str() % it->atom_name.c_str() % 
+           (int)(it->index) % it->atom_type.c_str() % tp.res_name.c_str() % it->atom_name.c_str() %
            (int)(it->c_gnr) % it->charge % it->mass % it->atom_type2.c_str() % it->comment;
   }
   out << flush;
@@ -262,7 +262,7 @@ void save_topology(Topology &tp, const char *fname, bool ncf) {
   // dihedrals
   if ( ( tp.parameters.get<1>().find(TPP_TTYPE_RBDIH) != tp.parameters.get<1>().end() ) ||
       //TODO: incorporate IMPDIH here?
-       ( tp.parameters.get<1>().find(TPP_TTYPE_SYMDIH) != tp.parameters.get<1>().end() ) 
+       ( tp.parameters.get<1>().find(TPP_TTYPE_SYMDIH) != tp.parameters.get<1>().end() )
       ) {
     out << "\n[ dihedrals ]\n";
     for (TopMap::nth_index_iterator<1>::type it = tp.parameters.get<1>().lower_bound(TPP_TTYPE_RBDIH);
@@ -274,7 +274,7 @@ void save_topology(Topology &tp, const char *fname, bool ncf) {
         else
           out << format("%1$3d %2$3d %3$3d %4$3d  %5$-15s\n") % (int)it0->i % (int)it0->j % (int)it0->k % (int)it0->l % it0->defname;
   }
-  // impropers 
+  // impropers
   if ( tp.parameters.get<1>().find(TPP_TTYPE_SPECIMP) != tp.parameters.get<1>().end() ) {
     out << "\n[ dihedrals ]\n";
     for (TopMap::nth_index_iterator<1>::type it = tp.parameters.get<1>().lower_bound(TPP_TTYPE_SPECIMP);
@@ -293,7 +293,7 @@ void save_topology(Topology &tp, const char *fname, bool ncf) {
       out << ";\n";
       for (TopArray::nth_index_iterator<1>::type it0 = tp.elements.get<1>().lower_bound(it->defname);
            it0 != tp.elements.get<1>().upper_bound(it->defname); ++it0) {
-        if (it0->defname == "ONE_PAIR") 
+        if (it0->defname == "ONE_PAIR")
           out << format("%1$3d %2$3d  %3$1d\n") % (int)it0->i % (int)it0->j % it->f;
         else
           out << format("%1$3d %2$3d  %3$1d %4$10.5f %5$10.5f\n") % (int)it0->i % (int)it0->j % it->f % it->c0 % it->c1;
@@ -314,13 +314,13 @@ void save_topology(Topology &tp, const char *fname, bool ncf) {
 
 // save information about lacking topology
 void save_lack(Topology &tp, const char *fname) {
-      cout << format("TPP will write %1$d lack parameters to %2$s.\n") 
+      cout << format("TPP will write %1$d lack parameters to %2$s.\n")
         % tp.parameters.get<2>().count(-1) % fname;
       std::ofstream qalcfile(fname, ios::out);
       BOOST_CHECK(qalcfile.is_open());
       qalcfile << "; TPP topology lack\n";
       for (TopMap::nth_index<2>::type::iterator typit = tp.parameters.get<2>().lower_bound(-1);
-         typit != tp.parameters.get<2>().upper_bound(-1); ++typit) {  
+         typit != tp.parameters.get<2>().upper_bound(-1); ++typit) {
         switch (typit->type) {
           case TPP_TTYPE_BON:
            qalcfile << format("#define %1$s 1 0.00 0.00 ;1\n") % typit->defname;
@@ -328,7 +328,7 @@ void save_lack(Topology &tp, const char *fname) {
           case TPP_TTYPE_ANG:
            qalcfile << format("#define %1$s 1 0.00 0.00 0.00 ;2\n") % typit->defname;
            break;
-          case TPP_TTYPE_IMPDIH: 
+          case TPP_TTYPE_IMPDIH:
            qalcfile << format("#define %1$s 2 0.00 0.00 0.00 ;3\n") % typit->defname;
            break;
           case TPP_TTYPE_RBDIH:
@@ -348,18 +348,18 @@ void print(T a) {
 
 #if ENABLE_GAMESS_FEATURES
 typedef ublas::matrix<double> umd;
-static member_function_ptr<umd::reference, umd,  umd::size_type, umd::size_type, umd::const_reference> 
+static member_function_ptr<umd::reference, umd,  umd::size_type, umd::size_type, umd::const_reference>
  ins_elem = &umd::insert_element;
 
 extern void load_hessian(ublas::matrix<double>& mtx, const char *fname) {
    {
   runtime.log_write(string("Trying to read ") + fname + " into hessian matrix.\n");
   fstream inf(fname, ios::in);
-  if (!inf.is_open()) { 
+  if (!inf.is_open()) {
     runtime.log_write("Fail to open file for read.\n");
     BOOST_CHECK(0);
   }
-  inf.close(); 
+  inf.close();
    }
 
   lex::iterator first(fname);
@@ -376,7 +376,7 @@ extern void load_hessian(ublas::matrix<double>& mtx, const char *fname) {
       (+blank_p >> uint_p[assign_a(num_x)] >> !(+blank_p >> uint_p) >> *blank_p >> eol_p)[&lex::echo::val_print] >>
       (+blank_p >> +alnum_p >> !(+blank_p >> +alnum_p) >> *blank_p >> eol_p)[&lex::echo::val_print] >>
       *(anychar_p - eol_p) >> eol_p >> // " x y z x y z" string
-      repeat_p(3,boost::spirit::classic::more) 
+      repeat_p(3,boost::spirit::classic::more)
       [
       +blank_p >> !( uint_p[assign_a(num_y)][var(y) = var(num_y)*3-3] >> +blank_p >> +alnum_p >> +blank_p )[&lex::echo::val_print]
                >> (ch_p('X') ^ 'Y' ^ 'Z')[increment_a(y)][var(x) = var(num_x)*3-3]
@@ -387,13 +387,13 @@ extern void load_hessian(ublas::matrix<double>& mtx, const char *fname) {
     // ending block
     >> +soms;
  parse_info<lex::iterator> info;
- //BOOST_SPIRIT_DEBUG_NODE( common );    
+ //BOOST_SPIRIT_DEBUG_NODE( common );
  try {
    info = parse(first,last, common);
  } catch (parser_error_base &e) {
       cout << "Parse error. Check file format (GAMESS OUTPUT, RUNTYP=HESSIAN).\n";
  }
- cout << format("%1$4d %2$4d %3$4d %4$4d\n") % x % y % num_x % num_y; 
+ cout << format("%1$4d %2$4d %3$4d %4$4d\n") % x % y % num_x % num_y;
  cout << "Current hesse matrix is: \n";
 
  if (!info.full) {
@@ -412,7 +412,7 @@ Error in parsing file '%1%' catched:  \n\
        PARAM_ADD(pars0, "error", "Parsing error");
        throw Exception("GAMESS output parsing error!", pars0);
  }
- 
+
  // symmetry matrix ;))
  for (int i=0; i<mtx.size1(); ++i)
   for (int j=0; j<i; ++j)
@@ -421,7 +421,7 @@ Error in parsing file '%1%' catched:  \n\
  ostringstream os;
  os << "Matrix hessian from GAMESS-file:\n";
  for (int i=0; i<mtx.size1(); ++i)
-   os << ublas::row(mtx,i) << endl; 
+   os << ublas::row(mtx,i) << endl;
  runtime.log_write(os.str());
  return;
 }
@@ -432,40 +432,40 @@ extern void load_lack(Topology &tp, const char *fname) {
    {
   runtime.log_write(string("Trying to read lack-file into topology from '")+fname+"'.\n");
   fstream inf(fname, ios::in);
-  if (!inf.is_open()) { 
+  if (!inf.is_open()) {
     runtime.log_write("Fail to open file for read.\n");
     BOOST_CHECK(0);
   }
-  inf.close(); 
+  inf.close();
    }
   lex::iterator first(fname);
   lex::iterator last = first.make_end();
   lex::rule_r clrs, coms, define, common;
   TopCoord _tc;
-  
+
   coms = *blank_p >> ch_p(';') >> (*(anychar_p - eol_p))[&lex::echo::val_print] >> eol_p;
   clrs = *blank_p >> eol_p;
   //define string
-  define  = *blank_p >> str_p("#define") >> +blank_p 
+  define  = *blank_p >> str_p("#define") >> +blank_p
                      >> (+(alnum_p | '_'))[assign_a(_tc.defname)][&lex::echo::val_print] >> +blank_p
-                     >> uint_p[assign_a(_tc.f,-1)] >> +blank_p 
-                     >> real_p[assign_a(_tc.c0)] >> +blank_p 
-                     >> real_p[assign_a(_tc.c1)] >> +blank_p 
-                     >> !(real_p[assign_a(_tc.c2)] >> +blank_p 
-                       >>   !( real_p[assign_a(_tc.c3)] >> +blank_p 
-                            >> real_p[assign_a(_tc.c4)] >> +blank_p 
-                            >> real_p[assign_a(_tc.c5)] >> +blank_p 
+                     >> uint_p[assign_a(_tc.f,-1)] >> +blank_p
+                     >> real_p[assign_a(_tc.c0)] >> +blank_p
+                     >> real_p[assign_a(_tc.c1)] >> +blank_p
+                     >> !(real_p[assign_a(_tc.c2)] >> +blank_p
+                       >>   !( real_p[assign_a(_tc.c3)] >> +blank_p
+                            >> real_p[assign_a(_tc.c4)] >> +blank_p
+                            >> real_p[assign_a(_tc.c5)] >> +blank_p
                            )
                          ) >> ch_p(';') >> uint_p[lex::assign_cast_a(_tc.type)] >> *blank_p
                   >> eol_p[lex::insert_mi_a(tp.parameters,_tc)];
  common = +(clrs ^ coms ^ define);
 
  parse_info<lex::iterator> info;
- 
- BOOST_SPIRIT_DEBUG_NODE( common );    
+
+ BOOST_SPIRIT_DEBUG_NODE( common );
  try {
    info = parse(first,last, common);
- } catch (parser_error_base &e) {
+ } catch (const parser_error_base &e) {
       cout << "Parse error. Check file format.\n";
  }
  cout << format("\
@@ -499,7 +499,7 @@ void load_topology(Topology &tp, const char *fname) {
   {
   runtime.log_write(string("Trying to read topology from '")+fname+"'.\n");
   fstream inf(fname, ios::in);
-  if (!inf.is_open()) { 
+  if (!inf.is_open()) {
     runtime.log_write("Fail to open file for read.\n");
     BOOST_CHECK(0);
   }
@@ -508,24 +508,24 @@ void load_topology(Topology &tp, const char *fname) {
   // header
   lex::iterator first(fname);
   lex::iterator last = first.make_end();
-  lex::rule_r clrs, coms, define, atom, bond, angl, dihe, header, 
+  lex::rule_r clrs, coms, define, atom, bond, angl, dihe, header,
     pair, atoms, moltype, bonds, angles, dihedrals, pairs, common;
   TopCoord _tc;
   Atom _at;
   TopElement _te;
-  
+
   coms = *blank_p >> ch_p(';') >> (*(anychar_p - eol_p))[&lex::echo::val_print] >> eol_p;
   clrs = *blank_p >> eol_p;
   //define string
-  define  = *blank_p >> str_p("#define") >> +blank_p 
+  define  = *blank_p >> str_p("#define") >> +blank_p
                      >> (+(alnum_p | '_'))[assign_a(_tc.defname)][&lex::echo::val_print] >> +blank_p
-                     >> uint_p[assign_a(_tc.f)] >> +blank_p 
-                     >> real_p[assign_a(_tc.c0)] >> +blank_p 
-                     >> real_p[assign_a(_tc.c1)] >> +blank_p 
-                     >> !(real_p[assign_a(_tc.c2)] >> +blank_p 
-                       >>   !( real_p[assign_a(_tc.c3)] >> +blank_p 
-                            >> real_p[assign_a(_tc.c4)] >> +blank_p 
-                            >> real_p[assign_a(_tc.c5)] >> +blank_p 
+                     >> uint_p[assign_a(_tc.f)] >> +blank_p
+                     >> real_p[assign_a(_tc.c0)] >> +blank_p
+                     >> real_p[assign_a(_tc.c1)] >> +blank_p
+                     >> !(real_p[assign_a(_tc.c2)] >> +blank_p
+                       >>   !( real_p[assign_a(_tc.c3)] >> +blank_p
+                            >> real_p[assign_a(_tc.c4)] >> +blank_p
+                            >> real_p[assign_a(_tc.c5)] >> +blank_p
                            )
                          ) >> ch_p(';') >> uint_p[lex::assign_cast_a(_tc.type)] >> *blank_p
                   >> eol_p[lex::insert_mi_a(tp.parameters,_tc)];
@@ -537,10 +537,10 @@ void load_topology(Topology &tp, const char *fname) {
                   >> uint_p >> +blank_p // chain
                   >> (+alnum_p) >> +blank_p // residue
                   >> (+alnum_p)[assign_a(_at.atom_name)] >> +blank_p
-                  >> uint_p[assign_a(_at.c_gnr)] >> +blank_p 
+                  >> uint_p[assign_a(_at.c_gnr)] >> +blank_p
                   >> real_p[assign_a(_at.charge)] >> +blank_p
                   >> real_p[assign_a(_at.mass)] >> +blank_p
-                  >> ch_p(';') >> (+(anychar_p - eol_p))[assign_a(_at.comment)] 
+                  >> ch_p(';') >> (+(anychar_p - eol_p))[assign_a(_at.comment)]
                 >> eol_p[lex::insert_mi_a(tp.atoms,_at)];
   else // if no atoms present in topology now
   atom = *blank_p >> uint_p[assign_a(_at.index)] >> +blank_p // atom index
@@ -548,10 +548,10 @@ void load_topology(Topology &tp, const char *fname) {
                   >> uint_p >> +blank_p // chain
                   >> (+alnum_p) >> +blank_p // residue
                   >> (+alnum_p)[assign_a(_at.atom_name)] >> +blank_p
-                  >> uint_p[assign_a(_at.c_gnr)] >> +blank_p 
+                  >> uint_p[assign_a(_at.c_gnr)] >> +blank_p
                   >> real_p[assign_a(_at.charge)] >> +blank_p
                   >> real_p[assign_a(_at.mass)] >> +blank_p
-                  >> ch_p(';') >> (+(anychar_p - eol_p))[assign_a(_at.comment)] 
+                  >> ch_p(';') >> (+(anychar_p - eol_p))[assign_a(_at.comment)]
                 >> eol_p[lex::update_mi_a(tp.atoms,_at)];
   // bond string
   bond = *blank_p >> uint_p[assign_a(_te.i)] >> +blank_p
@@ -588,16 +588,16 @@ void load_topology(Topology &tp, const char *fname) {
     >> +dihe;
   pairs =  *blank_p >> ch_p('[') >> *blank_p >> str_p("pairs") >> *blank_p >> ch_p(']') >> *blank_p >> eol_p
     >> +pair;
-  header = *blank_p >> str_p("#include") >> +blank_p >> ch_p('<') 
-    >> (+(anychar_p - '>' - eol_p))[assign_a(tp.ffinclude)][&lex::echo::val_print]  
+  header = *blank_p >> str_p("#include") >> +blank_p >> ch_p('<')
+    >> (+(anychar_p - '>' - eol_p))[assign_a(tp.ffinclude)][&lex::echo::val_print]
     >> '>' >> *blank_p >> eol_p;
  common = *(clrs ^ coms)
-        >> +header 
+        >> +header
         >> *(clrs ^ coms)
         >> moltype
         >> *(clrs ^ coms)
         >> *(define)
-        >> *(clrs ^ coms) 
+        >> *(clrs ^ coms)
         >> atoms
         >> *(clrs ^ coms)
         >> !bonds
@@ -615,11 +615,11 @@ void load_topology(Topology &tp, const char *fname) {
         >> *(clrs ^ coms);
 
  parse_info<lex::iterator> info;
- 
- BOOST_SPIRIT_DEBUG_NODE( common );    
+
+ BOOST_SPIRIT_DEBUG_NODE( common );
  try {
    info = parse(first,last, common);
- } catch (parser_error_base &e) {
+ } catch (const parser_error_base &e) {
       cout << "Parse error. Check file format.\n";
  }
  cout << format("\
@@ -647,8 +647,8 @@ Error in parsing file '%1%' catched:  \n\
  {
  ostringstream os;
  os << "Bonds readed: " << tp.parameters.get<1>().count(TPP_TTYPE_BON) << endl;
- os << "Angles readed: " << tp.parameters.get<1>().count(TPP_TTYPE_ANG) << endl; 
- os << "RB dihedrals readed: " << tp.parameters.get<1>().count(TPP_TTYPE_RBDIH) << endl; 
+ os << "Angles readed: " << tp.parameters.get<1>().count(TPP_TTYPE_ANG) << endl;
+ os << "RB dihedrals readed: " << tp.parameters.get<1>().count(TPP_TTYPE_RBDIH) << endl;
  os << "Pairs readed: " << tp.parameters.get<1>().count(TPP_TTYPE_PAIR) << endl;
  runtime.log_write(os.str());
  }

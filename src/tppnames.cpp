@@ -1,5 +1,5 @@
 #include "tppnames.hpp"
-#include "logger.h"
+#include "logger.hpp"
 #include "exceptions.hpp"
 
 #include <boost/lexical_cast.hpp>
