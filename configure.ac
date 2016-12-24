@@ -19,13 +19,45 @@ echo
 echo '>> Checking for common requirements of TPPMKTOP'
 echo
 
+
+# Check for libs required for BOOST logger
+
+#AC_MSG_CHECKING([pthread])
+AX_PTHREAD
+
+AC_CHECK_LIB([boost_system], [main],[],
+             [AC_MSG_ERROR([Can not link to boost_system!])] )
+AC_CHECK_LIB([boost_thread], [main],[],
+             [AC_MSG_ERROR([Can not link to boost_thread!])] )
+AC_CHECK_LIB([boost_log_setup], [main],[],
+             [AC_MSG_ERROR([Can not link to boost_log_setup!])] )
+AC_CHECK_LIB([boost_log], [main],[],
+             [AC_MSG_ERROR([Can not link to boost_log!])] )
+
+CXXFLAGS="-DBOOST_LOG_DYN_LINK $PTHREAD_CFLAGS $CXXFLAGS"
+LIBS="$PTHREAD_LIBS $LIBS"
+# Not every required header is included into check but I think that's enough
+
+AC_CHECK_HEADERS_ONCE([boost/log/trivial.hpp boost/log/sources/severity_logger.hpp boost/log/utility/setup/file.hpp],,
+                [AC_MSG_ERROR([BOOST::LOG headers are not present!])])
+
+AC_MSG_CHECKING([for BOOST::LOG correct behavior])
+AC_TRY_LINK([#include <boost/log/trivial.hpp>],
+            [
+    BOOST_LOG_TRIVIAL(trace) << "A trace severity message";
+    BOOST_LOG_TRIVIAL(debug) << "A debug severity message";
+    BOOST_LOG_TRIVIAL(info) << "An informational severity message";
+            ],
+            [AC_MSG_RESULT([works])],
+            [AC_MSG_ERROR([Error compiling example BOOST::LOG code! May be wrong version.])]
+)
+
 # Checks for BOOST::PROGRAM_OPTIONS
 AC_CHECK_LIB([boost_program_options], [main],,
              [AC_MSG_ERROR([Can not link to libboost_program_options!])]
 )
-AC_CHECK_HEADERS([boost/program_options/options_description.hpp boost/program_options/parsers.hpp boost/program_options/variables_map.hpp boost/program_options/errors.hpp],,
+AC_CHECK_HEADERS_ONCE([boost/program_options/options_description.hpp boost/program_options/parsers.hpp boost/program_options/variables_map.hpp boost/program_options/errors.hpp],,
                 [AC_MSG_ERROR([BOOST headers are required! Install libboost-dev!])] )
-
 
 AC_MSG_CHECKING([checking for options_description interface])
 AC_TRY_LINK([#include <boost/program_options/options_description.hpp>],
@@ -43,6 +75,8 @@ AC_CHECK_HEADER([/usr/include/mysql/mysql.h],
 )
 
 # Check for MySQL++
+# do not link mysql for all project targets
+SAVELIBS="$LIBS"
 AC_CHECK_LIB([mysqlpp], [main],[],
              [AC_MSG_ERROR([Can not link to libmysqlpp!])] )
 AC_CHECK_HEADER([mysql++/mysql++.h],,
@@ -53,12 +87,12 @@ AC_MSG_CHECKING([checking for MySQL++ correct behavior])
 AC_TRY_LINK([#include <mysql.h>
 #include <mysql++/mysql++.h>],
             [
-mysqlpp::Connection con (false); 
+mysqlpp::Connection con (false);
             ],
             [AC_MSG_RESULT([works])],
             [AC_MSG_ERROR([Incorrect MySQL++ usage! May be wrong version.])]
 )
-
+LIBS="$SAVELIBS"
 
 # checking for openbabel functions
 PKG_CHECK_MODULES([OPENBABEL], [openbabel-2.0],
@@ -67,7 +101,7 @@ PKG_CHECK_MODULES([OPENBABEL], [openbabel-2.0],
 AC_CHECK_LIB([openbabel], [main],,
              [AC_MSG_ERROR([Can not link to libopenbabel!])]
 )
-AC_CHECK_HEADERS([openbabel/parsmart.h openbabel/obiter.h openbabel/obconversion.h openbabel/mol.h],,
+AC_CHECK_HEADERS_ONCE([openbabel/parsmart.h openbabel/obiter.h openbabel/obconversion.h openbabel/mol.h],,
                 [AC_MSG_ERROR([OpenBabel headers are required! Install libopenbabel-dev!])]
 )
 
@@ -83,18 +117,17 @@ pat.Init("CC(=O)-[NH2]");
 
 
 # Checks for STL header
-AC_CHECK_HEADERS([iostream])
+AC_CHECK_HEADERS_ONCE([iostream string sstring exception])
 
 if test x$HAVE_IOSTREAM = x1; then
   AC_MSG_ERROR([Error with STL headers!])
 fi
 
 # Check for BOOST header-only libs
-AC_CHECK_HEADERS([boost/lexical_cast.hpp boost/cast.hpp boost/date_time/posix_time/posix_time.hpp boost/format.hpp],,
+AC_CHECK_HEADERS_ONCE([boost/lexical_cast.hpp boost/cast.hpp boost/date_time/posix_time/posix_time.hpp boost/format.hpp],,
                  [AC_MSG_ERROR([BOOST headers are incomplete!])])
 
-AC_CHECK_HEADERS([boost/spirit/core.hpp])
-AC_CHECK_HEADERS([boost/spirit/home/classic/core.hpp])
+AC_CHECK_HEADERS_ONCE([boost/spirit/core.hpp boost/spirit/home/classic/core.hpp])
 
 if test x$HAVE_BOOST_SPIRIT_CORE_HPP = x0; then
   if test x$HAVE_BOOST_SPIRIT_HOME_CLASSIC_CORE_HPP = x0; then
@@ -103,7 +136,7 @@ if test x$HAVE_BOOST_SPIRIT_CORE_HPP = x0; then
 fi
 
 # Check for BOOST ublas headers
-AC_CHECK_HEADERS([boost/numeric/ublas/vector.hpp boost/numeric/ublas/matrix_proxy.hpp boost/numeric/ublas/matrix.hpp boost/numeric/ublas/io.hpp],,
+AC_CHECK_HEADERS_ONCE([boost/numeric/ublas/vector.hpp boost/numeric/ublas/matrix_proxy.hpp boost/numeric/ublas/matrix.hpp boost/numeric/ublas/io.hpp],,
                  [AC_MSG_ERROR([BOOST numeric ublas headers are required!])])
 
 # activate GAMESS features (as HESSIAN load)
@@ -126,9 +159,11 @@ if test x$gamessfe = x1; then
   AC_CHECK_HEADERS([boost/numeric/bindings/lapack/gesv.hpp boost/numeric/bindings/lapack/gesvd.hpp boost/numeric/bindings/traits/ublas_matrix.hpp],,
                   [AC_MSG_ERROR([BOOST numeric bindings are required for GAMESS FEATURES!])])
 
+  SAVELIBS="$LIBS"
   AC_CHECK_LIB([lapack], [sgesvd_],[true],
               [AC_MSG_ERROR([Lapack SVD should work for GAMESS FEATURES!])]
   )
+  LIBS="$SAVELIBS"
 fi
 
 # activate TEST features
@@ -153,12 +188,8 @@ if test x$selftestfe = x1; then
 
 fi
 
-
-# Override LIBS to make program-specific linking in AM
-LIBS="-lpthread -lboost_system -lboost_thread  -lboost_log_setup  -lboost_log -lopenbabel -lboost_program_options"
-
 #TODO: make compiler flags conditional
-CXXFLAGS="-g"
+CXXFLAGS="-g $CXXFLAGS"
 
 # FIXME: unit test with ENABLE option
 
