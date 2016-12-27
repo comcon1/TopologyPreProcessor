@@ -14,12 +14,16 @@
 #include "paramset.hpp"
 #include "pdbutils.hpp"
 #include "structio.hpp"
+#include "async_call.hpp"
 
 #include <boost/program_options/variables_map.hpp>
 #include <boost/program_options/errors.hpp>
 #include <boost/program_options/options_description.hpp>
 #include <boost/program_options/parsers.hpp>
 #include <boost/format.hpp>
+
+#define TPP_LOADFILE_TIMELIMIT 3
+#define TPP_RENUMBER_TIMELIMIT 10
 
 namespace p_o = boost::program_options;
 
@@ -149,11 +153,18 @@ int main(int argc, char * argv[]) {
     //
     tpp::Topology topology;
     tpp::StructureIO io(ignore_index, rtp_file);
-    io.loadFromFile(topology, iform, input_file.c_str());
 
-    tpp::Renumberer rnr(topology.mol, verbose);
-    std::vector<unsigned> tail1 = rnr.findLongestChain();
-    topology.atoms = rnr.molRenumber(topology.atoms, tail1, hex_flag);
+    tpp::run_with_timeout<void>(TPP_LOADFILE_TIMELIMIT, 
+            [&]() { io.loadFromFile(topology, iform, input_file.c_str()); }
+             );
+    
+
+    tpp::run_with_timeout<void>(TPP_RENUMBER_TIMELIMIT, 
+        [&]() {
+          tpp::Renumberer rnr(topology.mol, verbose);
+          std::vector<unsigned> tail1 = rnr.findLongestChain();
+          topology.atoms = rnr.molRenumber(topology.atoms, tail1, hex_flag);
+          } );
 
     io.saveToFile(topology, oform, output_file.c_str());
   } // of global try

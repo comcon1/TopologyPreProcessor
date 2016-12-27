@@ -2,6 +2,8 @@
 
 namespace tpp {
 
+  // TODO: may be remove "Input format" and "Output format"
+  // TODO: may be convert to maps
   std::string in_fmt_descr(InputFormat iform) {
     switch (iform) {
     case tpp::TPP_IF_PDB:
