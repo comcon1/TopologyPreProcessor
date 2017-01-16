@@ -1,5 +1,4 @@
 #include "atom_definer.hpp"
-#include "runtime.hpp"
 
 #include <mysql.h>
 
@@ -9,6 +8,8 @@
 #include <boost/format.hpp>
 #include <boost/lexical_cast.hpp>
 
+#include <assert.h>
+#include <logger.hpp>
 
 //#define CDB
 
@@ -96,7 +97,7 @@ SELECT MIN(id) as mid FROM atoms \n\
 WHERE znuc = %1$d AND ffield = %2$d \n\
 GROUP BY name") % anum % atomSettings.ffid;
     res = qu.store();
-    BOOST_CHECK(res);
+    assert(res);
     tmpv.clear();
     for (co = 0; co < res.num_rows(); ++co) {
       row = res.at(co);
@@ -174,7 +175,7 @@ AND ( SELECT MIN( znuc ) FROM atoms WHERE atoms.name = bonds.j AND atoms.ffield 
 )\n\
 ") % atomSettings.ffid % a1 % a2;
     res = qu.store();
-    BOOST_CHECK(res);
+    assert(res);
     tmpv.clear();
     for (co = 0; co < res.num_rows(); ++co) {
       row = res.at(co);
@@ -294,7 +295,7 @@ WHERE angles.ffield = %1$d\n\
  AND ( SELECT MIN( znuc ) FROM atoms WHERE atoms.name = angles.k AND atoms.ffield = %1$d) = %2$d)\n\
 ") % atomSettings.ffid % a1 % a2 % a3;
     res = qu.store();
-    BOOST_CHECK(res);
+    assert(res);
     tmpv.clear();
     for (co = 0; row = res.at(co); ++co) {
       tmpv.insert((int)row["inv"] == 0 ?
@@ -417,7 +418,7 @@ WHERE dihedrals.ffield = %1$d\n\
 ") % atomSettings.ffid % a1 % a2 % a3 % a4;
 //        cout << endl << qu.preview() << endl;
     res = qu.store();
-    BOOST_CHECK(res);
+    assert(res);
     tmpv.clear();
     for (co = 0; row = res.at(co); ++co) {
       tmpv.insert((int)row["inv"] == 0 ?
@@ -518,7 +519,7 @@ SELECT atoms.id AS aid FROM atoms \
 RIGHT JOIN atoms AS atoms1 ON atoms1.id = %1$d \
 WHERE atoms.name = atoms1.name and not (atoms.id = %1$d)") % score_subit->first;
    res = qu.store();
-   BOOST_CHECK(res);
+   assert(res);
    for(co = 0; row = res.at(co); ++co)
    score_it->second.insert(pair<int,int>(row["aid"],score_subit->second));
    qu.reset();
@@ -550,7 +551,7 @@ void AtomDefiner::atom_align() {
       << "SELECT id, uname, name, charge, mass, comment FROM atoms WHERE ffield = "
       << atomSettings.ffid;
   res = qu.store();
-  BOOST_CHECK(res);
+  assert(res);
   cout << "Filling map ..." << flush;
   for (co = 0; co < res.num_rows(); ++co) {
     row = res.at(co);
@@ -563,7 +564,7 @@ void AtomDefiner::atom_align() {
     t0.comment = row["comment"].c_str();
     atom_mapper.insert(t0);
   }
-  BOOST_CHECK(co > 1);
+  assert(co > 1);
   qu.reset();
   cout << "done." << endl;
   // finding atoms with maximum scores
@@ -582,11 +583,11 @@ void AtomDefiner::atom_align() {
         max = mmm->first;
       }
     chk0 = atom_mapper.find(max); // iterator to best atom in atom_mapper
-    BOOST_CHECK(chk0 != atom_mapper.end());
+    assert(chk0 != atom_mapper.end());
     name = chk0->type; // name of best atom
     tp.mol.GetAtom(sit->first)->SetType(name);
     AtomArray::iterator newa_ = tp.atoms.find(sit->first);
-    BOOST_CHECK(newa_ != tp.atoms.end());
+    assert(newa_ != tp.atoms.end());
     Atom newa = *newa_;
     newa.atom_type = chk0->type;
     newa.atom_type2 = chk0->type2;
@@ -625,7 +626,7 @@ void AtomDefiner::count_scores() {
 #endif
       map<int, map<int, int> >::iterator scit1 = scores.find(
           it->first.first()), scit2 = scores.find(it->first.second());
-      BOOST_CHECK((scit1 != scores.end()) && (scit2 != scores.end()));
+      assert((scit1 != scores.end()) && (scit2 != scores.end()));
       tmp = scit1->second;  // map of 1st atom
       tmp1 = scit2->second; // map of 2nd atom
       for (set<spec2_>::iterator jit = it->second.begin();
@@ -633,11 +634,11 @@ void AtomDefiner::count_scores() {
 #ifdef CDB
         cout << "===========" << jit->first() << ":" << jit->second() << endl;
 #endif
-        BOOST_CHECK(tmp.find(jit->first()) != tmp.end());
+        assert(tmp.find(jit->first()) != tmp.end());
         int old = (tmp.find(jit->first()))->second; // old score
         tmp.erase(jit->first()); // erase from map
         tmp.insert(pair<int, int>(jit->first(), old + TPP_BOND_COEFF)); // replace new value into map
-        BOOST_CHECK(tmp1.find(jit->second()) != tmp1.end());
+        assert(tmp1.find(jit->second()) != tmp1.end());
         old = (tmp1.find(jit->second()))->second;
         tmp1.erase(jit->second());
         tmp1.insert(
@@ -660,7 +661,7 @@ void AtomDefiner::count_scores() {
       map<int, map<int, int> >::iterator scit1 = scores.find(
           it->first.first()), scit2 = scores.find(it->first.second()),
           scit3 = scores.find(it->first.third());
-      BOOST_CHECK(
+      assert(
           (scit1 != scores.end()) && (scit2 != scores.end())
               && (scit3 != scores.end()));
       tmp = scit1->second;  // map of 1st atom
@@ -671,16 +672,16 @@ void AtomDefiner::count_scores() {
 #ifdef CDB
         cout << "===========" << jit->first() << ":" << jit->second() << ":" << jit->third() << endl;
 #endif
-        BOOST_CHECK(tmp.find(jit->first()) != tmp.end());
+        assert(tmp.find(jit->first()) != tmp.end());
         int old = (tmp.find(jit->first()))->second; // old score
         tmp.erase(jit->first()); // erase from map
         tmp.insert(pair<int, int>(jit->first(), old + TPP_ANGLE_COEFF)); // replace new value into map
-        BOOST_CHECK(tmp1.find(jit->second()) != tmp1.end());
+        assert(tmp1.find(jit->second()) != tmp1.end());
         old = (tmp1.find(jit->second()))->second;
         tmp1.erase(jit->second());
         tmp1.insert(
             pair<int, int>(jit->second(), old + TPP_ANGLE_COEFF));
-        BOOST_CHECK(tmp2.find(jit->third()) != tmp2.end());
+        assert(tmp2.find(jit->third()) != tmp2.end());
         old = (tmp2.find(jit->third()))->second;
         tmp2.erase(jit->third());
         tmp2.insert(
@@ -707,7 +708,7 @@ void AtomDefiner::count_scores() {
           it->first.first()), scit2 = scores.find(it->first.second()),
           scit3 = scores.find(it->first.third()), scit4 = scores.find(
               it->first.fourth());
-      BOOST_CHECK(
+      assert(
           (scit1 != scores.end()) && (scit2 != scores.end())
               && (scit3 != scores.end())
               && (scit4 != scores.end()));
@@ -720,21 +721,21 @@ void AtomDefiner::count_scores() {
 #ifdef CDB
         cout << "===========" << jit->first() << ":" << jit->second() << ":" << jit->third() << endl;
 #endif
-        BOOST_CHECK(tmp.find(jit->first()) != tmp.end());
+        assert(tmp.find(jit->first()) != tmp.end());
         int old = (tmp.find(jit->first()))->second; // old score
         tmp.erase(jit->first()); // erase from map
         tmp.insert(pair<int, int>(jit->first(), old + TPP_DIHED_COEFF)); // replace new value into map
-        BOOST_CHECK(tmp1.find(jit->second()) != tmp1.end());
+        assert(tmp1.find(jit->second()) != tmp1.end());
         old = (tmp1.find(jit->second()))->second;
         tmp1.erase(jit->second());
         tmp1.insert(
             pair<int, int>(jit->second(), old + TPP_DIHED_COEFF));
-        BOOST_CHECK(tmp2.find(jit->third()) != tmp2.end());
+        assert(tmp2.find(jit->third()) != tmp2.end());
         old = (tmp2.find(jit->third()))->second;
         tmp2.erase(jit->third());
         tmp2.insert(
             pair<int, int>(jit->third(), old + TPP_DIHED_COEFF));
-        BOOST_CHECK(tmp3.find(jit->fourth()) != tmp3.end());
+        assert(tmp3.find(jit->fourth()) != tmp3.end());
         old = (tmp3.find(jit->fourth()))->second;
         tmp3.erase(jit->fourth());
         tmp3.insert(
@@ -775,7 +776,7 @@ void AtomDefiner::print_scores(std::ostream &os) {
 void AtomDefiner::log_scores() {
   ostringstream os;
   print_scores(os);
-  runtime.log_write(os.str());
+  TPPD<<os.str();
   cout << "Scores for atom types are written to LOG." << endl;
 }
 
@@ -814,7 +815,6 @@ void AtomDefiner::proceed() {
     count_scores();
     smart_fit();
   } catch (const SqlException &e) {
-    e.fix_log();
     throw e;
   }
 }
@@ -829,22 +829,22 @@ void AtomDefiner::smart_cgnr() {
       }
       // algo body
       try {
-          runtime.log_write("Starting curious SMART-charge-group fitting.\n");
+        TPPD<<"Starting curious SMART-charge-group fitting.";
           mysqlpp::Query qu = con->query();
           qu << format("SELECT id,PAT,flag FROM chargegroups \
                   WHERE ffield = %1$d and flag = 1") % atomSettings.ffid;
-          runtime.log_write("Loading CGNR patterns from DB..");
+          TPPD<<"Loading CGNR patterns from DB..";
           cout << "CHARGEGROUP patterns are loading. Please wait.." << flush;
           QueryResult res;
           res = qu.store();
           if (!res) {
-              Parameters params;
-              params.add("procname", "tpp::AtomDefiner::smart_cgnr");
-              params.add("error", "SQL query error");
-              params.add("sql_error", qu.error() );
-              throw SqlException("SQL query failed!", params);
+            SqlException e("SQL query failed!");
+            e.add("procname", "tpp::AtomDefiner::smart_cgnr");
+            e.add("error", "SQL query error");
+            e.add("sql_error", qu.error() );
+            throw e;
           }
-          runtime.log_write("OK!\n");
+          TPPD<<"OK!\n";
           cout << " finished.\n" <<
                   "Starting SMART-fit." << endl;
 
@@ -863,7 +863,7 @@ void AtomDefiner::smart_cgnr() {
               int pna = pat.NumAtoms();
               os << format("[DB] Getting PATTERN: %1$s having %2$d atoms.\n")
                   % row["PAT"] % pna;
-              runtime.log_write(os.str());
+              TPPD<<os.str();
               if (sized_patterns.count(pna) == 0)
                   sized_patterns[pna] = vector<string>();
               sized_patterns[pna].push_back(string(row["PAT"]));
@@ -877,7 +877,7 @@ void AtomDefiner::smart_cgnr() {
               os.str(""); os.clear();
               os << format("Aplying PATTERNS of size %1$d (%2$d total): \n")
                   % it->first % it->second.size();
-              runtime.log_write(os.str());
+              TPPD<<os.str();
               for(vector<string>::iterator ci = it->second.begin();
                       ci != it->second.end(); ++ci) {
                   os.str(""); os.clear();
@@ -888,7 +888,7 @@ void AtomDefiner::smart_cgnr() {
 
                   os << format("[OB] Pattern %1$s matches %2$d times.\n")
                       % (*ci) % maplist.size();
-                  runtime.log_write(os.str());
+                  TPPD<<os.str();
 
                   for(int i=0;i<maplist.size();++i) {
                       for (int j=0; j<maplist[i].size(); ++j) {
@@ -896,7 +896,7 @@ void AtomDefiner::smart_cgnr() {
 #ifdef CDB
                           cout << maplist[i][j] << " " << flush;
 #endif
-                          BOOST_CHECK(cur_it != tp.atoms.end());
+                          assert(cur_it != tp.atoms.end());
                           Atom cur0 = *cur_it;
                           cur0.c_gnr = curCG;
                           tp.atoms.replace(cur_it, cur0);
@@ -941,7 +941,7 @@ void AtomDefiner::smart_cgnr() {
                     }
                     for (set<TppIndex>::iterator ii = _tempset.begin(); ii != _tempset.end(); ++ii) {
                         AtomArray::iterator cit = tp.atoms.find(*ii);
-                        BOOST_CHECK( cit != tp.atoms.end() );
+                        assert( cit != tp.atoms.end() );
                         Atom cur0 = *cit;
                         cur0.c_gnr = current_cgr;
                         tp.atoms.replace(cit, cur0);
@@ -971,7 +971,7 @@ void AtomDefiner::smart_fit() {
           j.second = 0;
 
       // next work with copied sf_scores
-      runtime.log_write("Starting curious SMART-fitting procedure.\n");
+      TPPD<<("Starting curious SMART-fitting procedure.\n");
       mysqlpp::Query qu = con->query();
       QueryResult res;
       mysqlpp::Row    row;
@@ -988,17 +988,17 @@ SELECT atom_patterns.id as apid, PAT, pos, atom_ids, atoms.znuc AS znuc, good \
 FROM atom_patterns \
 RIGHT JOIN atoms ON atoms.id = atom_patterns.atom_ids \
 WHERE  (not atom_patterns.group = 1) and (atoms.ffield = %1$d)") % atomSettings.ffid;
-      runtime.log_write("Loading patterns from database...");
+      TPPD<<"Loading patterns from database...";
       cout << "Patterns are loading. Please wait.." << flush;
       res = qu.store();
       if (!res) {
-        Parameters params;
-        params.add("procname", "tpp::AtomDefiner::smartfit");
-        params.add("error", "SQL query error");
-        params.add("sql_error", qu.error() );
-        throw SqlException("SQL query failed!", params);
+        SqlException e("SQL query failed!");
+        e.add("procname", "tpp::AtomDefiner::smartfit");
+        e.add("error", "SQL query error");
+        e.add("sql_error", qu.error() );
+        throw e;
       }
-      runtime.log_write("OK!\n");
+      TPPD<<"OK!";
       cout << " finished." << endl;
       cout << "Starting SMART-fit." << endl;
       cout << ( format("Patterns checked: %1$4d.") % 0 ) << flush;
@@ -1010,7 +1010,7 @@ WHERE  (not atom_patterns.group = 1) and (atoms.ffield = %1$d)") % atomSettings.
         std::ostringstream os;
         os << format("[OB] Process PAT: %1$s having %2$d atoms.\n")
             % row["PAT"] % pat.NumAtoms();
-        runtime.log_write(os.str());
+        TPPD<<os.str();
         pat.Match(tp.mol);
         maplist.clear();
         atoms_suite.clear();
@@ -1020,20 +1020,20 @@ WHERE  (not atom_patterns.group = 1) and (atoms.ffield = %1$d)") % atomSettings.
              << "Matches: " << maplist.size() << endl;
 #endif
         for(int i=0;i<maplist.size();++i) {
-          BOOST_CHECK( maplist[i].size() >= (int)(row["pos"]) );
+          assert( maplist[i].size() >= (int)(row["pos"]) );
           atoms_suite.insert( maplist[i][row["pos"]-1] );
         }
 
         for(set_it = atoms_suite.begin(); set_it != atoms_suite.end(); ++set_it) {
           score_it = sf_scores.find(*set_it);
-          BOOST_CHECK( score_it != sf_scores.end() );
+          assert( score_it != sf_scores.end() );
           score_subit = score_it->second.find( row["atom_ids"] );
           if ( score_subit == score_it->second.end() ) {
-            Parameters params;
-            params.add("procname", "tpp::AtomDefiner::smartfit");
-            params.add("error", string("SMART atom pattern #") +
+            Exception e("SMARTS-DB ERROR!");
+            e.add("procname", "tpp::AtomDefiner::smartfit");
+            e.add("error", string("SMART atom pattern #") +
                 lexical_cast<string>(row["apid"]) + " in DB is for invalid atom type!");
-            throw Exception("SMARTS-DB ERROR!", params);
+            throw e;
           }
           // fixing bug with summarizing equimatching smarts weights
           if ( (int)row["good"] > score_subit->second ) {

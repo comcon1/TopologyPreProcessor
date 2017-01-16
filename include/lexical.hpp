@@ -15,7 +15,8 @@
 #endif
 
 #include "global.hpp"
-
+#include <assert.h>
+#include "logger.hpp"
 
 #include "core.hpp"
 
@@ -216,7 +217,7 @@ struct update_mi_action {
 	template<typename ReferentT>
 	void act(AtomArray& ref_, Atom const& value_, ReferentT const& key_) const {
 		AtomArray::iterator it = ref_.find(value_.index);
-		BOOST_CHECK(it != ref_.end());
+		assert(it != ref_.end());
 		Atom atom0 = *it;
 		atom0.atom_name = value_.atom_name;
 		atom0.charge = value_.charge;
@@ -230,7 +231,7 @@ struct update_mi_action {
 	void act(AtomArray& ref_, Atom const& value_, IteratorT const& first_,
 			IteratorT const& last_) const {
 		AtomArray::iterator it = ref_.find(value_.index);
-		BOOST_CHECK(it != ref_.end());
+		assert(it != ref_.end());
 		Atom atom0 = *it;
 		atom0.atom_name = value_.atom_name;
 		atom0.charge = value_.charge;

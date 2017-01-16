@@ -15,6 +15,8 @@
 #include <boost/format.hpp>
 #include <boost/lexical_cast.hpp>
 
+#include <assert.h>
+
 using std::string;
 using std::ostringstream;
 using std::cout;
@@ -156,17 +158,16 @@ namespace tpp {
         if (! _tailed.insert(p).second) {
           TPPE << format("Failed to insert atom no. %d") % p;
           // throwing ..
-          tpp::Parameters params;
-          params.add("procname", "tpp::detail::recurse_mol_scan");
-          params.add("error",
-            string("Error in atom numeration. See the log."));
-          throw tpp::Exception("Error in recurse scan.", params);
+          tpp::Exception e("Error in recurse scan.");
+          e.add("procname", "tpp::detail::recurse_mol_scan");
+          e.add("error","Error in atom numeration. See the log.");
+          throw e;
         }
       // cycle over current tail
       for (auto p: _tail) {
         { // area of defining local variables
           OBAtom *pA = mol.GetAtom(p);
-          BOOST_CHECK(_ar.count(p) == 1);
+          assert(_ar.count(p) == 1);
           Atom tat = *(_ar.find(p));
           _n++;
           _h++;
@@ -177,7 +178,7 @@ namespace tpp {
           tat.ncharge = pA->GetAtomicNum();
           AtomNameGenerator ang(tat);
           tat.atom_name = ang.setNums(_h,0,hexFlag).getName();
-          BOOST_CHECK(_A.insert(tat).second);
+          assert(_A.insert(tat).second);
           int k = 0; // hydrogen local counter
           // arrange hydrogens
           FOR_NBORS_OF_ATOM(pQ, &*pA){

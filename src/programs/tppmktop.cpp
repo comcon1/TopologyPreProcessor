@@ -7,12 +7,12 @@
 #include "global.hpp"
 #include "core.hpp"
 #include "exceptions.hpp"
-#include "runtime.hpp"
 #include "topio.hpp"
 #include "structio.hpp"
 #include "db_base.hpp"
 #include "atom_definer.hpp"
 #include "bond_definer.hpp"
+#include "logger.hpp"
 
 #include <boost/program_options/variables_map.hpp>
 #include <boost/program_options/errors.hpp>
@@ -22,7 +22,6 @@
 #include <boost/format.hpp>
 
 namespace p_o = boost::program_options;
-using tpp::Parameters;
 
 using boost::format;
 
@@ -193,14 +192,10 @@ int main(int argc, char * argv[]) {
     cout << format("Please, correct your charges according to sum: %1$8.3f.\n") % sumcharge(TOP);
   } // of global try
   catch (const tpp::SqlException &e) {
-    e.fix_log();
-    cerr << "TPP_SQL_EXCEPTION FROM: " << e["procname"] << endl;
-    cerr << "more info see in log-file." << endl;
+    TPPE << "TPP_SQL_EXCEPTION: " << e.what() << endl;
     return 3;
   } catch (const tpp::DbException &e) {
-    e.fix_log();
-    cerr << "TPP_DB_EXCEPTION FROM: " << e["procname"] << endl;
-    cerr << "more info see in log-file." << endl;
+    TPPE << "TPP_DB_EXCEPTION: " << e.what() << endl;
     return 2;
   }
   catch (boost::program_options::error & e) {
@@ -209,9 +204,7 @@ int main(int argc, char * argv[]) {
     return 1;
   }
   catch (const tpp::Exception &e) {
-    cerr << "  TPP_EXCEPTION FROM: " << e["procname"] << endl;
-    cerr << "  With following error: " << e["error"] << endl;
-    cerr << "  more info see in log-file." << endl;
+    TPPE << "  TPP_EXCEPTION: " << e.what() << endl;
     return 2;
   }
   catch(const std::exception& e)

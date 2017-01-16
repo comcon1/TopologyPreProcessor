@@ -4,7 +4,7 @@
 AC_PREREQ([2.69])
 AC_INIT([Topology PreProcessor], [0.1], [comconadin@gmail.com])
 AM_INIT_AUTOMAKE([])
-AC_CONFIG_SRCDIR([src/runtime.cpp])
+AC_CONFIG_SRCDIR([src/logger.cpp])
 AC_CONFIG_HEADERS([config.h])
 
 

@@ -15,6 +15,7 @@
 #include <cctype>
 
 using std::string;
+using std::to_string;
 using std::pair;
 using std::ios;
 using std::fstream;
@@ -44,12 +45,10 @@ namespace tpp {
     fstream inf(fname, ios::in);
     if (!inf.is_open()) {
       TPPE << "Fail to open file for read.";
-      Parameters params;
-      params.add("procname", "tpp::load_struct");
-      params.add("error", "invalid filename");
-      params.add("filename", fname);
-      Exception e("Can't open specified file for read.", params);
-      e.fix_log();
+      Exception e("Can't open specified file for read.");
+      e.add("procname", "tpp::load_struct")
+       .add("error", "invalid filename")
+       .add("filename", fname);
       throw e;
     }
     // loading from stream
@@ -78,16 +77,21 @@ namespace tpp {
         case TPP_IF_GAMOPT: ;
         case TPP_IF_GAMHESS: ;
         case TPP_IF_GAMSP: conv.SetInFormat("GAMOUT"); break;
-        default: BOOST_FAIL(0);
+        default:
+          Exception e("Invalid input format");
+          e.add("procname", "tpp::loadFromStream");
+          e.add("error", "OpenBabel: parsing error");
+          e.add("format", to_string(ifm));
+          throw e;
       }
       // reading from file with OpenBabel function
       TPPI << "Start reading by OpenBabel.";
       OBMol mol;
       if ( (!conv.Read(&mol)) || (!mol.NumAtoms()) ) {
-        Parameters params;
-        params.add("procname", "tpp::load_struct");
-        params.add("error", "OpenBabel: parsing error");
-        throw Exception("Can't read file format.", params);
+        Exception e("Can't read file format.");
+        e.add("procname", "tpp::load_struct");
+        e.add("error", "OpenBabel: parsing error");
+        throw e;
       }
       TPPI << "Reading from openbabel: DONE.";
 
@@ -161,22 +165,22 @@ namespace tpp {
                       TPPE << format("** Caught bad lexical cast with error: %s") % e.what();
                       TPPE << format("** Last field read: [%1$s]") % field;
                       TPPE << curString;
-                      Parameters params;
-                      params.add("classname", "StructIO");
-                      params.add("procname", "loadFromStream");
-                      params.add("error", "PDB parsing error");
-                      params.add("line", lexical_cast<string>(strc).c_str());
-                      throw Exception("Failed to extract numbers from the ATOM string.", params);
+                      Exception tppe("Failed to extract numbers from the ATOM string.");
+                      tppe.add("classname", "StructIO");
+                      tppe.add("procname", "loadFromStream");
+                      tppe.add("error", "PDB parsing error");
+                      tppe.add("line", lexical_cast<string>(strc).c_str());
+                      throw tppe;
                     } catch (const boost::bad_numeric_cast &e) {
                       TPPE << format("** Caught bad numeric cast with error: ") % e.what();
                       TPPE << format("** Last field read: [%1$s]") % field;
                       TPPE << curString;
-                      Parameters params;
-                      params.add("classname", "StructIO");
-                      params.add("procname", "loadFromStream");
-                      params.add("error", "PDB numeric conversion error");
-                      params.add("line", lexical_cast<string>(strc).c_str());
-                      throw Exception("Some of ATOM indexes is out of bonds.", params);
+                      Exception tppe("Some of ATOM indexes is out of bonds.");
+                      tppe.add("classname", "StructIO");
+                      tppe.add("procname", "loadFromStream");
+                      tppe.add("error", "PDB numeric conversion error");
+                      tppe.add("line", lexical_cast<string>(strc).c_str());
+                      throw tppe;
                     }
                     // Chemical atom
                     if (curString.size() > 76) {
@@ -188,12 +192,12 @@ namespace tpp {
 
                     // internal check
                     if ( fieldCounter < 8 ) {
-                      Parameters params;
-                      params.add("classname", "StructIO");
-                      params.add("procname", "loadFromStream");
-                      params.add("error", "PDB parsing error");
-                      params.add("line", lexical_cast<string>(strc).c_str());
-                      throw Exception("Invalid ATOM string in your PDB file.", params);
+                      Exception e("Invalid ATOM string in your PDB file.");
+                      e.add("classname", "StructIO");
+                      e.add("procname", "loadFromStream");
+                      e.add("error", "PDB parsing error");
+                      e.add("line", lexical_cast<string>(strc).c_str());
+                      throw e;
                     }
 
                     cur0.old_aname = string(_aName);
@@ -216,12 +220,12 @@ namespace tpp {
 
                     if (! at_it.second) {
                       TPPE << "Failed to insert just readed atom.";
-                      Parameters params;
-                      params.add("classname", "StructIO");
-                      params.add("procname", "loadFromStream");
-                      params.add("error", "PDB parsing error");
-                      params.add("line", lexical_cast<string>(strc).c_str());
-                      throw Exception("Repeat index or something else.", params);
+                      Exception e("Repeat index or something else.");
+                      e.add("classname", "StructIO");
+                      e.add("procname", "loadFromStream");
+                      e.add("error", "PDB parsing error");
+                      e.add("line", lexical_cast<string>(strc).c_str());
+                      throw e;
                     }
 
                     if (ignoreIndexFlag) {
@@ -243,8 +247,12 @@ namespace tpp {
         case TPP_IF_GAMHESS: ;
         case TPP_IF_GAMSP:   molToAtoms(tp); // #TODO 3
                              break;
-        default: BOOST_FAIL(0);
-                 break;
+        default:
+          Exception e("Invalid input format");
+          e.add("classname", "StructIO");
+          e.add("procname", "loadFromStream");
+          e.add("error", "PDB parsing error");
+          throw e;
       };
 
       // setting up residue name
@@ -267,16 +275,16 @@ namespace tpp {
       }
 
       if ( tp.atoms.empty() ) {
-        Parameters params;
-        params.add("classname", "StructIO");
-        params.add("procname", "loadFromStream");
-        params.add("error", "no atoms");
-        throw Exception("No atoms in structure file or bad format.", params);
+        Exception e("No atoms in structure file or bad format.");
+        e.add("classname", "StructIO");
+        e.add("procname", "loadFromStream");
+        e.add("error", "no atoms");
+        throw e;
       } else {
         TPPI << format("Successfully readed %d atoms!") % tp.atoms.size();
       }
     } catch(const Exception &e) {
-      e.fix_log();
+      //e.fix_log();
       throw e;
     }
   } // end loadFromStream
@@ -288,12 +296,12 @@ namespace tpp {
     fstream out(fname, ios::out);
     if (!out.is_open()) {
       TPPE << "Fail to open file for write.";
-      Parameters params;
-      params.add("classname", "StructIO");
-      params.add("procname", "saveToFile");
-      params.add("error", "invalid filename");
-      params.add("filename", fname);
-      throw Exception("Can't open specified file for write.", params);
+      Exception e("Can't open specified file for write.");
+      e.add("classname", "StructIO");
+      e.add("procname", "saveToFile");
+      e.add("error", "invalid filename");
+      e.add("filename", fname);
+      throw e;
     }
     switch (ofm) {
       case TPP_OF_PDB:
@@ -326,7 +334,7 @@ namespace tpp {
     out.close();
     // header
     } catch (const Exception &e) {
-      e.fix_log();
+      //e.fix_log();
       throw e;
     }
 
@@ -356,11 +364,11 @@ namespace tpp {
       }
       res = tp.atoms.insert(cur0);
       if (!res.second) {
-        Parameters params;
-        params.add("classname", "StructIO");
-        params.add("procname", "molToAtoms");
-        params.add("error", "PDB parsing error. Repeated index.");
-        throw Exception("..something to log..", params);
+        Exception e("..something to log..");
+        e.add("classname", "StructIO");
+        e.add("procname", "molToAtoms");
+        e.add("error", "PDB parsing error. Repeated index.");
+        throw e;
       }
     }
 

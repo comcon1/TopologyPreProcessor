@@ -91,11 +91,10 @@ namespace tpp {
   string AtomNameGenerator::getName() {
     char *rrr = new char[4];
     if ( (heavyNum > 255) && !hexFlag ) {
-      tpp::Parameters params;
-      params.add("procname", "tpp::AtomNameGenerator::getName");
-      params.add("error",
-          string("Too many atoms to number. Try to turn HEX mode. "));
-      throw tpp::Exception("Error in atom naming..", params);
+      tpp::Exception e("Error in atom naming.");
+      e.add("procname", "tpp::AtomNameGenerator::getName");
+      e.add("error", "Too many atoms to number. Try to turn HEX mode. ");
+      throw e;
     }
     ostringstream os;
     if (hexFlag) {

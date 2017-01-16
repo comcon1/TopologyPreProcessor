@@ -13,7 +13,11 @@ using std::string;
 namespace tpp {
 
   //
-  Exception::Exception(): mesg("Undefined exception.") {
+  Exception::Exception(const string& msg): _mesg(msg) {
+
+  }
+
+  Exception::Exception(const char* msg): _mesg(msg) {
 
   }
 
@@ -21,6 +25,9 @@ namespace tpp {
   {
 
   }
+
+  // The following mechanic is obsolete and should not be used.
+  /*
 
   Exception::Exception(const char *_mesg, Parameters &_pars): mesg(_mesg), pars(_pars) {
     if (pars.exists("fatal")) {
@@ -30,54 +37,42 @@ namespace tpp {
       std::terminate();
     }
   }
+  */
 
-  Exception::Exception(const char *s): mesg(s){
 
+  const char* Exception::what() const noexcept {
+    _totalMessage = _mesg;
+    if (_params.size() == 0){
+      _totalMessage += " No parameters specified.";
+    }
+    else{
+      _totalMessage += " Parameters:\n";
+      for (const auto& param: _params){
+        _totalMessage += param.first + ": " + param.second;
+      }
+    }
+    return _totalMessage.c_str();
   }
 
-  std::string Exception::operator [](const char *s) const {
-          return std::string(pars.read(s));
+  const std::map<std::string, std::string> Exception::params() const{
+    return _params;
   }
 
-  std::string Exception::operator [](const std::string &s) const {
-          return std::string(pars.read(s));
-  }
-
-
-  void Exception::fix_log() const {
-          std::ostringstream os;
-          os << "TPP catched exception!\n";
-          os << format("***** from %1% -> %2%\n") % pars.read("classname")
-                                          % pars.read("procname");
-          os << format("***** ===[ %1% ]===\n") % pars.read("error");
-          if (pars.exists("line"))
-                  os << "***** parsing line: #" << pars.read("line") << std::endl;
-          os << "***** " << mesg << std::endl;
-          TPPE << os.str();
+  Exception& Exception::add(const std::string param, const std::string& value){
+    _params[param] = value;
+    return *this;
   }
 
   //
   //	DBExceptionmethods
   //
-  DbException::DbException(const char *a, Parameters &b): Exception(a,b)
-  {
+  DbException::DbException(const string& msg): Exception(msg) {
 
   }
 
+  DbException::DbException(const char* msg): Exception(msg) {
 
-  void DbException::fix_log() const {
-          std::ostringstream os;
-          os << "TPP catched exception!\n";
-          os << format("***** from %1% -> %2%\n")
-                                          % pars.read("classname")
-                                          % pars.read("procname");
-          os << format("***** ===[ %1% ]===\n") % pars.read("error");
-          if (pars.exists("line"))
-                  os << "***** parsing line: #" << pars.read("line") << endl;
-          os << "***** SQL error: #" << pars.read("sql_error") << endl;
-          os << "***** SQL query: #" << pars.read("sql_query") << endl;
-          os << "***** " << mesg << endl;
-          TPPE << os.str();
   }
+
 
 }

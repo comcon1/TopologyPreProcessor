@@ -1,8 +1,9 @@
 #include "bond_definer.hpp"
-#include "runtime.hpp"
+#include "logger.hpp"
 #include "tppnames.hpp"
 
 #include <mysql.h>
+#include <assert.h>
 #include <boost/multi_index_container.hpp>
 
 #include <openbabel/obconversion.h>
@@ -56,17 +57,17 @@ bool BondDefiner::connect_db() {
           % bondSettings.ffname.c_str();
   res = qu.store();
   if (!res) {
-    Parameters params;
-    params.add("procname", "tpp::BondDefiner::connect_db");
-    params.add("error", "SQL query error");
-    params.add("sql_error", qu.error());
-    throw SqlException("SQL query failed!", params);
+    SqlException e("SQL query failed!");
+    e.add("procname", "tpp::BondDefiner::connect_db");
+    e.add("error", "SQL query error");
+    e.add("sql_error", qu.error());
+    throw e;
   }
   if (res.num_rows() == 0) {
-    Parameters params;
-    params.add("procname", "tpp::BondDefiner::connect_db");
-    params.add("error", "Error in parameters");
-    throw Exception("Force field not found!", params);
+    Exception e("Force field not found!");
+    e.add("procname", "tpp::BondDefiner::connect_db");
+    e.add("error", "Error in parameters");
+    throw e;
   }
   ffid = res.at(0)["id"];
   genpairs = (bool) (res.at(0)["generate_pairs"]);
@@ -94,16 +95,16 @@ bool BondDefiner::connect_db() {
   qu << query;
   res = qu.store();
   if (!res) {
-    Parameters params;
-    params.add("procname", "tpp::BondDefiner::connect_db");
-    params.add("error", "SQL query error");
-    params.add("sql_error", qu.error());
-    throw SqlException("SQL query failed!", params);
+    SqlException e("SQL query failed!");
+    e.add("procname", "tpp::BondDefiner::connect_db");
+    e.add("error", "SQL query error");
+    e.add("sql_error", qu.error());
+    throw e;
   }
 
   for (mysqlpp::Row::size_type co = 0; co < res.num_rows(); ++co) {
     row = res.at(co);
-    BOOST_CHECK(namemap.find(string(row["uname"].c_str())) != namemap.end());
+    assert(namemap.find(string(row["uname"].c_str())) != namemap.end());
     namemap.find(string(row["uname"].c_str()))->second =
         row["name"].c_str();
   }
@@ -117,11 +118,11 @@ void BondDefiner::fill_bonds() {
   mysqlpp::Row row;
   string query;
   int co = 0;
-  runtime.log_write("Defining bonds:\n");
+  TPPD<<"Defining bonds:\n";
   FOR_BONDS_OF_MOL(it,tp.mol){
   co++;
   qu.reset();
-  runtime.log_write(lexical_cast<string>(it->GetBeginAtomIdx())+ "->"+lexical_cast<string>(it->GetEndAtomIdx())+"\n");
+  TPPD<<lexical_cast<string>(it->GetBeginAtomIdx())+ "->"+lexical_cast<string>(it->GetEndAtomIdx())+"\n";
   string typ1 = namemap.find( tp.atoms.find(it->GetBeginAtomIdx())->atom_type )->second;
   string typ2 = namemap.find( tp.atoms.find(it->GetEndAtomIdx())->atom_type) ->second;
   qu << format("\
@@ -133,27 +134,27 @@ WHERE (bonds.ffield = %3$d) AND \
   )") % typ1 % typ2 % ffid;
   res = qu.store();
   if (!res) {
-    Parameters params;
-    params.add("procname", "tpp::BondDefiner::fill_bonds");
-    params.add("error", "SQL query error");
-    params.add("sql_error", qu.error() );
-    throw SqlException("SQL query failed!", params);
+    SqlException e("SQL query failed!");
+    e.add("procname", "tpp::BondDefiner::fill_bonds");
+    e.add("error", "SQL query error");
+    e.add("sql_error", qu.error() );
+    throw e;
   }
   if ( res.num_rows() == 0 ) {
     if (bondSettings.noqalculate) {
-      Parameters params;
-      params.add("procname", "tpp::BondDefiner::fill_bonds");
-      params.add("error", string("Bond not found between ") + typ1 + " and " + typ2 + "!" );
-      throw Exception("Bond definition error!", params);
+      Exception e("Bond definition error!");
+      e.add("procname", "tpp::BondDefiner::fill_bonds");
+      e.add("error", string("Bond not found between ") + typ1 + " and " + typ2 + "!" );
+      throw e;
     } else {
       ostringstream os;
       os << format("Bond not found between %1$s and %2$s!") % typ1 % typ2;
-      runtime.log_write(os.str());
+      TPPD<<os.str();
       if (bondSettings.verbose) {
         cout << "[LACK] " << os.str() << endl;
       }
     }
-    runtime.log_write(string("Bond not found between ") + typ1 + " and " + typ2 + "!\n");
+    TPPD<<string("Bond not found between ") + typ1 + " and " + typ2 + "!";
   }
   TopCoord tpc;
   TopElement tel;
@@ -230,24 +231,24 @@ WHERE (angles.ffield = %4$d) AND \
   res = qu.store();
 
   if (!res) {
-    Parameters params;
-    params.add("procname", "tpp::BondDefiner::fill_angles");
-    params.add("error", "SQL query error");
-    params.add("sql_error", qu.error() );
-    throw SqlException("SQL query failed!", params);
+    SqlException e("SQL query failed!");
+    e.add("procname", "tpp::BondDefiner::fill_angles");
+    e.add("error", "SQL query error");
+    e.add("sql_error", qu.error() );
+    throw e;
   }
 
   if (res.num_rows() == 0 ) {
 
     if (bondSettings.noqalculate) {
-      Parameters params;
-      params.add("procname", "tpp::BondDefiner::fill_angles");
-      params.add("error", string("Angle not found between ") + typ1 + " and " + typ2 + " and " + typ3 + "!" );
-      throw Exception("Bond definition error!", params);
+      Exception e("Bond definition error!");
+      e.add("procname", "tpp::BondDefiner::fill_angles");
+      e.add("error", string("Angle not found between ") + typ1 + " and " + typ2 + " and " + typ3 + "!" );
+      throw e;
     } else {
       ostringstream os;
       os << format("Angle not found between %1$s, %2$s and %3$s!") % typ1 % typ2 % typ3;
-      runtime.log_write(os.str());
+      TPPD<<os.str();
       if (bondSettings.verbose) {
         cout << "[LACK] " << os.str() << endl;
       }
@@ -334,11 +335,11 @@ WHERE (dihedrals.ffield = %5$d) AND \
   )") % typ1 % typ2 % typ3 % typ4 % ffid;
   res = qu.store();
   if (!res) {
-    Parameters params;
-    params.add("procname", "tpp::BondDefiner::fill_dihedrals");
-    params.add("error", "SQL query error");
-    params.add("sql_error", qu.error() );
-    throw SqlException("SQL query failed!", params);
+    SqlException e("SQL query failed!");
+    e.add("procname", "tpp::BondDefiner::fill_dihedrals");
+    e.add("error", "SQL query error");
+    e.add("sql_error", qu.error() );
+    throw e;
   }
   TopCoord tpc;
   TopElement tel;
@@ -377,7 +378,7 @@ WHERE (dihedrals.ffield = %5$d) AND \
       tpc.c4 = 0;
       tpc.c5 = 0;
       break;
-      default: BOOST_ERROR("Wrong dihedral type");
+      default: throw std::runtime_error("Wrong dihedral type");
     };
   } else {
     tpc.f = -1;
@@ -412,7 +413,7 @@ WHERE (dihedrals.ffield = %5$d) AND \
     } else {
       ostringstream os;
       os << format("Dihedral not found between %1$s, %2$s, %3$s and %4$s!") % typ1 % typ2 % typ3 % typ4;
-      runtime.log_write(os.str());
+      TPPD<<os.str();
       if (bondSettings.verbose) {
         cout << "[LACK] " << os.str() << endl;
       }
@@ -464,7 +465,7 @@ WHERE (dihedrals.ffield = %5$d) AND \
 
 //! use for clever choosing and posing improper dihedrals
 void BondDefiner::fill_impropers() {
-  runtime.log_write("Starting curious SMART-improper-dihedral fitting.\n");
+  TPPD<<"Starting curious SMART-improper-dihedral fitting.\n";
   mysqlpp::Query qu = con->query();
   qu
       << format(
@@ -474,19 +475,19 @@ void BondDefiner::fill_impropers() {
         RIGHT JOIN impropers as ia ON ia.id = ip.impid \
         WHERE ip.ffield = %1$d and ip.override = 0 ")
           % this->ffid;
-  runtime.log_write("Loading IMPROPER patterns from DB..");
+  TPPD<<"Loading IMPROPER patterns from DB..";
   cout << "IMPROPER patterns are loading. Please wait.." << flush;
   QueryResult res;
   res = qu.store();
   if (!res) {
-    Parameters params;
-    params.add("procname", "tpp::BondDefiner::fill_impropers");
-    params.add("error", "SQL query error");
-    params.add("sql_error", qu.error());
-    params.add("sql_query", qu.str());
-    throw DbException("SQL query failed!", params);
+    DbException e("SQL query failed!");
+    e.add("procname", "tpp::BondDefiner::fill_impropers");
+    e.add("error", "SQL query error");
+    e.add("sql_error", qu.error());
+    e.add("sql_query", qu.str());
+    throw e;
   }
-  runtime.log_write("OK!\n");
+  TPPD<<"OK!";;
   cout << " finished.\n" << "Starting SMART-fit." << endl;
   cout << (format("Patterns checked: %1$4d.") % 0) << flush;
   std::ostringstream os;
@@ -502,9 +503,9 @@ void BondDefiner::fill_impropers() {
     os
         << format("[OB] Process PAT: %1$s having %2$d atoms.\n")
             % row["PAT"] % pat.NumAtoms();
-    runtime.log_write(os.str());
+    TPPD<<os.str();
     pat.Match(tp.mol);
-    BOOST_CHECK(pat.NumAtoms() == 4);
+    assert(pat.NumAtoms() == 4);
     maplist.clear();
     maplist = pat.GetUMapList();
 #ifdef CDB
@@ -514,25 +515,25 @@ void BondDefiner::fill_impropers() {
     os
         << format("[OB] Pattern %1$s matches %2$d times.\n")
             % row["PAT"] % maplist.size();
-    runtime.log_write(os.str());
+    TPPD<<os.str();
     // manipulating matches
     for (int i = 0; i < maplist.size(); ++i) {
       int oo = (int) (row["order"]);
-      BOOST_CHECK(oo <= 4321 and oo >= 1234);
+      assert(oo <= 4321 and oo >= 1234);
       TopElement tel;
-      BOOST_CHECK(oo % 10 <= 4); // 4312 -> 2
+      assert(oo % 10 <= 4); // 4312 -> 2
       tel.l = maplist[i][oo % 10 - 1];
       oo = oo / 10;
-      BOOST_CHECK(oo % 10 <= 4); // 431 -> 1
+      assert(oo % 10 <= 4); // 431 -> 1
       tel.k = maplist[i][oo % 10 - 1];
       oo = oo / 10;
-      BOOST_CHECK(oo % 10 <= 4); // 43 -> 3
+      assert(oo % 10 <= 4); // 43 -> 3
       tel.j = maplist[i][oo % 10 - 1];
       oo = oo / 10;
-      BOOST_CHECK(oo <= 4); // 4 -> 4
+      assert(oo <= 4); // 4 -> 4
       tel.i = maplist[i][oo - 1];
       tel.defname = (string) row["name"];
-      BOOST_CHECK(
+      assert(
           (tp.atoms.find(tel.i) != tp.atoms.end())
               && (tp.atoms.find(tel.j) != tp.atoms.end())
               && (tp.atoms.find(tel.k) != tp.atoms.end())
@@ -583,9 +584,9 @@ void BondDefiner::fill_pairs() {
     FOR_TORSIONS_OF_MOL(it,tp.mol){
     TopElement tel;
     tel.defname = "ONE_PAIR";
-    BOOST_CHECK(tp.atoms.find((*it)[0]+1) != tp.atoms.end());
+    assert(tp.atoms.find((*it)[0]+1) != tp.atoms.end());
     tel.i = tp.atoms.find((*it)[0]+1)->index;
-    BOOST_CHECK(tp.atoms.find((*it)[1]+1) != tp.atoms.end());
+    assert(tp.atoms.find((*it)[1]+1) != tp.atoms.end());
     tel.j = tp.atoms.find((*it)[3]+1)->index;
     tp.elements.push_back(tel);
   }
@@ -602,14 +603,14 @@ void BondDefiner::bond_align() {
     fill_impropers();
     fill_pairs();
   } catch (const DbException &e) {
-    e.fix_log();
     cout << "..something fails." << endl;
-  } catch (const SqlException &e) {
-    e.fix_log();
+    TPPD<<e.what();
+  } catch (const SqlException &e) {;
     cout << "..something fails." << endl;
+    TPPD<<e.what();
   } catch (const Exception &e) {
-    e.fix_log();
     cout << "..something fails." << endl;
+    TPPD<<e.what();
   }
 }
 

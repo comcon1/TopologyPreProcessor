@@ -57,10 +57,10 @@ bool BondMatrix::check() {
         ++it)
       os << (*it) << ",";
     os << " - This atoms are isolated" << endl;
-    Parameters params;
-    params.add("procname", "tpp::BondMatrix::check");
-    params.add("error", os.str());
-    throw Exception("Bad connection atoms", params);
+    Exception e("Bad connection atoms");
+    e.add("procname", "tpp::BondMatrix::check");
+    e.add("error", os.str());
+    throw e;
   }
   return true;
 }

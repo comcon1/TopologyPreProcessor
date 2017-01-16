@@ -3,10 +3,12 @@
 
 #include "db_base.hpp"
 
+#include <assert.h>
+
 namespace tpp {
 
 //
-//	Auxilary classses for AtomDefiner
+//	Auxilary classes for AtomDefiner
 //
 
 // structures for 2 3 and 4 different elements
@@ -22,7 +24,7 @@ public:
   }
   spec2(int a, int b) :
       i(a), j(b) {
-    BOOST_CHECK(a != b);
+    assert(a != b);
   }
 };
 
@@ -57,7 +59,7 @@ public:
   }
   spec3(int a, int b, int c) :
       i(a), j(b), k(c) {
-    BOOST_CHECK((a - b) * (a - c) * (b - c) != 0);
+    assert((a - b) * (a - c) * (b - c) != 0);
   }
 };
 
@@ -98,7 +100,7 @@ public:
   }
   spec4(int a, int b, int c, int d) :
       i(a), j(b), k(c), l(d) {
-    BOOST_CHECK((a - b) * (a - c) * (a - d) * (b - c) * (b - d) * (c - d) != 0);
+    assert((a - b) * (a - c) * (a - d) * (b - c) * (b - d) * (c - d) != 0);
   }
 };
 

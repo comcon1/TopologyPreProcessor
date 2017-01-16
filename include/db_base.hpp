@@ -26,8 +26,7 @@ namespace tpp {
   //! Exception to be used when something goes wrong on sql level.
   class SqlException : public Exception {
     public:
-    virtual void fix_log() const; 
-    SqlException(const char *s, Parameters &p): Exception(s, p) { ; }
+    SqlException(const char *s): Exception(s) { }
   };
 
   /// for brevity

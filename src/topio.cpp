@@ -1,9 +1,10 @@
 #include "topio.hpp"
 #include "exceptions.hpp"
-#include "runtime.hpp"
 
 #include "strutil.h"
 
+#include <assert.h>
+#include "logger.hpp"
 
 #include <boost/format.hpp>
 
@@ -84,11 +85,11 @@ static const char * top_comment =
 
 void save_topology_rtp(Topology &tp, const char *fname) {
   // test if file exists
-  runtime.log_write(string("Trying to write RTP-topology into '")+fname+"'.\n");
+  TPPD<<string("Trying to write RTP-topology into '")+fname+"'.";
   fstream out(fname, ios::out);
   if (!out.is_open()) {
-    runtime.log_write("Fail to open file for write.\n");
-    BOOST_CHECK(0);
+    TPPD<<"Failed to open file for write.";
+    assert(0);
   }
   // header
   out << format("\
@@ -191,11 +192,11 @@ void save_topology_rtp(Topology &tp, const char *fname) {
 void save_topology(Topology &tp, const char *fname, bool ncf) {
   //bool ncf = cmdline.read("nocalculate_flag") == "on";
   // test if file exists
-  runtime.log_write(string("Trying to write topology into '")+fname+"'.\n");
+  TPPD<<string("Trying to write topology into '")+fname+"'.";
   fstream out(fname, ios::out);
   if (!out.is_open()) {
-    runtime.log_write("Fail to open file for write.\n");
-    BOOST_CHECK(0);
+    TPPD<<"Fail to open file for write.";
+    assert(0);
   }
   // header
   out << format("\
@@ -317,7 +318,7 @@ void save_lack(Topology &tp, const char *fname) {
       cout << format("TPP will write %1$d lack parameters to %2$s.\n")
         % tp.parameters.get<2>().count(-1) % fname;
       std::ofstream qalcfile(fname, ios::out);
-      BOOST_CHECK(qalcfile.is_open());
+      assert(qalcfile.is_open());
       qalcfile << "; TPP topology lack\n";
       for (TopMap::nth_index<2>::type::iterator typit = tp.parameters.get<2>().lower_bound(-1);
          typit != tp.parameters.get<2>().upper_bound(-1); ++typit) {
@@ -357,7 +358,7 @@ extern void load_hessian(ublas::matrix<double>& mtx, const char *fname) {
   fstream inf(fname, ios::in);
   if (!inf.is_open()) {
     runtime.log_write("Fail to open file for read.\n");
-    BOOST_CHECK(0);
+    assert(0);
   }
   inf.close();
    }
@@ -430,11 +431,11 @@ Error in parsing file '%1%' catched:  \n\
 // loading topology parameters from lack-file
 extern void load_lack(Topology &tp, const char *fname) {
    {
-  runtime.log_write(string("Trying to read lack-file into topology from '")+fname+"'.\n");
+     TPPD<<string("Trying to read lack-file into topology from '")+fname+"'.";
   fstream inf(fname, ios::in);
   if (!inf.is_open()) {
-    runtime.log_write("Fail to open file for read.\n");
-    BOOST_CHECK(0);
+    TPPD<<"Failed to open file for read.\n";
+    assert(0);
   }
   inf.close();
    }
@@ -484,9 +485,10 @@ Error in parsing file '%1%' catched:  \n\
 * - the point of error\n";
         cout << "Parsed parameters: " << endl;
         cout << lex::outs.str() << endl;
-       Parameters pars0;
-       pars0.add("error", "Parsing error");
-       throw Exception("Topology lack parsing error!", pars0);
+
+       Exception e("Topology lack parsing error!");
+       e.add("error", "Parsing error");
+       throw e;
  }
  return;
 
@@ -497,11 +499,11 @@ Error in parsing file '%1%' catched:  \n\
 void load_topology(Topology &tp, const char *fname) {
   // test if file exists
   {
-  runtime.log_write(string("Trying to read topology from '")+fname+"'.\n");
+    TPPD<<string("Trying to read topology from '")+fname+"'.";
   fstream inf(fname, ios::in);
   if (!inf.is_open()) {
-    runtime.log_write("Fail to open file for read.\n");
-    BOOST_CHECK(0);
+    TPPD<<"Failed to open file for read.\n";
+    assert(0);
   }
   inf.close();
   }
@@ -640,9 +642,9 @@ Error in parsing file '%1%' catched:  \n\
 * - the point of error\n";
         cout << "Parsed parameters: " << endl;
         cout << lex::outs.str() << endl;
-       Parameters pars0;
-       pars0.add("error", "Parsing error");
-       throw Exception("Topology parsing error!", pars0);
+        Exception e("Topology parsing error!");
+        e.add("error", "Parsing error");
+        throw e;
  }
  {
  ostringstream os;
@@ -650,7 +652,7 @@ Error in parsing file '%1%' catched:  \n\
  os << "Angles readed: " << tp.parameters.get<1>().count(TPP_TTYPE_ANG) << endl;
  os << "RB dihedrals readed: " << tp.parameters.get<1>().count(TPP_TTYPE_RBDIH) << endl;
  os << "Pairs readed: " << tp.parameters.get<1>().count(TPP_TTYPE_PAIR) << endl;
- runtime.log_write(os.str());
+ TPPD<<os.str();
  }
  return;
 }

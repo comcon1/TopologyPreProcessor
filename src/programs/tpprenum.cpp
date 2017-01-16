@@ -11,7 +11,6 @@
 #include "global.hpp"
 #include "logger.hpp"
 #include "exceptions.hpp"
-#include "paramset.hpp"
 #include "pdbutils.hpp"
 #include "structio.hpp"
 #include "async_call.hpp"
@@ -174,19 +173,17 @@ int main(int argc, char * argv[]) {
     return 1;
   }
   catch (const tpp::Exception &e) {
-    TPPE << "  TPP_EXCEPTION FROM: " << e["procname"] << endl
-         << "  With following error: " << e["error"] << endl
-         << "  more info see in log-file.";
+    TPPE << "TPP crashed with tpp::exception: "<< e.what();
     return 2;
   }
   catch(const std::exception& e)
   {
-    TPPE<<"  TPP crashed with std::exception:"<<e.what();
+    TPPE<<"TPP crashed with std::exception: "<<e.what();
     return 3;
   }
   catch(...)
   {
-    TPPE<<"  TPP crashed with unknown type of exception!";
+    TPPE<<"TPP crashed with unknown type of exception!";
     return 3;
   }
   TPPI << "TPPRENUM finished normally!" << endl;

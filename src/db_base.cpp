@@ -2,8 +2,9 @@
 
 #include "global.hpp" // for magic number macro
 #include "exceptions.hpp"
-#include "runtime.hpp"
+#include "logger.hpp"
 
+#include <string>
 #include <algorithm>
 
 #include <boost/format.hpp>
@@ -20,17 +21,6 @@ using std::ostringstream;
 
 namespace tpp {
 
-  /*
-   * SQL Exception message format.
-   */
-  void SqlException::fix_log() const {
-    std::ostringstream os; 
-    os << "TPP catched exception!\n";
-    os << format("***** from %1% -> %2%\n") % pars.read("classname") % pars.read("procname");
-    os << "***** " << mesg << endl;
-    os << "***** MYSQL: " << pars.read("sql_error") << endl;
-    runtime.log_write(os.str());
-  }
 
   /*
    * Standard constructor with DB connection
@@ -57,11 +47,11 @@ namespace tpp {
 
     // connection established
     if (!con->connected()) {
-      Parameters params;
-      params.add("procname", "tpp::atom_definer::connect_db");
-      params.add("error", "SQL connection error");
-      params.add("sql_error", con->error() );
-      throw SqlException("SQL connection failed!", params);
+      SqlException e("SQL connection failed!");
+      e.add("procname", "tpp::atom_definer::connect_db");
+      e.add("error", "SQL connection error");
+      e.add("sql_error", con->error() );
+      throw e;
     }
 
     mysqlpp::Query qu = this->con->query();
@@ -74,27 +64,27 @@ namespace tpp {
     qu << "SELECT `id`,`keyword`,`value` FROM `properties` WHERE keyword='magic_number'";
     res = qu.store();
     if (!res) {
-      Parameters params;
-      params.add("procname", "tpp::DbInfo::connect_db");
-      params.add("error", "SQL query error");
-      params.add("sql_error", qu.error() );
-      throw SqlException("SQL query failed: may be you have incorrect DataBase!", params);
+      SqlException e("SQL query failed: may be you have incorrect DataBase!");
+      e.add("procname", "tpp::DbInfo::connect_db");
+      e.add("error", "SQL query error");
+      e.add("sql_error", qu.error() );
+      throw e;
     }
     if (res.num_rows() != 1) {
-      Parameters params;
-      params.add("procname", "tpp::DbInfo::connect_db");
-      params.add("error", "Error in DB check.");
-      throw Exception("Your DataBase is empty!", params);
+      Exception e("Your DataBase is empty!");
+      e.add("procname", "tpp::DbInfo::connect_db");
+      e.add("error", "Error in DB check.");
+      throw e;
     }
 
     string cur_mn(res.at(0)["value"]);
     string required_mn(DB_MAGICNUMBER);
-    BOOST_CHECK(cur_mn == required_mn);
+    assert(cur_mn == required_mn);
 
     os << "Required magic number: " << required_mn << endl;
     os << "Current  magic number: " << cur_mn << endl;
 
-    runtime.log_write(os.str()); 
+    TPPD<<os.str();
 
     if (cur_mn.c_str()[4] > required_mn.c_str()[4]) {
       cerr << "\n"
@@ -130,17 +120,18 @@ namespace tpp {
     qu << format("SELECT `id`,`include`,`desc` FROM `forcefield` WHERE name='%1$s'") % this->ffname.c_str();
     res = qu.store();
     if (!res) {
-      Parameters params;
-      params.add("procname", "tpp::DbInfo::getFFdata");
-      params.add("error", "SQL query error");
-      params.add("sql_error", qu.error() );
-      throw SqlException("SQL query failed!", params);
+      SqlException e("SQL query failed!");
+      e.add("procname", "tpp::DbInfo::getFFdata");
+      e.add("error", "SQL query error");
+      e.add("sql_error", qu.error() );
+      throw e;
     }
     if (!res.num_rows()) {
-      Parameters params;
-      params.add("procname", "tpp::DbInfo::getFFdata");
-      params.add("error", "Error in parameters");
-      throw Exception((string("Force field '")+this->ffname+string("' not found!")).c_str(), params);
+      Exception e("Force field  not found!");
+      e.add("procname", "tpp::DbInfo::getFFdata");
+      e.add("error", "Error in parameters");
+      e.add("field", this->ffname);
+      throw e;
     }
     this->ffid = res.at(0)["id"];
     this->ffinclude = (res.at(0)["include"]).c_str();
@@ -150,11 +141,11 @@ namespace tpp {
     qu << format("select `value` from `properties` WHERE `keyword`='%1$srev'") % this->ffname;
     res = qu.store();
     if ( (!res) || res.size() == 0 || (!res.at(0)) ) {
-        Parameters params;
-        params.add("procname", "tpp::atom_definer::connect_db");
-        params.add("error", "SQL query error");
-        params.add("sql_error", qu.error() );
-        throw SqlException("SQL force field revision is unknown!", params);
+      SqlException e("SQL force field revision is unknown!");
+      e.add("procname", "tpp::atom_definer::connect_db");
+      e.add("error", "SQL query error");
+      e.add("sql_error", qu.error() );
+      throw e;
     }
     this->ffrev = res.at(0)["value"].c_str();
   }
@@ -175,11 +166,11 @@ SELECT\n\
  (SELECT COUNT(*) as CF FROM nonbonded WHERE ffield = %1$d) as count_nonbond;") % this->ffid;
     res = qu.store();
     if ( (!res) || (!res.at(0)) ) {
-        Parameters params;
-        params.add("procname", "tpp::atom_definer::connect_db");
-        params.add("error", "SQL query error");
-        params.add("sql_error", qu.error() );
-        throw SqlException("SQL query failed!", params);
+      SqlException e( "SQL query failed!");
+      e.add("procname", "tpp::atom_definer::connect_db");
+      e.add("error", "SQL query error");
+      e.add("sql_error", qu.error() );
+      throw e;
     }
     std::ostringstream os;
     os << format("\
@@ -197,11 +188,11 @@ Total statistics:\n\
     qu << format("show table status from `%1$s`") % settings.dbname;
     res = qu.store();
     if ( (!res) || (!res.at(0)) ) {
-        Parameters params;
-        params.add("procname", "tpp::atom_definer::connect_db");
-        params.add("error", "SQL query error");
-        params.add("sql_error", qu.error() );
-        throw SqlException("SQL status query failed!", params);
+      SqlException e("SQL status query failed!");
+      e.add("procname", "tpp::atom_definer::connect_db");
+      e.add("error", "SQL query error");
+      e.add("sql_error", qu.error() );
+      throw e;
     }
 
     vector<string> ss;
