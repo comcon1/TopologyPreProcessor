@@ -23,7 +23,10 @@ echo
 # Check for libs required for BOOST logger
 
 #AC_MSG_CHECKING([pthread])
-AX_PTHREAD
+
+# This line works, but AC_PTHREAD creates empty $PTHREAD_CFLAGs and $PTHREAD_LIBS
+AC_CHECK_LIB(pthread, pthread_create, [PTHREAD_CFLAGS+=-pthread])
+#AC_PTHREAD()
 
 AC_CHECK_LIB([boost_system], [main],[],
              [AC_MSG_ERROR([Can not link to boost_system!])] )
@@ -33,6 +36,15 @@ AC_CHECK_LIB([boost_log_setup], [main],[],
              [AC_MSG_ERROR([Can not link to boost_log_setup!])] )
 AC_CHECK_LIB([boost_log], [main],[],
              [AC_MSG_ERROR([Can not link to boost_log!])] )
+
+echo 'Pthread flags:'
+echo $CXXFLAGS
+echo $PTHREAD_CFLAGS
+echo $PTHREAD_CXXFLAGS
+echo $PTHREAD_CC
+echo $PTHREAD_LIBS
+echo 'end of flags'
+
 
 CXXFLAGS="-DBOOST_LOG_DYN_LINK $PTHREAD_CFLAGS $CXXFLAGS"
 LIBS="$PTHREAD_LIBS $LIBS"

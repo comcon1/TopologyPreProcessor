@@ -13,5 +13,5 @@ programs_tppmktest_SOURCES = programs/tppmktest.cpp testcase.cpp runtime.cpp str
 programs_tppmktest_LDADD = -lmysqlpp
 endif
 programs_tpprenum_SOURCES = programs/tpprenum.cpp strutil.cpp structio.cpp tppnames.cpp pdbutils.cpp exceptions.cpp logger.cpp bond_matrix.cpp core.cpp
-programs_tppmktop_SOURCES = programs/tppmktop.cpp runtime.cpp structio.cpp topio.cpp strutil.cpp tppnames.cpp exceptions.cpp db_base.cpp atom_definer.cpp bond_definer.cpp bond_matrix.cpp core.cpp
+programs_tppmktop_SOURCES = programs/tppmktop.cpp runtime.cpp structio.cpp topio.cpp strutil.cpp tppnames.cpp exceptions.cpp logger.cpp db_base.cpp atom_definer.cpp bond_definer.cpp bond_matrix.cpp core.cpp
 programs_tppmktop_LDADD = -lmysqlpp
