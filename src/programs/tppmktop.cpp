@@ -7,7 +7,7 @@
 #include "global.hpp"
 #include "core.hpp"
 #include "exceptions.hpp"
-#include "runtime.hpp"
+#include "logger.hpp"
 #include "topio.hpp"
 #include "structio.hpp"
 #include "db_base.hpp"
