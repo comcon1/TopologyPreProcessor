@@ -1,7 +1,7 @@
 #include "structio.hpp"
 #include "exceptions.hpp"
 
-#include "strutil.h"
+#include "strutil.hpp"
 #include "logger.hpp"
 
 #include <boost/format.hpp>

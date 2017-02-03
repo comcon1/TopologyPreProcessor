@@ -7,12 +7,12 @@
 #include "global.hpp"
 #include "core.hpp"
 #include "exceptions.hpp"
+#include "logger.hpp"
 #include "topio.hpp"
 #include "structio.hpp"
 #include "db_base.hpp"
 #include "atom_definer.hpp"
 #include "bond_definer.hpp"
-#include "logger.hpp"
 
 #include <boost/program_options/variables_map.hpp>
 #include <boost/program_options/errors.hpp>

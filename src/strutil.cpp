@@ -5,7 +5,7 @@
 // by James Fancy
 ////////////////////////////////////////////////////////////////////////////////
 
-#include "strutil.h"
+#include "strutil.hpp"
 #include <algorithm>
 #include <locale>
 

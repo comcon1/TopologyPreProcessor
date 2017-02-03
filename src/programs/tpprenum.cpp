@@ -21,8 +21,8 @@
 #include <boost/program_options/parsers.hpp>
 #include <boost/format.hpp>
 
-#define TPP_LOADFILE_TIMELIMIT 3
-#define TPP_RENUMBER_TIMELIMIT 10
+#define TPP_LOADFILE_TIMELIMIT 60
+#define TPP_RENUMBER_TIMELIMIT 60
 
 namespace p_o = boost::program_options;
 

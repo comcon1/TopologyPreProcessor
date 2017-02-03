@@ -21,9 +21,9 @@ namespace tpp {
    *  \param ncf ???
    *
    */
-  void save_topology(Topology & top, const char * fname, bool ncf) ;
+  void save_topology(const Topology & top, const char * fname, bool ncf) ;
 
-  void save_topology_rtp(Topology &, const char *);
+  void save_topology_rtp(const Topology &, const char *);
 
   void load_topology(Topology &, const char *);
 
@@ -31,10 +31,10 @@ namespace tpp {
 
   void check_topology(Topology &) ;
 
-  void save_lack(Topology &, const char *);
+  void save_lack(const Topology &, const char *);
 
 #if ENABLE_GAMESS_FEATURES
-  extern void load_hessian(ublas::matrix<double>&, const char *);
+  void load_hessian(ublas::matrix<double>&, const char *);
 #endif
 
   //TODO: also serialization should be included

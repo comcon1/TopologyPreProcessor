@@ -17,6 +17,8 @@ Makefile
 Makefile.in
 aclocal.m4
 config.h.in
+config.guess
+config.sub
 configure
 depcomp
 *~
