@@ -14,13 +14,6 @@
 #include <set>
 #include <map>
 
-
-#define TPP_SMART_COEFF 10
-#define TPP_ZNUC_COEFF  10000
-#define TPP_BOND_COEFF  2
-#define TPP_ANGLE_COEFF 4
-#define TPP_DIHED_COEFF 8
-
 namespace tpp {
 
   //! Exception to be used when something goes wrong on sql level.
@@ -50,40 +43,66 @@ namespace tpp {
         std::string dbname;
       };
 
+      /** \brief Initialize class with settings of DB connection
+        *
+        */
       DbBase(const Settings& settings);
+
+      /** \brief Safety disconnect DB
+        */
       virtual ~DbBase();
 
     protected:
-      Settings settings;
-      mysqlpp::Connection *con;
-      virtual bool connect_db();
+      Settings settings;         //!< Structure with DB connection settings
+      mysqlpp::Connection *con;  //!< Pointer to Connection object
+
+      /** \brief Connect to database.
+        *  Method is called from the constructor.
+        */
+      virtual bool connectDB();
   };
- 
+
   /**
    * \brief Class that accepts information about DB and Force Field (FF).
    */
   class DbInfo: public DbBase {
 
     protected:
-      bool connect_db() override;
-      int ffid;
-      std::string ffname;
-      std::string ffdesc;
-      std::string ffinclude;
-      std::string ffrev;
+      /** \brief Overriden method of DB connection.
+        *
+        * Loads FF information via loadFFData call.
+        */
+      bool connectDB() override;
 
-      //! Protected method for gathering force field information.
-      void getFFdata();
-      void getDBdata();
+      int ffID;                   //!< ID of the force field in DB.
+      std::string ffName;         //!< Name of the force field
+      std::string ffDesc;         //!< USE SOMEWHERE?? Description of the force field (add to ITP header)
+      std::string ffInclude;      //!< DEPRECATED
+
+      /** \brief Revision of the force field
+        *
+        * Very important force field characteristic. One should be sure that force field
+        * is the same in data base and in the repository.
+        */
+      std::string ffRev;
+
+      /** \brief Load FF data from DB and set up object variables
+        */
+      void loadFFData();
 
     public:
       DbInfo(const Settings& set, const std::string& ffn);
-      int get_ffid() { return ffid; }
-      std::string get_ffinclude() { return ffinclude; }
-      std::string get_ffrev() { return ffrev; }
 
-      //! Function that gives string statistics about current force field.
-      std::string get_statistics();
+      int getFFID() { return ffID; }                    //!< Public alias to ffID
+      std::string getFFInclude() { return ffInclude; }  //!< Public alias to ffInclude [DEPRECATED]
+      std::string getFFRev() { return ffRev; }          //!< Public alias to ffRev
+
+      /** \brief Function that gives string statistics about current force field.
+        *
+        * This function performs call curious query that may be sensitive
+        * to SQL version
+        */
+      std::string getStatistics();
 
   };
 

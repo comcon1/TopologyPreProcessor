@@ -217,7 +217,7 @@ namespace lex {
         template<typename ReferentT>
         void act(AtomArray& ref_, Atom const& value_, ReferentT const& key_) const {
             AtomArray::iterator it = ref_.find(value_.index);
-            BOOST_CHECK(it != ref_.end());
+            assert(it != ref_.end());
             Atom atom0 = *it;
             atom0.atom_name = value_.atom_name;
             atom0.charge = value_.charge;
@@ -231,7 +231,7 @@ namespace lex {
         void act(AtomArray& ref_, Atom const& value_, IteratorT const& first_,
                 IteratorT const& last_) const {
             AtomArray::iterator it = ref_.find(value_.index);
-            BOOST_CHECK(it != ref_.end());
+            assert(it != ref_.end());
             Atom atom0 = *it;
             atom0.atom_name = value_.atom_name;
             atom0.charge = value_.charge;
@@ -241,7 +241,6 @@ namespace lex {
             ref_.replace(it, atom0);
         }
     };
->>>>>>> other
 
     inline ref_const_ref_value_actor<tpp::AtomArray, Atom, update_mi_action> update_mi_a(
             AtomArray& ref_, Atom const& value_) {

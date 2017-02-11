@@ -35,41 +35,41 @@ BondDefiner::BondDefiner(const DbBase::Settings& s1,
                          Topology &_tp) : DbBase(s1),
                                          bondSettings(s2),
                                          tp(_tp) {
-  connect_db();
+  connectDB();
 }
 
 BondDefiner::~BondDefiner() {
   qalcfile.close();
 }
 
-bool BondDefiner::connect_db() {
-  DbBase::connect_db();
+bool BondDefiner::connectDB() {
+  DbBase::connectDB();
 
   int cat, cbon, cang, cdih, cnb;
 
-  // get ffid
+  // get ffID
   mysqlpp::Query qu = con->query();
   QueryResult res;
   mysqlpp::Row row;
   qu
       << format(
           "SELECT id, generate_pairs FROM forcefield WHERE name='%1$s'")
-          % bondSettings.ffname.c_str();
+          % bondSettings.ffName.c_str();
   res = qu.store();
   if (!res) {
     SqlException e("SQL query failed!");
-    e.add("procname", "tpp::BondDefiner::connect_db");
+    e.add("procname", "tpp::BondDefiner::connectDB");
     e.add("error", "SQL query error");
     e.add("sql_error", qu.error());
     throw e;
   }
   if (res.num_rows() == 0) {
     Exception e("Force field not found!");
-    e.add("procname", "tpp::BondDefiner::connect_db");
+    e.add("procname", "tpp::BondDefiner::connectDB");
     e.add("error", "Error in parameters");
     throw e;
   }
-  ffid = res.at(0)["id"];
+  ffID = res.at(0)["id"];
   genpairs = (bool) (res.at(0)["generate_pairs"]);
   if (genpairs && bondSettings.verbose) {
     cout << "1-4 pair generation is required for FF." << endl;
@@ -90,13 +90,13 @@ bool BondDefiner::connect_db() {
     query += (string(",'") + ii->first + "'");
   }
   query = string("SELECT `uname`,`name` FROM `atoms` WHERE `ffield` = ")
-      + lexical_cast<string>(ffid) + " and `uname` IN " + query + ")";
+      + lexical_cast<string>(ffID) + " and `uname` IN " + query + ")";
   // mysql stuff
   qu << query;
   res = qu.store();
   if (!res) {
     SqlException e("SQL query failed!");
-    e.add("procname", "tpp::BondDefiner::connect_db");
+    e.add("procname", "tpp::BondDefiner::connectDB");
     e.add("error", "SQL query error");
     e.add("sql_error", qu.error());
     throw e;
@@ -131,7 +131,7 @@ FROM bonds \
 WHERE (bonds.ffield = %3$d) AND \
   ( (bonds.i = '%1$s' and bonds.j = '%2$s') OR \
     (bonds.i = '%2$s' and bonds.j = '%1$s')\
-  )") % typ1 % typ2 % ffid;
+  )") % typ1 % typ2 % ffID;
   res = qu.store();
   if (!res) {
     SqlException e("SQL query failed!");
@@ -227,7 +227,7 @@ FROM angles \
 WHERE (angles.ffield = %4$d) AND \
   ( (angles.i = '%1$s' and angles.j = '%2$s' and angles.k = '%3$s') OR \
     (angles.i = '%3$s' and angles.j = '%2$s' and angles.k = '%1$s')\
-  )") % typ1 % typ2 % typ3 % ffid;
+  )") % typ1 % typ2 % typ3 % ffID;
   res = qu.store();
 
   if (!res) {
@@ -332,7 +332,7 @@ FROM dihedrals \
 WHERE (dihedrals.ffield = %5$d) AND \
   ( (dihedrals.i IN ('%1$s','X') and dihedrals.j IN ('%2$s','X') and dihedrals.k IN ('%3$s','X') and dihedrals.l IN ('%4$s','X') ) OR \
     (dihedrals.i IN ('%4$s','X') and dihedrals.j IN ('%3$s','X') and dihedrals.k IN ('%2$s','X') and dihedrals.l IN ('%1$s','X') )\
-  )") % typ1 % typ2 % typ3 % typ4 % ffid;
+  )") % typ1 % typ2 % typ3 % typ4 % ffID;
   res = qu.store();
   if (!res) {
     SqlException e("SQL query failed!");
@@ -474,7 +474,7 @@ void BondDefiner::fill_impropers() {
         FROM improper_patterns as ip \
         RIGHT JOIN impropers as ia ON ia.id = ip.impid \
         WHERE ip.ffield = %1$d and ip.override = 0 ")
-          % this->ffid;
+          % this->ffID;
   TPPD<<"Loading IMPROPER patterns from DB..";
   cout << "IMPROPER patterns are loading. Please wait.." << flush;
   QueryResult res;

@@ -3,198 +3,246 @@
 
 #include "db_base.hpp"
 
-#include <assert.h>
+#include <cassert>
 
 namespace tpp {
 
-//
-//	Auxilary classes for AtomDefiner
-//
+  /**
+    *	\bief Auxilary classes for AtomDefiner
+    *
+    * Structures for 2 3 and 4 different elements and comparison operators
+    * under these objects.
+    */
+  namespace detail {
 
-// structures for 2 3 and 4 different elements
-class spec2 {
-private:
-  int i, j;
-public:
-  int first() const {
-    return (i < j) ? i : j;
-  }
-  int second() const {
-    return (i < j) ? j : i;
-  }
-  spec2(int a, int b) :
-      i(a), j(b) {
-    assert(a != b);
-  }
-};
+    /** \brief Pair with first less than second
+      */
+    template<typename ElemType>
+    class Spec2 {
+      private:
+        ElemType i, j;
+      public:
+        ElemType first() const  { return (i < j) ? i : j; }
+        ElemType second() const { return (i < j) ? j : i; }
+        Spec2(ElemType a, ElemType b): i(a), j(b) { assert(a != b); }
+    };
 
-class spec2_ {
-private:
-  int i, j;
-public:
-  int first() const {
-    return i;
-  }
-  int second() const {
-    return j;
-  }
-  spec2_(int a, int b) :
-      i(a), j(b) {
-    ;
-  }
-};
+    /** \brief Simple pair<int,int>
+      */
+    template<typename ElemType>
+    class Spec2_ {
+      private:
+        ElemType i, j;
+      public:
+        ElemType first() const { return i; }
+        ElemType second() const { return j; }
+        Spec2_(ElemType a, ElemType b): i(a), j(b) { ; }
+    };
 
-class spec3 {
-private:
-  int i, j, k;
-public:
-  int first() const {
-    return (i < k) ? i : k;
-  }
-  int second() const {
-    return j;
-  }
-  int third() const {
-    return (i < k) ? k : i;
-  }
-  spec3(int a, int b, int c) :
-      i(a), j(b), k(c) {
-    assert((a - b) * (a - c) * (b - c) != 0);
-  }
-};
+    /** \brief Trinity of numbers a,b,c with orientation: a < c != b
+      *
+      */
+    template<typename ElemType>
+    class Spec3 {
+      private:
+        ElemType i, j, k;
+      public:
+        ElemType first() const { return (i < k) ? i : k; }
+        ElemType second() const { return j; }
+        ElemType third() const { return (i < k) ? k : i; }
+        Spec3(ElemType a, ElemType b, ElemType c): i(a), j(b), k(c) {
+          assert( (a != b) && (a != c) && (b != c) );
+        }
+    };
 
-class spec3_ {
-private:
-  int i, j, k;
-public:
-  int first() const {
-    return i;
-  }
-  int second() const {
-    return j;
-  }
-  int third() const {
-    return k;
-  }
-  spec3_(int a, int b, int c) :
-      i(a), j(b), k(c) {
-    ;
-  }
-};
+    /** \brief Simple trinity of numbers.
+      */
+    template<typename ElemType>
+    class Spec3_ {
+      private:
+        ElemType i, j, k;
+      public:
+        ElemType first() const { return i; }
+        ElemType second() const { return j; }
+        ElemType third() const { return k; }
+        Spec3_(ElemType a, ElemType b, ElemType c): i(a), j(b), k(c) { ; }
+    };
 
-class spec4 {
-private:
-  int i, j, k, l;
-public:
-  int first() const {
-    return (i < l) ? i : l;
-  }
-  int second() const {
-    return (i < l) ? j : k;
-  }
-  int third() const {
-    return (i < l) ? k : j;
-  }
-  int fourth() const {
-    return (i < l) ? l : i;
-  }
-  spec4(int a, int b, int c, int d) :
-      i(a), j(b), k(c), l(d) {
-    assert((a - b) * (a - c) * (a - d) * (b - c) * (b - d) * (c - d) != 0);
-  }
-};
+    /** \brief Four numbers a,b,c,d with orientation a > d != b != c
+      */
+    template<typename ElemType>
+    class Spec4 {
+      private:
+        ElemType i, j, k, l;
+      public:
+        ElemType first()  const { return (i < l) ? i : l; }
+        ElemType second() const { return (i < l) ? j : k; }
+        ElemType third()  const { return (i < l) ? k : j; }
+        ElemType fourth() const { return (i < l) ? l : i; }
+        Spec4(ElemType a, ElemType b, ElemType c, ElemType d) :
+            i(a), j(b), k(c), l(d) {
+          assert( (a != b) && (a != c) && (a != d) && (b != c) && (b != d) && (c != d) );
+        }
+    };
 
-class spec4_ {
-private:
-  int i, j, k, l;
-public:
-  int first() const {
-    return i;
-  }
-  int second() const {
-    return j;
-  }
-  int third() const {
-    return k;
-  }
-  int fourth() const {
-    return l;
-  }
-  spec4_(int a, int b, int c, int d) :
-      i(a), j(b), k(c), l(d) {
-    ;
-  }
-};
+    /** \brief Simple quad of numbers.
+      */
+    template<typename ElemType>
+    class Spec4_ {
+    private:
+      ElemType i, j, k, l;
+    public:
+      ElemType first()  const { return i; }
+      ElemType second() const { return j; }
+      ElemType third()  const { return k; }
+      ElemType fourth() const { return l; }
+      Spec4_(ElemType a, ElemType b, ElemType c, ElemType d):
+          i(a), j(b), k(c), l(d) { ;  }
+    };
 
-/**
- * \brief Class that proceed (mb produces?) atom type definition.
- */
-class AtomDefiner: public DbBase {
-public:
-  /// Parameters for caluclations
-  struct Settings{
-    short ffid; /// id of current forcefield
-    bool maxbonds; /// this surely means something!
-    bool maxdihedrals; /// this surely means something!
-    bool maxangles; /// this surely means something!
+    template<typename ElemType>
+    bool operator <(const Spec2<ElemType> &a, const Spec2<ElemType> &b) {
+      return (a.first() < b.first())
+          || ((a.first() == b.first()) && (a.second() < b.second()));
+    }
+
+    template<typename ElemType>
+    bool operator <(const Spec2_<ElemType> &a, const Spec2_<ElemType> &b) {
+      return (a.first() < b.first())
+          || ((a.first() == b.first()) && (a.second() < b.second()));
+    }
+
+    template<typename ElemType>
+    bool operator <(const Spec3<ElemType> &a, const Spec3<ElemType> &b) {
+      return (a.first() < b.first())
+          || ((a.first() == b.first())
+              && (Spec2<ElemType>(a.second(), a.third())
+                  < Spec2<ElemType>(b.second(), b.third())));
+    }
+
+    template<typename ElemType>
+    bool operator <(const Spec3_<ElemType> &a, const Spec3_<ElemType> &b) {
+      return (a.first() < b.first())
+          || ((a.first() == b.first())
+              && (Spec2_<ElemType>(a.second(), a.third())
+                  < Spec2_<ElemType>(b.second(), b.third())));
+    }
+
+    template<typename ElemType>
+    bool operator <(const Spec4<ElemType> &a, const Spec4<ElemType> &b) {
+      return (a.first() < b.first())
+          || ((a.first() == b.first())
+              && (Spec3<ElemType>(a.second(), a.third(), a.fourth())
+                  < Spec3<ElemType>(b.second(), b.third(), b.fourth())));
+    }
+
+    template<typename ElemType>
+    bool operator <(const Spec4_<ElemType> &a, const Spec4_<ElemType> &b) {
+      return (a.first() < b.first())
+          || ((a.first() == b.first())
+              && (Spec3_<ElemType>(a.second(), a.third(), a.fourth())
+                  < Spec3_<ElemType>(b.second(), b.third(), b.fourth())));
+    }
+
+  } // end namespace detail
+
+  /**
+   * \brief Class that performs atom type definition.
+   */
+  class AtomDefiner: public DbBase {
+    public:
+      /// Parameters for caluclations
+      struct Settings {
+        short ffID;        //!< id of current forcefield
+        bool maxbonds;     //!< try to maximize count of known bonds [EXPERIMENTAL]
+        bool maxdihedrals; //!< try to maximize count of known dihedrals [EXPERIMENTAL]
+        bool maxangles;    //!< try to maximize count of known angles [EXPERIMENTAL]
+      };
+
+      /** \brief Constructor defines initial parameters of atom definition
+        */
+      AtomDefiner(const DbBase::Settings&,
+                  const AtomDefiner::Settings&,
+                  Topology &);
+
+      /** \brief Print current scores into log-file
+        */
+      void logScores();
+
+
+      void proceed();
+      void atom_align();
+
+    private:
+      AtomDefiner::Settings atomSettings;
+      Topology &tp;
+
+      //! atom ID -> { atomtype ID -> score }
+      std::map<int, std::map<int, int> > scores;
+
+      void scoresZeroFill();
+
+      /**
+       * Function fill *scores* map according to `atom_patterns`
+       * table of the database.
+       */
+      void smart_fit();
+
+
+      std::map<int, std::set<std::string> > nbSuite;                     //!< atom ID -> {atom valence type}
+      std::map<detail::Spec2<int>, std::set<detail::Spec2_<std::string> > > bondSuite;   //!< (atom ID, atom ID) -> { (a.v.t, a.v.t.) }
+      std::map<detail::Spec3<int>, std::set<detail::Spec3_<std::string> > > angleSuite;  //!< (atom ID, atom ID, atom ID) -> { (a.v.t, a.v.t., a.v.t.) }
+      std::map<detail::Spec4<int>, std::set<detail::Spec4_<std::string> > > dihdSuite;   //!< (atom ID, atom ID, atom ID, atom ID) -> { (a.v.t, a.v.t., a.v.t., a.v.t.) }
+
+      std::map<int, std::map<std::string, int> > avtScores;                 //!< SCORE for valence type (name) of an atom
+
+      /**
+       * \brief Function matches atomtypes according only to atomic number.
+       * Result is filling *nbSuite* map.
+       */
+      void fillNB();
+
+      /**
+       * \brief Function matches bondtypes according to existing bonds in DB.
+       * Result is filling *bondSuite* map.
+       */
+      void fillBonds();
+
+      ///TODO: REFACTOR AS fillBonds
+      void fillAngles();
+      void fillDihs();
+
+      /**
+       * Summarize scores from different x_suite maps.
+       * Weight coefficients of every property in atomtype definition are applied
+       * here. Coef-s are defined at the top of this header in TPP_XXX defines.
+       */
+      void countAVTScores();
+
+      /**
+       * << WHAT IS THIS ?? >>
+       * To spread scores found for bonded type (name-type) to all nb types
+       * (uname) that corresponds to this bonded type.
+       * Makes sense only if fill_bon/ang/dih are used.
+       */
+      void convertAVTtoScores();
+
+
+      /** \brief Print scores into stream
+        */
+      void printScores(std::ostream &os);
+
+      void smart_cgnr();
+
+    protected:
+
+      /** \brief Now this function is not overriden.
+        * See parent function for details.
+        */
+      virtual bool connectDB();
+
   };
-  AtomDefiner(const DbBase::Settings& s1,
-              const AtomDefiner::Settings& s2,
-              Topology &);
-  void log_scores();
-  void proceed();
-  void atom_align();
-private:
-  AtomDefiner::Settings atomSettings;
-  Topology &tp;
-
-  std::map<int, std::map<int, int> > scores; //! atom ID -> { atomtype ID -> score }
-
-  /**
-   * Function fill *scores* map according to `atom_patterns`
-   * table of the database.
-   */
-  void smart_fit();
-
-  //! ID -> {atomtype ID}
-  std::map<int, std::set<int> > nb_suite;
-
-  /**
-   * Function matches atomtypes according only to atomic number.
-   * Result is filling *nb_suite* map.
-   */
-  void fill_nb();
-
-  /**
-   * Summarize scores from different x_suite maps.
-   * Weight coefficients of every property in atomtype definition are applied
-   * here. Coef-s are defined at the top of this header in TPP_XXX defines.
-   */
-  void count_scores();
-
-  /**
-   * << WHAT IS THIS ?? >>
-   * To spread scores found for bonded type (name-type) to all nb types
-   * (uname) that corresponds to this bonded type.
-   * Makes sense only if fill_bon/ang/dih are used.
-   */
-  void spread_atomid();
-
-  std::map<spec2, std::set<spec2_> > bon_suite;
-  std::map<spec3, std::set<spec3_> > ang_suite;
-  std::map<spec4, std::set<spec4_> > dih_suite;
-
-  void fill_bon();
-  void fill_ang();
-  void fill_dih();
-  void print_scores(std::ostream &os);
-  void smart_cgnr();
-
-protected:
-  virtual bool connect_db();
-
-};
-// of atom definer
+  // of atom definer
 }// of namespace tpp
 
 #endif

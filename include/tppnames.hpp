@@ -65,6 +65,14 @@ namespace tpp {
       virtual std::string getName();
   };
 
+  /** \brief Class for naming residue according to input filename.
+   */
+  class ResidueNameGenerator: NameGenerator<std::string> {
+    public:
+      ResidueNameGenerator(std::string &i): NameGenerator<std::string>(i) {;}
+      virtual std::string getName();
+  };
+
   /**
    * \brief Common feature that extends the stream usage.
    *

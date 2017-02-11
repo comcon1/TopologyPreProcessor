@@ -1,6 +1,6 @@
 /*! \file tppmktop.cpp
  *
- *	\briefThis file provides executable for TPPMKTOP utility.
+ *	\brief This file provides executable for TPPMKTOP utility.
  *
  */
 
@@ -11,6 +11,7 @@
 #include "topio.hpp"
 #include "structio.hpp"
 #include "db_base.hpp"
+#include "tppnames.hpp"
 #include "atom_definer.hpp"
 #include "bond_definer.hpp"
 
@@ -44,6 +45,7 @@ string extension(const std::string& filename){
 }
 
 int main(int argc, char * argv[]) {
+  tpp::initiate_logging("tppmktop.log");
   string progname("Execution rules for TPPMKTOP ");
   progname = progname + VERSION;
   p_o::options_description desc(progname);
@@ -108,10 +110,10 @@ int main(int argc, char * argv[]) {
     bool verbose = vars["verbose"].as<bool>();
 
     bondSettings.verbose = verbose;
-    bondSettings.noqalculate = vars["nocalculate"].as<bool>();
-    bondSettings.ffname = forcefield;
+    bondSettings.noqalculate = vars.count("nocalculate") == 1;
+    bondSettings.ffName = forcefield;
 
-    atomSettings.maxbonds = vars["max-bonds"].as<bool>();
+    atomSettings.maxbonds = vars.count("max-bonds") == 1;
     atomSettings.maxdihedrals = atomSettings.maxbonds;
     atomSettings.maxangles = atomSettings.maxbonds;
 
@@ -156,37 +158,31 @@ int main(int argc, char * argv[]) {
   }
 
   // Main  program body
-
     tpp::Topology TOP;
     tpp::StructureIO sio(false, rtpout.size() > 0); // it seems that ignore index has no meaning here
-    // setting up common topology parameters
-    TOP.res_name = input_file.substr(0, 3);
+    tpp::ResidueNameGenerator rng(input_file);
+    TOP.res_name = rng.getName();
     TOP.nrexcl = 3;
-    // ;-)
     sio.loadFromFile(TOP, iform, input_file.c_str());
-    // customization of 2-nd level parameters
-
 
     // initial DB queries
     tpp::DbInfo DI(baseSettings, forcefield);
-    atomSettings.ffid = DI.get_ffid();
-    TOP.ffinclude = DI.get_ffinclude().c_str();
-    TOP.ffinfo = forcefield + " revision " + DI.get_ffrev();
-    //
+    atomSettings.ffID = DI.getFFID();
+    TOP.ffinclude = DI.getFFInclude().c_str();
+    TOP.ffinfo = forcefield + " revision " + DI.getFFRev();
     if (verbose) {
-      cout << DI.get_statistics();
+      cout << DI.getStatistics();
     }
     // starting program body
     tpp::AtomDefiner AD(baseSettings, atomSettings, TOP);
     AD.proceed();
-    AD.log_scores();
+    AD.logScores();
     AD.atom_align();
     tpp::BondDefiner BD(baseSettings, bondSettings, TOP);
     BD.bond_align();
     tpp::save_topology(TOP, output_file.c_str(), bondSettings.noqalculate);
     tpp::save_lack(TOP, lackfile.c_str());
-    if (rtpout.size() > 0)
-    {
+    if (rtpout.size() > 0) {
       tpp::save_topology_rtp(TOP, rtpout.c_str());
     }
     cout << format("Please, correct your charges according to sum: %1$8.3f.\n") % sumcharge(TOP);

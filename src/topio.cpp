@@ -92,11 +92,10 @@ namespace tpp {
     fstream out(fname, ios::out);
     if (!out.is_open()) {
       TPPE << "Fail to open file for write.";
-      Parameters params;
-      params.add("procname", "tpp::save_topology_rtp");
-      params.add("error", "invalid filename");
-      params.add("filename", fname);
-      Exception e("Can't open specified file for write.", params);
+      Exception e("Can't open specified file for write.");
+      e.add("procname", "tpp::save_topology_rtp");
+      e.add("error", "invalid filename");
+      e.add("filename", fname);
       throw e;
     }
     // header
@@ -204,11 +203,10 @@ namespace tpp {
     fstream out(fname, ios::out);
     if (!out.is_open()) {
       TPPE << "Fail to open file for write.";
-      Parameters params;
-      params.add("procname", "tpp::save_topology");
-      params.add("error", "invalid filename");
-      params.add("filename", fname);
-      Exception e("Can't open specified file for write.", params);
+      Exception e("Can't open specified file for write.");
+      e.add("procname", "tpp::save_topology");
+      e.add("error", "invalid filename");
+      e.add("filename", fname);
       throw e;
     }
     // header
@@ -334,11 +332,10 @@ namespace tpp {
         std::ofstream qalcfile(fname, ios::out);
         if (!qalcfile.is_open()) {
           TPPE << "Fail to open file for write.";
-          Parameters params;
-          params.add("procname", "tpp::save_lack");
-          params.add("error", "invalid filename");
-          params.add("filename", fname);
-          Exception e("Can't open specified file for write.", params);
+          Exception e("Can't open specified file for write.");
+          e.add("procname", "tpp::save_lack");
+          e.add("error", "invalid filename");
+          e.add("filename", fname);
           throw e;
         }
         qalcfile << "; TPP topology lack\n";
@@ -453,11 +450,10 @@ namespace tpp {
       fstream inf(fname, ios::in);
       if (!inf.is_open()) {
           TPPE << "Fail to open file for read.";
-          Parameters params;
-          params.add("procname", "tpp::load_lack");
-          params.add("error", "invalid filename");
-          params.add("filename", fname);
-          Exception e("Can't open specified file for read.", params);
+          Exception e("Can't open specified file for read.");
+          e.add("procname", "tpp::load_lack");
+          e.add("error", "invalid filename");
+          e.add("filename", fname);
           throw e;
       }
       inf.close();
@@ -508,9 +504,9 @@ namespace tpp {
   * - the point of error\n";
           cout << "Parsed parameters: " << endl;
           cout << lex::outs.str() << endl;
-         Parameters pars0;
-         pars0.add("error", "Parsing error");
-         throw Exception("Topology lack parsing error!", pars0);
+         Exception e("Topology lack parsing error!");
+         e.add("error", "Parsing error");
+         throw e;
    }
    return;
 
@@ -524,11 +520,10 @@ namespace tpp {
       fstream inf(fname, ios::in);
       if (!inf.is_open()) {
           TPPE << "Fail to open file for read.";
-          Parameters params;
-          params.add("procname", "tpp::load_topology");
-          params.add("error", "invalid filename");
-          params.add("filename", fname);
-          Exception e("Can't open specified file for read.", params);
+          Exception e("Can't open specified file for read.");
+          e.add("procname", "tpp::load_topology");
+          e.add("error", "invalid filename");
+          e.add("filename", fname);
           throw e;
       }
       inf.close();
@@ -668,9 +663,9 @@ namespace tpp {
   * - the point of error\n";
           cout << "Parsed parameters: " << endl;
           cout << lex::outs.str() << endl;
-         Parameters pars0;
-         pars0.add("error", "Parsing error");
-         throw Exception("Topology parsing error!", pars0);
+         Exception e("Topology parsing error!");
+         e.add("error", "Parsing error");
+         throw e;
    }
    {
      ostringstream os;

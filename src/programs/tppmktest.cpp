@@ -164,7 +164,7 @@ int main(int argc, char * argv[]) {
     PARAM_ADD(par0, "ffname", PARAM_READ(cmdline, "forcefield") );
     // initial DB queries
     tpp::db_info DI(par0);
-    PARAM_ADD(par0, "ffid", boost::lexical_cast<string>(DI.get_ffid()) );
+    PARAM_ADD(par0, "ffid", boost::lexical_cast<string>(DI.getFFId()) );
     TOP.ffinclude = DI.get_ffinclude().c_str();
     TOP.ffinfo = PARAM_READ(par0, "ffname") + " revision " + DI.get_ffrev();
 

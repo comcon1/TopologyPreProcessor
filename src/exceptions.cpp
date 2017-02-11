@@ -48,7 +48,7 @@ namespace tpp {
     else{
       _totalMessage += " Parameters:\n";
       for (const auto& param: _params){
-        _totalMessage += param.first + ": " + param.second;
+        _totalMessage += param.first + ": " + param.second + "\n";
       }
     }
     return _totalMessage.c_str();

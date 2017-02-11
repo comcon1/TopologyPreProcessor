@@ -29,14 +29,19 @@
 #include <boost/serialization/vector.hpp>
 #include <boost/serialization/map.hpp>
 
-//
-//  Those are quite mysterious
-//
+///  configurational definitions
 #define TPP_GMX_EXTERNAL
 #define TPP_MAX_ATOM_NUM 200
 #define TPP_MAX_FREQ_NUM 600
 #define TPP_MAX_BONDS 4
 #define TPP_MAX_LONGTAIL_DEEP 10
+
+/// definitions of atom definer
+#define TPP_SMART_COEFF 10
+#define TPP_ZNUC_COEFF  10000
+#define TPP_BOND_COEFF  2
+#define TPP_ANGLE_COEFF 4
+#define TPP_DIHED_COEFF 8
 
 /** \namespace tpp is used for scoping TPP specific variables.
  *

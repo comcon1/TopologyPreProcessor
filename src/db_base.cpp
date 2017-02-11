@@ -22,8 +22,8 @@ using std::ostringstream;
 namespace tpp {
 
 
-  /*
-   * Standard constructor with DB connection
+  /**
+   * \brief Standard constructor with DB connection
    */
   DbBase::DbBase(const Settings& set) :
        settings(set), con(new mysqlpp::Connection(false)) {
@@ -34,10 +34,10 @@ namespace tpp {
     delete con;
   }
 
-  /*
-   * Standart DB connection.
+  /**
+   * \brief Standart DB connection.
    */
-  bool DbBase::connect_db()  {
+  bool DbBase::connectDB()  {
     con->connect(
         settings.dbname.c_str(),
         (settings.host + ":" + to_string(settings.port)).c_str(),
@@ -48,7 +48,7 @@ namespace tpp {
     // connection established
     if (!con->connected()) {
       SqlException e("SQL connection failed!");
-      e.add("procname", "tpp::atom_definer::connect_db");
+      e.add("procname", "tpp::atom_definer::connectDB");
       e.add("error", "SQL connection error");
       e.add("sql_error", con->error() );
       throw e;
@@ -57,7 +57,7 @@ namespace tpp {
     mysqlpp::Query qu = this->con->query();
     QueryResult res;
     mysqlpp::Row row;
-    ostringstream os; 
+    ostringstream os;
 
     os << "Checking DB version." << endl;
 
@@ -65,14 +65,14 @@ namespace tpp {
     res = qu.store();
     if (!res) {
       SqlException e("SQL query failed: may be you have incorrect DataBase!");
-      e.add("procname", "tpp::DbInfo::connect_db");
+      e.add("procname", "tpp::DbInfo::connectDB");
       e.add("error", "SQL query error");
       e.add("sql_error", qu.error() );
       throw e;
     }
     if (res.num_rows() != 1) {
       Exception e("Your DataBase is empty!");
-      e.add("procname", "tpp::DbInfo::connect_db");
+      e.add("procname", "tpp::DbInfo::connectDB");
       e.add("error", "Error in DB check.");
       throw e;
     }
@@ -84,74 +84,74 @@ namespace tpp {
     os << "Required magic number: " << required_mn << endl;
     os << "Current  magic number: " << cur_mn << endl;
 
-    TPPD<<os.str();
+    TPPD << os.str();
 
     if (cur_mn.c_str()[4] > required_mn.c_str()[4]) {
-      cerr << "\n"
+      TPPE << "\n"
 "Your DataBase version is slightly higher. Program should work but\n"
 "this behavior may be unpredictable. It is better to update the code." << endl;
     }
 
     return true;
+  } // end connectDB
+
+  /**
+    * \brief DB INFO implementation
+    */
+  DbInfo::DbInfo(const Settings& sets, const std::string& ffn): DbBase(sets), ffName(ffn) {
+    this->connectDB();
   }
 
-  //
-  // DB INFO implementation
-  //
-
-  DbInfo::DbInfo(const Settings& sets, const std::string& ffn): DbBase(sets), ffname(ffn) {
-    this->connect_db();
-  }
-
-  /*
-   * DB queries for DB-INFO class
+  /**
+   * \brief DB queries for DB-INFO class
    */
-  bool DbInfo::connect_db() {
-    DbBase::connect_db();
-    this->getFFdata();
+  bool DbInfo::connectDB() {
+    DbBase::connectDB();
+    this->loadFFData();
   }
 
-
-  void DbInfo::getFFdata() {
+  /** \brief Load FF data from DB and set up object variables
+    */
+  void DbInfo::loadFFData() {
     mysqlpp::Query qu = this->con->query();
     QueryResult res;
     mysqlpp::Row row;
-    // get ffid
-    qu << format("SELECT `id`,`include`,`desc` FROM `forcefield` WHERE name='%1$s'") % this->ffname.c_str();
+    // get ffID
+    qu << format("SELECT `id`,`include`,`desc` FROM `forcefield` WHERE name='%1$s'") % this->ffName.c_str();
     res = qu.store();
     if (!res) {
       SqlException e("SQL query failed!");
-      e.add("procname", "tpp::DbInfo::getFFdata");
+      e.add("procname", "tpp::DbInfo::loadFFData");
       e.add("error", "SQL query error");
       e.add("sql_error", qu.error() );
       throw e;
     }
     if (!res.num_rows()) {
       Exception e("Force field  not found!");
-      e.add("procname", "tpp::DbInfo::getFFdata");
+      e.add("procname", "tpp::DbInfo::loadFFData");
       e.add("error", "Error in parameters");
-      e.add("field", this->ffname);
+      e.add("field", this->ffName);
       throw e;
     }
-    this->ffid = res.at(0)["id"];
-    this->ffinclude = (res.at(0)["include"]).c_str();
-    this->ffdesc = (res.at(0)["desc"]).c_str();
+    this->ffID = res.at(0)["id"];
+    this->ffInclude = (res.at(0)["include"]).c_str();
+    this->ffDesc = (res.at(0)["desc"]).c_str();
 
     qu.reset();
-    qu << format("select `value` from `properties` WHERE `keyword`='%1$srev'") % this->ffname;
+    qu << format("select `value` from `properties` WHERE `keyword`='%1$srev'") % this->ffName;
     res = qu.store();
     if ( (!res) || res.size() == 0 || (!res.at(0)) ) {
       SqlException e("SQL force field revision is unknown!");
-      e.add("procname", "tpp::atom_definer::connect_db");
+      e.add("procname", "tpp::atom_definer::connectDB");
       e.add("error", "SQL query error");
       e.add("sql_error", qu.error() );
       throw e;
     }
-    this->ffrev = res.at(0)["value"].c_str();
-  }
+    this->ffRev = res.at(0)["value"].c_str();
+  } // end loadFFData
 
 
-  string DbInfo::get_statistics() {
+  string DbInfo::getStatistics() {
 
     mysqlpp::Query qu = this->con->query();
     QueryResult res;
@@ -163,11 +163,11 @@ SELECT\n\
  (SELECT COUNT(*) FROM bonds WHERE ffield = %1$d) as count_bonds,\n\
  (SELECT COUNT(*) FROM angles WHERE ffield = %1$d) as count_angles,\n\
  (SELECT COUNT(*) FROM dihedrals WHERE ffield = %1$d) as count_dihedrals,\n\
- (SELECT COUNT(*) as CF FROM nonbonded WHERE ffield = %1$d) as count_nonbond;") % this->ffid;
+ (SELECT COUNT(*) as CF FROM nonbonded WHERE ffield = %1$d) as count_nonbond;") % this->ffID;
     res = qu.store();
     if ( (!res) || (!res.at(0)) ) {
       SqlException e( "SQL query failed!");
-      e.add("procname", "tpp::atom_definer::connect_db");
+      e.add("procname", "tpp::atom_definer::connectDB");
       e.add("error", "SQL query error");
       e.add("sql_error", qu.error() );
       throw e;
@@ -179,9 +179,9 @@ Description: %7$s.\n\
 Total statistics:\n\
 %2$5d atoms,     %3$5d bonds, %4$5d angles,\n\
 %5$5d dihedrals, %6$5d nonbonded parameters.\n")
-      % this->ffname.c_str() % res.at(0)["count_atoms"] % res.at(0)["count_bonds"]
+      % this->ffName.c_str() % res.at(0)["count_atoms"] % res.at(0)["count_bonds"]
       % res.at(0)["count_angles"] % res.at(0)["count_dihedrals"] % res.at(0)["count_nonbond"]
-      % this->ffdesc;
+      % this->ffDesc;
 
     //TODO: this query does not show last INSERT events. Should fix.
     qu.reset();
@@ -189,7 +189,7 @@ Total statistics:\n\
     res = qu.store();
     if ( (!res) || (!res.at(0)) ) {
       SqlException e("SQL status query failed!");
-      e.add("procname", "tpp::atom_definer::connect_db");
+      e.add("procname", "tpp::atom_definer::connectDB");
       e.add("error", "SQL query error");
       e.add("sql_error", qu.error() );
       throw e;
@@ -205,8 +205,8 @@ Total statistics:\n\
     os << "Database last update: " << ss.back() << endl;
 
     // force field revision
-    os << format("Force field %1$s DB revision: %2$s.") % this->ffname % this->ffrev  << endl;
+    os << format("Force field %1$s DB revision: %2$s.") % this->ffName % this->ffRev  << endl;
     return os.str();
-  }
+  } // end get Statistics
 
 }

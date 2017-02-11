@@ -5,6 +5,7 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/format.hpp>
 #include <sstream>
+#include <cctype>
 
 using std::string;
 using std::ostringstream;
@@ -107,6 +108,23 @@ namespace tpp {
       os << format("%s%-2d") % an2str(instance.ncharge) % heavyNum;
     }
     return os.str();
+  } // end ANG::getName
+
+  /** \brief Guess residue name from filename
+    */
+  string ResidueNameGenerator::getName() {
+    string rsn;
+    for (auto i: instance) {
+      if ( isalnum(i) ) {
+        rsn += toupper(i);
+      }
+    }
+    if (rsn.length() < 3) {
+      if (rsn.length() == 2) rsn += "X";
+      else if (rsn.length() == 1) rsn += "XX";
+      else { rsn = "XXX"; }
+    }
+    return rsn;
   }
 
 }
