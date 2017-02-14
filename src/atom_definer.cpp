@@ -55,10 +55,15 @@ namespace tpp {
     cout << "Atomic numbers: [" << flush;
     for (auto &cur: znucset) {
       qu = con->query();
-      qu << format(
+      ostringstream os;
+      os << format(
         "SELECT `atoms`.`name` as nm FROM `atoms` "
         "WHERE `znuc` = %1$d AND `ffield` = %2$d "
         "GROUP BY `name`") % cur.first % atomSettings.ffID;
+      #ifdef SQLDEBUG
+      TPPD << os.str();
+      #endif // SQLDEBUG
+      qu << os.str();
       res = qu.store();
       if (!res) {
         Exception e("Empty atom list resulted.");
@@ -71,14 +76,40 @@ namespace tpp {
       }
       cout << "." << flush;
     }
+    mapAItoAVT = znucset;
     cout << format("]\n"
       "%1$d queries proceeded on database\n") % znucset.size();
     cout << flush;
+    TPPD << format("%1$d queries proceeded on database") % znucset.size();
+    #ifdef DEBUG
+    ostringstream os;
+    os << "\n-- Logging znucset for NB --" << endl;
+    for (auto znucelem: znucset) {
+      os << znucelem.first << ": ";
+      for (auto nm: znucelem.second)
+        os << nm << " | ";
+      os << endl;
+    }
+    os << "-- END: logging znucset for NB --" << endl;
+    TPPD << os.str();
+    #endif // DEBUG
     // fill map to every atom
     FOR_ATOMS_OF_MOL(it, tp.mol) {
       nbSuite.insert(pair<int,set<string> >(it->GetIdx(), znucset[it->GetAtomicNum()]));
     }
   } // end fillNB
+
+  string AtomDefiner::getSQLSet(int ai) {
+    int co = 0;
+    string ans = "(";
+    for (string e: mapAItoAVT[ai]) {
+      if (co) ans += ",";
+      ans += "'"+e+"'";
+      co++;
+    }
+    ans += ")";
+    return ans;
+  }
 
   /// implement existing bond counting
   void AtomDefiner::fillBonds() {
@@ -91,7 +122,6 @@ namespace tpp {
     typedef Spec2_<string> NMBondSpec;   /// bond type specified by atom valence names
     typedef Spec2_<int>    AIBondSpec;   /// bond type specified by atom numbers only
     set<NMBondSpec> tmpv, tmpv1;
-    int qry = 0;
     map<AIBondSpec, set<NMBondSpec> > znucset; /// map: AtomNumber-AtomNumber -> AtomName-AtomName
 
     // all bond types are included once
@@ -108,39 +138,35 @@ namespace tpp {
     for (auto &cur: znucset) {
       int i = cur.first.first(), j = cur.first.second();
         qu = con->query();
+        ostringstream os;
         if (i == j)
-          qu << format(
+          os << format(
             " SELECT "
-            "   `bonds`.`id` AS `bid`, `bonds`.`i` AS `i`, `bonds`.`j` AS `j` "
+            "   `bonds`.`id` AS `bid`, `bonds`.`i` AS `bi`, `bonds`.`j` AS `bj` "
             " FROM `bonds` "
-            " RIGHT JOIN `atoms` as `iatoms` ON `bonds`.`i` = `iatoms`.`name` "
-            " RIGHT JOIN `atoms` as `jatoms` ON `bonds`.`j` = `jatoms`.`name` "
             " WHERE `bonds`.`ffield` = %1$d "
-            "   AND `iatoms`.`znuc` = %2$d AND `jatoms`.`znuc` = %2$d "
-            " GROUP BY `bid`"
-            ) % atomSettings.ffID % i;
+            "   AND `bonds`.`i` IN %2$s AND `bonds`.`j` IN %2$s "
+            ) % atomSettings.ffID % getSQLSet(i);
         else
-          qu << format(
+          os << format(
             " SELECT "
-            "       `bonds`.`id` AS `bid`, `bonds`.`i` AS `i`, `bonds`.`j` AS `j` "
+            "       `bonds`.`id` AS `bid`, `bonds`.`i` AS `bi`, `bonds`.`j` AS `bj` "
             "     FROM bonds "
-            "     RIGHT JOIN `atoms` as `iatoms` ON `bonds`.`i` = `iatoms`.`name` AND `iatoms`.`ffield` = %1$d "
-            "     RIGHT JOIN `atoms` as `jatoms` ON `bonds`.`j` = `jatoms`.`name` AND `iatoms`.`ffield` = %1$d "
             "     WHERE `bonds`.`ffield` = %1$d "
-            "       AND `iatoms`.`znuc` = %2$d AND `jatoms`.`znuc` = %3$d "
-            "     GROUP BY `bid` "
+            "       AND `bonds`.`i` IN %2$s AND `bonds`.`j` IN %3$s "
             "     "
             " UNION "
             "     "
             " SELECT "
-            "       `bonds`.`id` AS `bid`, `bonds`.`j` AS `i`, `bonds`.`i` AS `j` "
+            "       `bonds`.`id` AS `bid`, `bonds`.`j` AS `bi`, `bonds`.`i` AS `bj` "
             "     FROM bonds "
-            "     RIGHT JOIN `atoms` as `iatoms` ON `bonds`.`i` = `iatoms`.`name` AND `iatoms`.`ffield` = %1$d "
-            "     RIGHT JOIN `atoms` as `jatoms` ON `bonds`.`j` = `jatoms`.`name` AND `iatoms`.`ffield` = %1$d "
             "     WHERE `bonds`.`ffield` = %1$d "
-            "       AND `iatoms`.`znuc` = %3$d AND `jatoms`.`znuc` = %2$d "
-            "     GROUP BY `bid` "
-            ) % atomSettings.ffID % i % j;
+            "       AND `bonds`.`i` IN %3$s AND `bonds`.`j` IN %2$s "
+            ) % atomSettings.ffID % getSQLSet(i) % getSQLSet(j);
+        #ifdef SQLDEBUG
+        TPPD << os.str();
+        #endif // SQLDEBUG
+        qu << os.str();
         res = qu.store();
         if (!res) {
           Exception e("Empty bond list resulted.");
@@ -149,13 +175,28 @@ namespace tpp {
         }
         for (co = 0; co < res.num_rows(); ++co) {
           row = res.at(co);
-          cur.second.insert( NMBondSpec(string(row["i"]),string(row["j"]) ) );
+          cur.second.insert( NMBondSpec(string(row["bi"]),string(row["bj"]) ) );
         }
         cout << "." << flush;
     } // end for znucset
     cout << format("]\n"
               "%1$d queries proceeded on database\n") % znucset.size();
     cout << flush;
+    TPPD << format("%1$d queries proceeded on database\n") % znucset.size();
+
+    #ifdef DEBUG
+    ostringstream os;
+    os << "\n-- Logging znucset for BONDS --" << endl;
+    for (auto znucelem: znucset) {
+      os << format("(%1$d-%2$d): ") % znucelem.first.first() % znucelem.first.second();
+      for (auto nmpair: znucelem.second) {
+        os << format("%1$s-%2$s | ") % nmpair.first() % nmpair.second();
+      }
+      os << endl;
+    }
+    os << "\n-- END: Logging znucset for BONDS --" << endl;
+    TPPD << os.str();
+    #endif // DEBUG
 
     // associate znucset bondsets with every bond
     FOR_BONDS_OF_MOL(it, tp.mol) {
@@ -182,246 +223,235 @@ namespace tpp {
 
   } // end fillBonds
 
-  ///TODO: REFACTOR AS fillBonds
+  /// implements angle counting
   void AtomDefiner::fillAngles() {
-    return ; // not ready yet
-/*
     cout << "Comparing atom by angles.." << endl;
     mysqlpp::Query qu = con->query();
     QueryResult res;
     mysqlpp::Row row;
     mysqlpp::Row::size_type co;
-    set<Spec3_<int> > tmpv, tmpv1;
-    map<Spec3_<int>, set<Spec3_<int> > > znucset;
-    short qry = 0;
+
+    typedef Spec3_<string> NMAngleSpec;   /// angle type specified by atom valence names
+    typedef Spec3_<int>    AIAngleSpec;   /// angle type specified by atom numbers only
+    set<NMAngleSpec> tmpv, tmpv1;
+    int qry = 0;
+    map<AIAngleSpec, set<NMAngleSpec> > znucset; /// map: AtomNumber-AtomNumber-AtomNumber -> AtomName-AtomName-AtomName
+
+    // all angle types are included once
+    FOR_ANGLES_OF_MOL(it, tp.mol) {
+      int i0 = (*it)[1] + 1, j0 = (*it)[0] + 1, k0 = (*it)[2] + 1; // i,j,k
+      int a1 = tp.mol.GetAtom(i0)->GetAtomicNum(),
+          a2 = tp.mol.GetAtom(j0)->GetAtomicNum(),
+          a3 = tp.mol.GetAtom(k0)->GetAtomicNum();
+      AIAngleSpec S(a1 <= a3 ? a1 : a3, a2, a1 <= a3 ? a3 : a1);
+      znucset.insert( pair<AIAngleSpec, set<NMAngleSpec> > ( S, set<NMAngleSpec>() ) );
+    }
+
     cout << "Angles: [" << flush;
-    FOR_ANGLES_OF_MOL(it, tp.mol){
-    Spec3<int> A( (*it)[1]+1, (*it)[0]+1, (*it)[2]+1); // one-stabled angle definition
-    int i0 = A.first(), j0 = A.second(), k0 = A.third();
-    int a1 = tp.mol.GetAtom(i0)->GetAtomicNum(),
-    a2 = tp.mol.GetAtom(j0)->GetAtomicNum(),
-    a3 = tp.mol.GetAtom(k0)->GetAtomicNum();
-  #ifdef CDB
-    cout << (format("#%1$d-%2$d-%3$d,(%4$d-%5$d-%6$d)") % i0 %j0 % k0 % a1 % a2 % a3) << flush;
-  #endif
-    Spec3_<int> S(a1 <= a3 ? a1 : a3, a2, a1 <= a3 ? a3 : a1);
-    if ( znucset.find(S) == znucset.end() ) {
-      qry++;
-      qu = con->query();
-      if (a1 == a3)
-      qu << format("\
-  SELECT \n\
-    angles.id AS bid, \n\
-    ( SELECT MIN( id ) FROM atoms WHERE atoms.name = angles.i AND atoms.ffield = %1$d) AS aid1, \n\
-    ( SELECT MIN( id ) FROM atoms WHERE atoms.name = angles.j AND atoms.ffield = %1$d) AS aid2, \n\
-    ( SELECT MIN( id ) FROM atoms WHERE atoms.name = angles.k AND atoms.ffield = %1$d) AS aid3, \n\
-    0 AS inv\n\
-  FROM angles\n\
-  WHERE angles.ffield = %1$d\n\
-  AND ( SELECT MIN( znuc ) FROM atoms WHERE atoms.name = angles.i AND atoms.ffield = %1$d) = %2$d\n\
-  AND ( SELECT MIN( znuc ) FROM atoms WHERE atoms.name = angles.j AND atoms.ffield = %1$d) = %3$d\n\
-  AND ( SELECT MIN( znuc ) FROM atoms WHERE atoms.name = angles.k AND atoms.ffield = %1$d) = %2$d\n\
-  ") % atomSettings.ffID % a1 % a2;
-      else
-      qu << format("\
-  (SELECT \n\
-    angles.id AS bid, \n\
-    ( SELECT MIN( id ) FROM atoms WHERE atoms.name = angles.i AND atoms.ffield = %1$d) AS aid1, \n\
-    ( SELECT MIN( id ) FROM atoms WHERE atoms.name = angles.j AND atoms.ffield = %1$d) AS aid2, \n\
-    ( SELECT MIN( id ) FROM atoms WHERE atoms.name = angles.k AND atoms.ffield = %1$d) AS aid3, \n\
-    0 AS inv\n\
-  FROM angles\n\
-  WHERE angles.ffield = %1$d\n\
-   AND ( SELECT MIN( znuc ) FROM atoms WHERE atoms.name = angles.i AND atoms.ffield = %1$d) = %2$d\n\
-   AND ( SELECT MIN( znuc ) FROM atoms WHERE atoms.name = angles.j AND atoms.ffield = %1$d) = %3$d\n\
-   AND ( SELECT MIN( znuc ) FROM atoms WHERE atoms.name = angles.k AND atoms.ffield = %1$d) = %4$d)\n\
-  UNION \n\
-  (SELECT \n\
-    angles.id AS bid, \n\
-    ( SELECT MIN( id ) FROM atoms WHERE atoms.name = angles.i AND atoms.ffield = %1$d) AS aid1, \n\
-    ( SELECT MIN( id ) FROM atoms WHERE atoms.name = angles.j AND atoms.ffield = %1$d) AS aid2, \n\
-    ( SELECT MIN( id ) FROM atoms WHERE atoms.name = angles.k AND atoms.ffield = %1$d) AS aid3, \n\
-    1 AS inv\n\
-  FROM angles\n\
-  WHERE angles.ffield = %1$d\n\
-   AND ( SELECT MIN( znuc ) FROM atoms WHERE atoms.name = angles.i AND atoms.ffield = %1$d) = %4$d\n\
-   AND ( SELECT MIN( znuc ) FROM atoms WHERE atoms.name = angles.j AND atoms.ffield = %1$d) = %3$d\n\
-   AND ( SELECT MIN( znuc ) FROM atoms WHERE atoms.name = angles.k AND atoms.ffield = %1$d) = %2$d)\n\
-  ") % atomSettings.ffID % a1 % a2 % a3;
-      res = qu.store();
-      assert(res);
-      tmpv.clear();
-      for (co = 0; row = res.at(co); ++co) {
-        tmpv.insert((int)row["inv"] == 0 ?
-            Spec3_<int>(row["aid1"],row["aid2"],row["aid3"]) :
-            Spec3_<int>(row["aid3"],row["aid2"],row["aid1"])
-        );
-      }
-  #ifdef CDB
-      cout << "\ninserted: " << S.first() << ":" << S.second() << ":" << S.third() << " elements: " <<
-      std::distance(tmpv.begin(),tmpv.end()) << endl;
-  #endif
-
-      if (S.first() != a1) {
-        tmpv1.clear();
-        for (set<Spec3_<int> >::iterator iii = tmpv.begin(); iii != tmpv.end(); ++iii)
-        tmpv1.insert(Spec3_<int>(iii->third(),iii->second(), iii->first()));
-        znucset.insert(pair<Spec3_<int>, set<Spec3_<int> > >(S, tmpv1));
-      } else {
-        znucset.insert(pair<Spec3_<int>, set<Spec3_<int> > >(S, tmpv));
-      }
-    }  // end find in database
-    else {
-  #ifdef CDB
-      cout << "FOUND: " << znucset.find(S)->first.first()
-      << "-" << znucset.find(S)->first.second()
-      << "-" << znucset.find(S)->first.third() << endl;
-  #endif
-      tmpv1.clear();
-      tmpv1 = znucset.find(S)->second;
-      if (a1 == S.first()) {
-        tmpv = tmpv1;
-      } else { // turning over set
-        tmpv.clear();
-        for (set<Spec3_<int> >::iterator iii = tmpv1.begin(); iii != tmpv1.end(); ++iii)
-          tmpv.insert(Spec3_<int> (iii->third(), iii->second(), iii->first()));
-      }
-    } // end find in cash set
-    angleSuite.insert(pair<Spec3<int>, set<Spec3_<int> > >(A,tmpv));
-    cout << "." << flush;
-  #ifdef CDB
-    cout << std::distance(tmpv.begin(),tmpv.end());
-  #endif
-  } // end every angle
-    cout << format("]\n\
-  %1$d queries proceeded on database\n") % qry;
+    for (auto &cur: znucset) {
+      int i = cur.first.first(), j = cur.first.second(), k = cur.first.third();
+        qu = con->query();
+        ostringstream os;
+        if (i == k)
+          os << format(
+            " SELECT "
+            "   `angles`.`id` AS `aid`, `angles`.`i` AS `ai`, `angles`.`j` AS `aj`, `angles`.`k` AS `ak` "
+            " FROM `angles` "
+            " WHERE `angles`.`ffield` = %1$d "
+            "   AND `angles`.`i` IN %2$s AND `angles`.`j` IN %3$s AND `angles`.`k` IN %2$s "
+            ) % atomSettings.ffID % getSQLSet(i) % getSQLSet(j);
+        else
+          os << format(
+            " SELECT "
+            "     `angles`.`id` AS `aid`, `angles`.`i` AS `ai`, `angles`.`j` AS `aj`, `angles`.`k` AS `ak` "
+            "   FROM `angles` "
+            "   WHERE `angles`.`ffield` = %1$d "
+            "     AND `angles`.`i` IN %2$s AND `angles`.`j` IN %3$s AND `angles`.`k` IN  %4$s "
+            "     "
+            " UNION "
+            "     "
+            " SELECT "
+            "     `angles`.`id` AS `aid`, `angles`.`k` AS `ai`, `angles`.`j` AS `aj`, `angles`.`i` AS `ak` "
+            "   FROM `angles` "
+            "   WHERE `angles`.`ffield` = %1$d "
+            "     AND `angles`.`i` IN %4$s AND `angles`.`j` IN %3$s AND `angles`.`k` IN  %2$s "
+            ) % atomSettings.ffID % getSQLSet(i) % getSQLSet(j) % getSQLSet(k);
+        #ifdef SQLDEBUG
+        TPPD << os.str();
+        #endif // SQLDEBUG
+        qu << os.str();
+        res = qu.store();
+        if (!res) {
+          Exception e("Empty angle list resulted.");
+          e.add("query", qu.str());
+          throw e;
+        }
+        for (co = 0; co < res.num_rows(); ++co) {
+          row = res.at(co);
+          cur.second.insert( NMAngleSpec(string(row["ai"]),string(row["aj"]), string(row["ak"]) ) );
+        }
+        cout << "." << flush;
+    } // end for znucset
+    cout << format("]\n"
+              "%1$d queries proceeded on database\n") % znucset.size();
     cout << flush;
-    */
-  }
+    TPPD << format("%1$d queries proceeded on database\n") % znucset.size();
 
-  ///TODO: REFACTOR AS fillBonds
+    #ifdef DEBUG
+    ostringstream os;
+    os << "\n-- Logging znucset for ANGLES --" << endl;
+    for (auto znucelem: znucset) {
+      os << format("(%1$d-%2$d-%3$d): ") % znucelem.first.first() % znucelem.first.second() % znucelem.first.third();
+      for (auto nmtrt: znucelem.second) {
+        os << format("%1$s-%2$s-%3$s | ") % nmtrt.first() % nmtrt.second() % nmtrt.third();
+      }
+      os << endl;
+    }
+    os << "\n-- END: Logging znucset for ANGLES --" << endl;
+    TPPD << os.str();
+    #endif // DEBUG
+
+    // associate znucset bondsets with every angle
+    FOR_ANGLES_OF_MOL(it, tp.mol) {
+      Spec3<int> idxAng( (*it)[1] + 1, (*it)[0] + 1, (*it)[2] + 1); // angle i->j<-k
+      int i0 = idxAng.first(), j0 = idxAng.second(), k0 = idxAng.third(); // i,j,k
+      int a1 = tp.mol.GetAtom(i0)->GetAtomicNum(),
+          a2 = tp.mol.GetAtom(j0)->GetAtomicNum(),
+          a3 = tp.mol.GetAtom(k0)->GetAtomicNum();
+      if ( znucset.count(AIAngleSpec(a1,a2,a3)) ) {
+        angleSuite.insert( pair<Spec3<int>, set<NMAngleSpec> > (
+           idxAng, znucset[AIAngleSpec(a1,a2,a3)] ) );
+      } else if ( znucset.count(AIAngleSpec(a3,a2,a1) ) ) {
+        // swap first and second in the set
+        tmpv1.clear();
+        for (auto ii: znucset[AIAngleSpec(a1,a2,a3)])
+          tmpv1.insert(NMAngleSpec(ii.third(),ii.second(),ii.first()));
+        angleSuite.insert( pair<Spec3<int>, set<NMAngleSpec> > (
+           idxAng, tmpv1 ) );
+      } else {
+        /// This situation can not occur. Just test that the code is correct.
+        TPPE << format("No AIAngleSpec was prepared: %d-%d-%d ") % a1 % a2 % a3 ;
+        assert(0);
+      }
+    } // end FOR_ANGLES_OF_MOL
+
+  } // end fillAngles
+
+  /// implements dihedral counting
   void AtomDefiner::fillDihs() {
-    return; //TODO: not ready yet
-/*
     cout << "Comparing atom by dihedrals.." << endl;
     mysqlpp::Query qu = con->query();
     QueryResult res;
     mysqlpp::Row row;
     mysqlpp::Row::size_type co;
-    set<Spec4_> tmpv, tmpv1;
-    map<Spec4_, set<Spec4_> > znucset;
-    short qry = 0;
-    cout << "Dihedrals: [" << flush;
-    FOR_TORSIONS_OF_MOL(it, tp.mol){
-    Spec4 A( (*it)[1]+1, (*it)[0]+1, (*it)[2]+1, (*it)[3]+1); // one-stabled angle definition
-    int i0 = A.first(), j0 = A.second(), k0 = A.third(), l0 = A.fourth();
-    int a1 = tp.mol.GetAtom(i0)->GetAtomicNum(),
-    a2 = tp.mol.GetAtom(j0)->GetAtomicNum(),
-    a3 = tp.mol.GetAtom(k0)->GetAtomicNum(),
-    a4 = tp.mol.GetAtom(l0)->GetAtomicNum();
-  #ifdef CDB
-    cout << (format("#%1$d-%2$d-%3$d,(%4$d-%5$d-%6$d)") % i0 %j0 % k0 % a1 % a2 % a3) << flush;
-  #endif
-    Spec4_ S(a1 <= a4 ? a1 : a4, a1 <= a4 ? a2 : a3, a1 <= a4 ? a3 : a2, a1 <= a4 ? a4 : a1);
-    if ( znucset.find(S) == znucset.end() ) {
-      qry++;
-      qu = con->query();
-      if (a1 == a4)
-      qu << format("\
-  SELECT \n\
-    dihedrals.id AS did, \n\
-    ( SELECT MIN( id ) FROM atoms WHERE atoms.name = dihedrals.i AND atoms.ffield = %1$d) AS aid1, \n\
-    ( SELECT MIN( id ) FROM atoms WHERE atoms.name = dihedrals.j AND atoms.ffield = %1$d) AS aid2, \n\
-    ( SELECT MIN( id ) FROM atoms WHERE atoms.name = dihedrals.k AND atoms.ffield = %1$d) AS aid3, \n\
-    ( SELECT MIN( id ) FROM atoms WHERE atoms.name = dihedrals.l AND atoms.ffield = %1$d) AS aid4, \n\
-    0 AS inv\n\
-  FROM dihedrals\n\
-  WHERE dihedrals.ffield = %1$d\n\
-  AND ( SELECT MIN( znuc ) FROM atoms WHERE atoms.name = dihedrals.i AND atoms.ffield = %1$d) = %2$d\n\
-  AND ( SELECT MIN( znuc ) FROM atoms WHERE atoms.name = dihedrals.j AND atoms.ffield = %1$d) = %3$d\n\
-  AND ( SELECT MIN( znuc ) FROM atoms WHERE atoms.name = dihedrals.k AND atoms.ffield = %1$d) = %4$d\n\
-  AND ( SELECT MIN( znuc ) FROM atoms WHERE atoms.name = dihedrals.l AND atoms.ffield = %1$d) = %2$d\n\
-  ") % atomSettings.ffID % a1 % a2 % a3;
-      else
-      qu << format("\
-  (SELECT \n\
-    dihedrals.id AS bid, \n\
-    ( SELECT MIN( id ) FROM atoms WHERE atoms.name = dihedrals.i AND atoms.ffield = %1$d) AS aid1, \n\
-    ( SELECT MIN( id ) FROM atoms WHERE atoms.name = dihedrals.j AND atoms.ffield = %1$d) AS aid2, \n\
-    ( SELECT MIN( id ) FROM atoms WHERE atoms.name = dihedrals.k AND atoms.ffield = %1$d) AS aid3, \n\
-    ( SELECT MIN( id ) FROM atoms WHERE atoms.name = dihedrals.l AND atoms.ffield = %1$d) AS aid4, \n\
-    0 AS inv\n\
-  FROM dihedrals\n\
-  WHERE dihedrals.ffield = %1$d\n\
-   AND ( SELECT MIN( znuc ) FROM atoms WHERE atoms.name = dihedrals.i AND atoms.ffield = %1$d) = %2$d\n\
-   AND ( SELECT MIN( znuc ) FROM atoms WHERE atoms.name = dihedrals.j AND atoms.ffield = %1$d) = %3$d\n\
-   AND ( SELECT MIN( znuc ) FROM atoms WHERE atoms.name = dihedrals.k AND atoms.ffield = %1$d) = %4$d\n\
-   AND ( SELECT MIN( znuc ) FROM atoms WHERE atoms.name = dihedrals.l AND atoms.ffield = %1$d) = %5$d)\n\
-  UNION \n\
-  (SELECT \n\
-    dihedrals.id AS bid, \n\
-    ( SELECT MIN( id ) FROM atoms WHERE atoms.name = dihedrals.i AND atoms.ffield = %1$d) AS aid1, \n\
-    ( SELECT MIN( id ) FROM atoms WHERE atoms.name = dihedrals.j AND atoms.ffield = %1$d) AS aid2, \n\
-    ( SELECT MIN( id ) FROM atoms WHERE atoms.name = dihedrals.k AND atoms.ffield = %1$d) AS aid3, \n\
-    ( SELECT MIN( id ) FROM atoms WHERE atoms.name = dihedrals.l AND atoms.ffield = %1$d) AS aid4, \n\
-    1 AS inv\n\
-  FROM dihedrals\n\
-  WHERE dihedrals.ffield = %1$d\n\
-   AND ( SELECT MIN( znuc ) FROM atoms WHERE atoms.name = dihedrals.i AND atoms.ffield = %1$d) = %5$d\n\
-   AND ( SELECT MIN( znuc ) FROM atoms WHERE atoms.name = dihedrals.j AND atoms.ffield = %1$d) = %4$d\n\
-   AND ( SELECT MIN( znuc ) FROM atoms WHERE atoms.name = dihedrals.k AND atoms.ffield = %1$d) = %3$d\n\
-   AND ( SELECT MIN( znuc ) FROM atoms WHERE atoms.name = dihedrals.l AND atoms.ffield = %1$d) = %2$d)\n\
-  ") % atomSettings.ffID % a1 % a2 % a3 % a4;
-  //        cout << endl << qu.preview() << endl;
-      res = qu.store();
-      assert(res);
-      tmpv.clear();
-      for (co = 0; row = res.at(co); ++co) {
-        tmpv.insert((int)row["inv"] == 0 ?
-            Spec4_(row["aid1"],row["aid2"],row["aid3"],row["aid4"]) :
-            Spec4_(row["aid4"],row["aid3"],row["aid2"],row["aid1"])
-        );
-      }
-  #ifdef CDB
-      cout << "\ninserted: " << S.first() << ":" << S.second() << ":" << S.third() << " elements: " <<
-      std::distance(tmpv.begin(),tmpv.end()) << endl;
-  #endif
 
-      if (S.first() != a1) {
-        tmpv1.clear();
-        for (set<Spec4_>::iterator iii = tmpv.begin(); iii != tmpv.end(); ++iii)
-        tmpv1.insert(Spec4_(iii->fourth(),iii->third(),iii->second(), iii->first()));
-        znucset.insert(pair<Spec4_, set<Spec4_> >(S, tmpv1));
-      } else {
-        znucset.insert(pair<Spec4_, set<Spec4_> >(S, tmpv));
-      }
-    }  // end find in database
-    else {
-  #ifdef CDB
-      cout << "FOUND: " << znucset.find(S)->first.first()
-      << "-" << znucset.find(S)->first.second()
-      << "-" << znucset.find(S)->first.third() << endl;
-  #endif
-      tmpv1.clear();
-      tmpv1 = znucset.find(S)->second;
-      if (a1 == S.first()) {
-        tmpv = tmpv1;
-      } else { // turning over set
-        tmpv.clear();
-        for (set<Spec4_>::iterator iii = tmpv1.begin(); iii != tmpv1.end(); ++iii)
-        tmpv.insert(Spec4_(iii->fourth(),iii->third(), iii->second(), iii->first()));
-      }
-    } // end find in cash set
-    dih_suite.insert(pair<Spec4, set<Spec4_> >(A,tmpv));
-    cout << "." << flush;
-  #ifdef CDB
-    cout << std::distance(tmpv.begin(),tmpv.end());
-  #endif
-  } // end every angle
-    cout << format("]\n\
-  %1$d queries proceeded on database\n") % qry;
+    typedef Spec4_<string> NMDihdSpec;   /// angle type specified by atom valence names
+    typedef Spec4_<int>    AIDihdSpec;   /// angle type specified by atom numbers only
+    set<NMDihdSpec> tmpv, tmpv1;
+    int qry = 0;
+    map<AIDihdSpec, set<NMDihdSpec> > znucset; /// map: AtomNumber-AN-AN-AN -> AtomName-ANm-ANm-ANm
+
+    // all angle types are included once
+    FOR_TORSIONS_OF_MOL(it, tp.mol) {
+      int i0 = (*it)[0] + 1, j0 = (*it)[1] + 1, k0 = (*it)[2] + 1, l0 = (*it)[3] + 1; // i,j,k
+      int a1 = tp.mol.GetAtom(i0)->GetAtomicNum(),
+          a2 = tp.mol.GetAtom(j0)->GetAtomicNum(),
+          a3 = tp.mol.GetAtom(k0)->GetAtomicNum(),
+          a4 = tp.mol.GetAtom(l0)->GetAtomicNum();
+      bool ori = ( (a1 == a4) && (a2 > a3) ) || (a1 > a4);
+      AIDihdSpec S(ori ? a1 : a4, ori ? a2 : a3, ori ? a3 : a2, ori ? a4 : a1);
+      znucset.insert( pair<AIDihdSpec, set<NMDihdSpec> > ( S, set<NMDihdSpec>() ) );
+    }
+
+    cout << "Dihedrals: [" << flush;
+    for (auto &cur: znucset) {
+      int i = cur.first.first(), j = cur.first.second(), k = cur.first.third(), l = cur.first.fourth();
+        qu = con->query();
+        ostringstream os;
+        if ( (i == l) and (j == k) )
+          os << format(
+            " SELECT "
+            "   `dihedrals`.`id` AS `did`, `dihedrals`.`i` AS `di`, `dihedrals`.`j` AS `dj`, `dihedrals`.`k` AS `dk`, `dihedrals`.`l` AS `dl` "
+            " FROM `dihedrals` "
+            " WHERE `dihedrals`.`ffield` = %1$d "
+            "   AND `dihedrals`.`i` IN %2$s AND `dihedrals`.`j` IN %3$s AND `dihedrals`.`k` IN %3$s AND `dihedrals`.`l` IN %2$s "
+            ) % atomSettings.ffID % getSQLSet(i) % getSQLSet(j);
+        else
+          os << format(
+            " SELECT "
+            "     `dihedrals`.`id` AS `did`, `dihedrals`.`i` AS `di`, `dihedrals`.`j` AS `dj`, `dihedrals`.`k` AS `dk`, `dihedrals`.`l` AS `dl` "
+            "   FROM `dihedrals` "
+            "   WHERE `dihedrals`.`ffield` = %1$d "
+            "     AND `dihedrals`.`i` IN %2$s AND `dihedrals`.`j` IN %3$s AND `dihedrals`.`k` IN %4$s AND `dihedrals`.`l` IN %5$s "
+            "     "
+            " UNION "
+            "     "
+            " SELECT "
+            "     `dihedrals`.`id` AS `did`, `dihedrals`.`l` AS `di`, `dihedrals`.`k` AS `dj`,  `dihedrals`.`j` AS `dk`, `dihedrals`.`i` AS `dl`"
+            "   FROM `dihedrals` "
+            "   WHERE `dihedrals`.`ffield` = %1$d "
+            "     AND `dihedrals`.`i` IN %5$s AND `dihedrals`.`j` IN %4$s AND `dihedrals`.`k` IN %3$s AND `dihedrals`.`l` IN %2$s "
+            ) % atomSettings.ffID % getSQLSet(i) % getSQLSet(j) % getSQLSet(k) % getSQLSet(l);
+        #ifdef SQLDEBUG
+        TPPD << os.str();
+        #endif // SQLDEBUG
+        qu << os.str();
+        res = qu.store();
+        if (!res) {
+          Exception e("Empty dihedral list resulted.");
+          e.add("query", qu.str());
+          throw e;
+        }
+        for (co = 0; co < res.num_rows(); ++co) {
+          row = res.at(co);
+          cur.second.insert( NMDihdSpec(string(row["di"]),string(row["dj"]), string(row["dk"]), string(row["dl"]) ) );
+        }
+        cout << "." << flush;
+    } // end for znucset
+    cout << format("]\n"
+              "%1$d queries proceeded on database\n") % znucset.size();
     cout << flush;
-     */
+    TPPD << format("%1$d queries proceeded on database\n") % znucset.size();
+
+    #ifdef DEBUG
+    ostringstream os;
+    os << "\n-- Logging znucset for DIHEDRALS --" << endl;
+    for (auto znucelem: znucset) {
+      os << format("(%1$d-%2$d-%3$d-%4$d): ") % znucelem.first.first() % znucelem.first.second() % znucelem.first.third() % znucelem.first.fourth();
+      for (auto nmqd: znucelem.second) {
+        os << format("%1$s-%2$s-%3$s-%4$s | ") % nmqd.first() % nmqd.second() % nmqd.third() % nmqd.fourth();
+      }
+      os << endl;
+    }
+    os << "\n-- END: Logging znucset for DIHEDRALS --" << endl;
+    TPPD << os.str();
+    #endif // DEBUG
+
+    // associate znucset bondsets with every angle
+    FOR_TORSIONS_OF_MOL(it, tp.mol) {
+      Spec4<int> idxDih( (*it)[0] + 1, (*it)[1] + 1, (*it)[2] + 1, (*it)[3] + 1); // angle i-j-k-l
+      int i0 = idxDih.first(), j0 = idxDih.second(), k0 = idxDih.third(), l0 = idxDih.fourth(); // i,j,k
+      int a1 = tp.mol.GetAtom(i0)->GetAtomicNum(),
+          a2 = tp.mol.GetAtom(j0)->GetAtomicNum(),
+          a3 = tp.mol.GetAtom(k0)->GetAtomicNum(),
+          a4 = tp.mol.GetAtom(l0)->GetAtomicNum();
+      if ( znucset.count(AIDihdSpec(a1,a2,a3,a4)) ) {
+        dihdSuite.insert( pair<Spec4<int>, set<NMDihdSpec> > (
+           idxDih, znucset[AIDihdSpec(a1,a2,a3,a4)] ) );
+      } else if ( znucset.count(AIDihdSpec(a4,a3,a2,a1) ) ) {
+        // swap first and second in the set
+        tmpv1.clear();
+        for (auto ii: znucset[AIDihdSpec(a1,a2,a3,a4)])
+          tmpv1.insert(NMDihdSpec(ii.fourth(),ii.third(),ii.second(),ii.first()));
+        dihdSuite.insert( pair<Spec4<int>, set<NMDihdSpec> > (
+           idxDih, tmpv1 ) );
+      } else {
+        /// This situation can not occur. Just test that the code is correct.
+        TPPE << format("No AIDihdSpec was prepared: %d-%d-%d-%d ") % a1 % a2 % a3 % a4 ;
+        assert(0);
+      }
+    } // end FOR_TORSIONS_OF_MOL
+
   }
 
   /// .. scores is filled with zeroes ..
@@ -496,8 +526,10 @@ namespace tpp {
     string comment;
   } tempstruct_t;
 
-  void AtomDefiner::atom_align() {
-    cout << "Starting atom_alig.." << endl;
+  /// general atomtype attribution
+  void AtomDefiner::atomAlign() {
+    cout << "Starting atomAlign.." << endl;
+    TPPD << "Starting atomAlign attribution procedure";
     typedef multi_index_container<tempstruct_t,
         indexed_by<
             ordered_unique<member<tempstruct_t, int, &tempstruct_t::id> > > > AtomMapper;
@@ -506,6 +538,7 @@ namespace tpp {
     QueryResult res;
     mysqlpp::Row row;
     mysqlpp::Row::size_type co;
+    TPPD << "Requesting full atomtype table.";
     qu
         << "SELECT id, uname, name, charge, mass, comment FROM atoms WHERE ffield = "
         << atomSettings.ffID;
@@ -528,24 +561,23 @@ namespace tpp {
     cout << "done." << endl;
     // finding atoms with maximum scores
     cout << "Applying scores..." << endl;
+    TPPD << "Applying scores...";
     AtomMapper::iterator chk0;
     AtomArray::iterator newa_;
     int max, max_;
     string name;
-    for (map<int, map<int, int> >::iterator sit = scores.begin();
-        sit != scores.end(); ++sit) {
+    for (auto sit: scores) {
       max_ = 0;
-      for (map<int, int>::iterator mmm = sit->second.begin();
-          mmm != sit->second.end(); ++mmm)
-        if (mmm->second >= max_) {
-          max_ = mmm->second;
-          max = mmm->first;
+      for (auto mmm: sit.second) /// find type with max scores
+        if (mmm.second >= max_) {
+          max_ = mmm.second;
+          max = mmm.first;
         }
       chk0 = atom_mapper.find(max); // iterator to best atom in atom_mapper
       assert(chk0 != atom_mapper.end());
       name = chk0->type; // name of best atom
-      tp.mol.GetAtom(sit->first)->SetType(name);
-      AtomArray::iterator newa_ = tp.atoms.find(sit->first);
+      tp.mol.GetAtom(sit.first)->SetType(name);
+      AtomArray::iterator newa_ = tp.atoms.find(sit.first);
       assert(newa_ != tp.atoms.end());
       Atom newa = *newa_;
       newa.atom_type = chk0->type;
@@ -554,15 +586,14 @@ namespace tpp {
       newa.mass = chk0->mass;
       newa.comment = chk0->comment;
       tp.atoms.replace(newa_, newa);
-  //    cout << name << endl;
     }
-    smart_cgnr();
-  }
+    smartCgnr();
+  } // end atomAlign procedure
 
   /// count scores for znuc, atoms, bonds and dihedrals
   void AtomDefiner::countAVTScores() {
     map<string, int> tmp1, tmp2;
-//    map<int, int> tmpit;
+    TPPD << "avtScores are cleared";
     avtScores.clear();
     cout << " ----> Calculating scores for every atom.." << endl;
 
@@ -675,31 +706,42 @@ namespace tpp {
       TPPD << "Filling non-bonded scores.";
       fillNB();
       #ifdef DEBUG
-      convertAVTtoScores();
+      countAVTScores();
       logScores();
       #endif // DEBUG
       if (atomSettings.maxbonds) {
         TPPD << "Filling bond scores.";
         fillBonds();
         #ifdef DEBUG
-        convertAVTtoScores();
+        countAVTScores();
         logScores();
         #endif // DEBUG
       }
       if (atomSettings.maxangles) {
         TPPD << "Filling angle scores.";
         fillAngles();
+        #ifdef DEBUG
+        countAVTScores();
+        logScores();
+        #endif // DEBUG
       }
       if (atomSettings.maxdihedrals) {
         TPPD << "Filling dihedral scores.";
         fillDihs();
+        #ifdef DEBUG
+        countAVTScores();
+        logScores();
+        #endif // DEBUG
       }
-      convertAVTtoScores();
-      smart_fit();
+      countAVTScores();
+      smartFit();
+      #ifdef DEBUG
+      logScores();
+      #endif // DEBUG
   }
 
-
-  void AtomDefiner::smart_cgnr() {
+  /// implementing charge group definition
+  void AtomDefiner::smartCgnr() {
         // zero all charge groups
         for (AtomArray::iterator it = tp.atoms.begin(); it != tp.atoms.end(); ++it) {
             Atom nat = *it;
@@ -708,7 +750,7 @@ namespace tpp {
         }
         // algo body
         try {
-          TPPD<<"Starting curious SMART-charge-group fitting.";
+          TPPD << "Starting curious SMART-charge-group fitting.";
             mysqlpp::Query qu = con->query();
             qu << format("SELECT id,PAT,flag FROM chargegroups \
                     WHERE ffield = %1$d and flag = 1") % atomSettings.ffID;
@@ -718,12 +760,12 @@ namespace tpp {
             res = qu.store();
             if (!res) {
               SqlException e("SQL query failed!");
-              e.add("procname", "tpp::AtomDefiner::smart_cgnr");
+              e.add("procname", "tpp::AtomDefiner::smartCgnr");
               e.add("error", "SQL query error");
               e.add("sql_error", qu.error() );
               throw e;
             }
-            TPPD<<"OK!\n";
+            TPPD << "OK!\n";
             cout << " finished.\n" <<
                     "Starting SMART-fit." << endl;
 
@@ -841,7 +883,8 @@ namespace tpp {
         }
   }
 
-  void AtomDefiner::smart_fit() {
+  /// implementing fit according to SMARTS db
+  void AtomDefiner::smartFit() {
 
         // make zero-scored copy of scores map
         map<int, map<int, int> > sf_scores (scores);
@@ -850,7 +893,7 @@ namespace tpp {
             j.second = 0;
 
         // next work with copied sf_scores
-        TPPD<<("Starting curious SMART-fitting procedure.\n");
+        TPPD << "Starting curious SMART-fitting procedure.\n";
         mysqlpp::Query qu = con->query();
         QueryResult res;
         mysqlpp::Row    row;
@@ -862,12 +905,17 @@ namespace tpp {
         map<int, map<int,int> >::iterator score_it;
         map<int, int> score_submap;
         map<int, int>::iterator score_subit;
-        qu << format("\
+        ostringstream os;
+        os << format("\
   SELECT atom_patterns.id as apid, PAT, pos, atom_ids, atoms.znuc AS znuc, good \
   FROM atom_patterns \
   RIGHT JOIN atoms ON atoms.id = atom_patterns.atom_ids \
   WHERE  (not atom_patterns.group = 1) and (atoms.ffield = %1$d)") % atomSettings.ffID;
-        TPPD<<"Loading patterns from database...";
+        #ifdef SQLDEBUG
+        TPPD << os.str();
+        #endif // SQLDEBUG
+        qu << os.str();
+        TPPD << "Loading patterns from database...";
         cout << "Patterns are loading. Please wait.." << flush;
         res = qu.store();
         if (!res) {
@@ -877,7 +925,7 @@ namespace tpp {
           e.add("sql_error", qu.error() );
           throw e;
         }
-        TPPD<<"OK!";
+        TPPD << "OK!";
         cout << " finished." << endl;
         cout << "Starting SMART-fit." << endl;
         cout << ( format("Patterns checked: %1$4d.") % 0 ) << flush;

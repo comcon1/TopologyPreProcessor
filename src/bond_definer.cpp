@@ -14,200 +14,214 @@
 
 //#define CDB
 
-using std::map;
-using std::cout;
-using std::pair;
-using std::flush;
-using std::endl;
-using std::string;
-using std::vector;
-using std::ostringstream;
-
-using boost::format;
-using boost::lexical_cast;
-
 namespace tpp {
-using namespace OpenBabel;
 
-// common place procedures...
-BondDefiner::BondDefiner(const DbBase::Settings& s1,
-                         const BondDefiner::Settings& s2,
-                         Topology &_tp) : DbBase(s1),
-                                         bondSettings(s2),
-                                         tp(_tp) {
-  connectDB();
-}
+  using std::map;
+  using std::cout;
+  using std::pair;
+  using std::flush;
+  using std::endl;
+  using std::string;
+  using std::vector;
+  using std::ostringstream;
 
-BondDefiner::~BondDefiner() {
-  qalcfile.close();
-}
+  using boost::format;
+  using boost::lexical_cast;
 
-bool BondDefiner::connectDB() {
-  DbBase::connectDB();
+  using namespace OpenBabel;
 
-  int cat, cbon, cang, cdih, cnb;
-
-  // get ffID
-  mysqlpp::Query qu = con->query();
-  QueryResult res;
-  mysqlpp::Row row;
-  qu
-      << format(
-          "SELECT id, generate_pairs FROM forcefield WHERE name='%1$s'")
-          % bondSettings.ffName.c_str();
-  res = qu.store();
-  if (!res) {
-    SqlException e("SQL query failed!");
-    e.add("procname", "tpp::BondDefiner::connectDB");
-    e.add("error", "SQL query error");
-    e.add("sql_error", qu.error());
-    throw e;
-  }
-  if (res.num_rows() == 0) {
-    Exception e("Force field not found!");
-    e.add("procname", "tpp::BondDefiner::connectDB");
-    e.add("error", "Error in parameters");
-    throw e;
-  }
-  ffID = res.at(0)["id"];
-  genpairs = (bool) (res.at(0)["generate_pairs"]);
-  if (genpairs && bondSettings.verbose) {
-    cout << "1-4 pair generation is required for FF." << endl;
-  }
-  qu.reset();
-
-  // molecule stuff ))
-  string query;
-  FOR_ATOMS_OF_MOL(it,tp.mol){
-  AtomArray::iterator pa = tp.atoms.find(it->GetIdx());
-  namemap.insert(pair<string, string>(
-          pa->atom_type, string("") )
-  );
-}
-  query = string("('quququq'"); // I'm not sure if that is a legal SQL query.
-  for (map<string, string>::iterator ii = namemap.begin();
-      ii != namemap.end(); ++ii) {
-    query += (string(",'") + ii->first + "'");
-  }
-  query = string("SELECT `uname`,`name` FROM `atoms` WHERE `ffield` = ")
-      + lexical_cast<string>(ffID) + " and `uname` IN " + query + ")";
-  // mysql stuff
-  qu << query;
-  res = qu.store();
-  if (!res) {
-    SqlException e("SQL query failed!");
-    e.add("procname", "tpp::BondDefiner::connectDB");
-    e.add("error", "SQL query error");
-    e.add("sql_error", qu.error());
-    throw e;
+  // common place procedures...
+  BondDefiner::BondDefiner(const DbBase::Settings& s1,
+                           const BondDefiner::Settings& s2,
+                           Topology &_tp) : DbBase(s1),
+                                           bondSettings(s2),
+                                           tp(_tp) {
+    connectDB();
   }
 
-  for (mysqlpp::Row::size_type co = 0; co < res.num_rows(); ++co) {
-    row = res.at(co);
-    assert(namemap.find(string(row["uname"].c_str())) != namemap.end());
-    namemap.find(string(row["uname"].c_str()))->second =
-        row["name"].c_str();
+  BondDefiner::~BondDefiner() {
+    qalcfile.close();
   }
-  return true;
-}
 
-// special functions))
-void BondDefiner::fill_bonds() {
-  mysqlpp::Query qu = con->query();
-  QueryResult res;
-  mysqlpp::Row row;
-  string query;
-  int co = 0;
-  TPPD<<"Defining bonds:\n";
-  FOR_BONDS_OF_MOL(it,tp.mol){
-  co++;
-  qu.reset();
-  TPPD<<lexical_cast<string>(it->GetBeginAtomIdx())+ "->"+lexical_cast<string>(it->GetEndAtomIdx())+"\n";
-  string typ1 = namemap.find( tp.atoms.find(it->GetBeginAtomIdx())->atom_type )->second;
-  string typ2 = namemap.find( tp.atoms.find(it->GetEndAtomIdx())->atom_type) ->second;
-  qu << format("\
-SELECT id,f,c1,c2 \
-FROM bonds \
-WHERE (bonds.ffield = %3$d) AND \
-  ( (bonds.i = '%1$s' and bonds.j = '%2$s') OR \
-    (bonds.i = '%2$s' and bonds.j = '%1$s')\
-  )") % typ1 % typ2 % ffID;
-  res = qu.store();
-  if (!res) {
-    SqlException e("SQL query failed!");
-    e.add("procname", "tpp::BondDefiner::fill_bonds");
-    e.add("error", "SQL query error");
-    e.add("sql_error", qu.error() );
-    throw e;
-  }
-  if ( res.num_rows() == 0 ) {
-    if (bondSettings.noqalculate) {
-      Exception e("Bond definition error!");
-      e.add("procname", "tpp::BondDefiner::fill_bonds");
-      e.add("error", string("Bond not found between ") + typ1 + " and " + typ2 + "!" );
+  /// special connection function
+  bool BondDefiner::connectDB() {
+    DbBase::connectDB();
+
+    int cat, cbon, cang, cdih, cnb;
+
+    // get ffID
+    mysqlpp::Query qu = con->query();
+    QueryResult res;
+    mysqlpp::Row row;
+    TPPD << "Request if we should generate pairs.";
+    ostringstream os;
+    os << format("SELECT id, generate_pairs FROM forcefield WHERE name='%1$s'")
+            % bondSettings.ffName.c_str();
+    #ifdef SQLDEBUG
+    TPPD << os.str();
+    #endif // SQLDEBUG
+    qu << os.str();
+    res = qu.store();
+    if (!res) {
+      SqlException e("SQL query failed!");
+      e.add("procname", "tpp::BondDefiner::connectDB");
+      e.add("error", "SQL query error");
+      e.add("sql_error", qu.error());
       throw e;
-    } else {
-      ostringstream os;
-      os << format("Bond not found between %1$s and %2$s!") % typ1 % typ2;
-      TPPD<<os.str();
-      if (bondSettings.verbose) {
-        cout << "[LACK] " << os.str() << endl;
+    }
+    if (res.num_rows() == 0) {
+      Exception e("Force field not found!");
+      e.add("procname", "tpp::BondDefiner::connectDB");
+      e.add("error", "Error in parameters");
+      throw e;
+    }
+    ffID = res.at(0)["id"];
+    genPairs = (bool) (res.at(0)["generate_pairs"]);
+    TPPD << format("Generating pairs flag: %d") % genPairs;
+    if (genPairs && bondSettings.verbose) {
+      cout << "1-4 pair generation is required for FF." << endl;
+    }
+    qu.reset();
+
+    // molecule stuff ))
+    FOR_ATOMS_OF_MOL(it,tp.mol) {
+      AtomArray::iterator pa = tp.atoms.find(it->GetIdx());
+      namemap.insert(pair<string, string>(
+              pa->atom_type, string("") )
+      );
+    }
+    TPPD << "Request information about every atom used.";
+    os.str("");
+    os << format("SELECT `uname`,`name` FROM `atoms` WHERE `ffield` = %1$d and `uname` IN ") % ffID;
+    os << "('Fvyxag8T*8dgw'"; // phrase that never meet in real table
+    for (auto ii: namemap) {
+      os << ",'" << ii.first << "'";
+    }
+    os << ")";
+    #ifdef SQLDEBUG
+    TPPD << os.str();
+    #endif // SQLDEBUG
+    qu << os.str();
+    res = qu.store();
+    if (!res) {
+      SqlException e("SQL query failed!");
+      e.add("procname", "tpp::BondDefiner::connectDB");
+      e.add("error", "SQL query error");
+      e.add("sql_error", qu.error());
+      throw e;
+    }
+
+    for (mysqlpp::Row::size_type co = 0; co < res.num_rows(); ++co) {
+      row = res.at(co);
+      assert(namemap.find(string(row["uname"].c_str())) != namemap.end());
+      namemap.find(string(row["uname"].c_str()))->second =
+          row["name"].c_str();
+    }
+    return true;
+  } // connectDB
+
+  // implement filling bonds
+  void BondDefiner::fillBonds() {
+    mysqlpp::Query qu = con->query();
+    QueryResult res;
+    mysqlpp::Row row;
+    ostringstream os;
+    int co = 0;
+    TPPD << "Defining bonds ...";
+    FOR_BONDS_OF_MOL(it, tp.mol) {
+      co++;
+      qu.reset();
+      TPPD << format("%1$d->%2$d") % it->GetBeginAtomIdx() % it->GetEndAtomIdx();
+      string typ1 = namemap.find( tp.atoms.find(it->GetBeginAtomIdx())->atom_type )->second;
+      string typ2 = namemap.find( tp.atoms.find(it->GetEndAtomIdx())->atom_type) ->second;
+      os.str("");
+      os << format(
+        " SELECT id,f,c1,c2 "
+        " FROM bonds "
+        " WHERE (bonds.ffield = %3$d) AND "
+        "  ( (bonds.i = '%1$s' and bonds.j = '%2$s') OR "
+        "    (bonds.i = '%2$s' and bonds.j = '%1$s') "
+        "  )") % typ1 % typ2 % ffID;
+      #ifdef SQLDEBUG
+      TPPD << os.str();
+      #endif // SQLDEBUG
+      qu << os.str();
+      res = qu.store();
+      if (!res) {
+        SqlException e("SQL query failed!");
+        e.add("procname", "tpp::BondDefiner::fill_bonds");
+        e.add("error", "SQL query error");
+        e.add("sql_error", qu.error() );
+        throw e;
       }
-    }
-    TPPD<<string("Bond not found between ") + typ1 + " and " + typ2 + "!";
-  }
-  TopCoord tpc;
-  TopElement tel;
-  tel.i = it->GetBeginAtomIdx();
-  tel.j = it->GetEndAtomIdx();
-  tpc.type = TPP_TTYPE_BON;
-  // FIXME: need to process exception when num_rows > 1
-  tpc.f = (res.num_rows() > 0) ? res.at(0)["f"] : -1;
-  tpc.c0 = (res.num_rows() > 0) ? res.at(0)["c1"] : 0.00;
-  tpc.c1 = (res.num_rows() > 0) ? res.at(0)["c2"] : 0.00;
-  tpc.dbid = (res.num_rows() > 0) ? res.at(0)["id"] : -1;
-  tel.defname = TTCNameGenerator(tpc).set_btypes( {typ1,typ2}).getName();
-  tpc.defname = tel.defname;
-  tp.elements.push_back(tel);
-  tp.parameters.insert(tpc);
-} // end FOR_BONDS_OF_MOL
-
-// clearing the same bond types
-  for (TopMap::nth_index<1>::type::iterator it =
-      tp.parameters.get<1>().lower_bound(TPP_TTYPE_BON);
-      it != tp.parameters.get<1>().upper_bound(TPP_TTYPE_BON); ++it)
-    if (tp.elements.get<1>().find(it->defname)
-        != tp.elements.get<1>().end()) {
-      for (TopMap::nth_index<1>::type::iterator it0 =
-          tp.parameters.get<1>().lower_bound(TPP_TTYPE_BON);
-          it0 != tp.parameters.get<1>().upper_bound(TPP_TTYPE_BON);
-          ++it0)
-        // if defines are equal numerically
-        /*
-         if ( (it0 != it) && (it0->c0 == it->c0) && (it0->c1 == it->c1) && (it0->f == it->f) &&
-         (tp.elements.get<1>().find(it0->defname) != tp.elements.get<1>().end() )
-         ) */
-        // if defines are equal in DB
-        if ((it0 != it) && (it0->dbid == it->dbid)
-            && (tp.elements.get<1>().find(it0->defname)
-                != tp.elements.get<1>().end())) {
-          string lastdef = it0->defname;
-          TopArray::nth_index<1>::type::iterator fnd =
-              tp.elements.get<1>().find(it0->defname);
-          TopElement emod = *fnd;
-          emod.defname = it->defname;
-          tp.elements.get<1>().replace(fnd, emod); // correctly replacement with multi_index
+      if ( res.num_rows() == 0 ) {
+        if (bondSettings.noqalculate) {
+          Exception e("Bond definition error!");
+          e.add("procname", "tpp::BondDefiner::fill_bonds");
+          e.add("error", string("Bond not found between ") + typ1 + " and " + typ2 + "!" );
+          throw e;
+        } else {
+          ostringstream os_;
+          os_ << format("Bond not found between %1$s and %2$s!") % typ1 % typ2;
+          TPPD << os_.str();
+          if (bondSettings.verbose) {
+            cout << "[LACK] " << os_.str() << endl;
+          }
         }
-    }
-  // erasing non-meaning parameters
-  for (TopMap::nth_index<1>::type::iterator it =
-      tp.parameters.get<1>().lower_bound(TPP_TTYPE_BON);
-      it != tp.parameters.get<1>().upper_bound(TPP_TTYPE_BON); ++it)
-    if (tp.elements.get<1>().find(it->defname)
-        == tp.elements.get<1>().end())
-      tp.parameters.get<1>().erase(it);
+        TPPD << format("Bond not found between %1$s and %2$s!") % typ1 % typ2;
+      }
+      TopCoord tpc;
+      TopElement tel;
+      tel.i = it->GetBeginAtomIdx();
+      tel.j = it->GetEndAtomIdx();
+      tpc.type = TPP_TTYPE_BON;
+      // FIXME: need to process exception when num_rows > 1
+      tpc.f = (res.num_rows() > 0) ? res.at(0)["f"] : -1;
+      tpc.c0 = (res.num_rows() > 0) ? res.at(0)["c1"] : 0.00;
+      tpc.c1 = (res.num_rows() > 0) ? res.at(0)["c2"] : 0.00;
+      tpc.dbid = (res.num_rows() > 0) ? res.at(0)["id"] : -1;
+      tel.defname = TTCNameGenerator(tpc).set_btypes( {typ1,typ2}).getName();
+      tpc.defname = tel.defname;
+      tp.elements.push_back(tel);
+      tp.parameters.insert(tpc);
+    } // end FOR_BONDS_OF_MOL
 
-}
+  // clearing the same bond types
+    for (TopMap::nth_index<1>::type::iterator it =
+        tp.parameters.get<1>().lower_bound(TPP_TTYPE_BON);
+        it != tp.parameters.get<1>().upper_bound(TPP_TTYPE_BON); ++it)
+      if (tp.elements.get<1>().find(it->defname)
+          != tp.elements.get<1>().end()) {
+        for (TopMap::nth_index<1>::type::iterator it0 =
+            tp.parameters.get<1>().lower_bound(TPP_TTYPE_BON);
+            it0 != tp.parameters.get<1>().upper_bound(TPP_TTYPE_BON);
+            ++it0)
+          // if defines are equal numerically
+          /*
+           if ( (it0 != it) && (it0->c0 == it->c0) && (it0->c1 == it->c1) && (it0->f == it->f) &&
+           (tp.elements.get<1>().find(it0->defname) != tp.elements.get<1>().end() )
+           ) */
+          // if defines are equal in DB
+          if ((it0 != it) && (it0->dbid == it->dbid)
+              && (tp.elements.get<1>().find(it0->defname)
+                  != tp.elements.get<1>().end())) {
+            string lastdef = it0->defname;
+            TopArray::nth_index<1>::type::iterator fnd =
+                tp.elements.get<1>().find(it0->defname);
+            TopElement emod = *fnd;
+            emod.defname = it->defname;
+            tp.elements.get<1>().replace(fnd, emod); // correctly replacement with multi_index
+          }
+      }
+    // erasing non-meaning parameters
+    for (TopMap::nth_index<1>::type::iterator it =
+        tp.parameters.get<1>().lower_bound(TPP_TTYPE_BON);
+        it != tp.parameters.get<1>().upper_bound(TPP_TTYPE_BON); ++it)
+      if (tp.elements.get<1>().find(it->defname)
+          == tp.elements.get<1>().end())
+        tp.parameters.get<1>().erase(it);
+
+  } // end fillBonds
 
 void BondDefiner::fill_angles() {
   mysqlpp::Query qu = con->query();
@@ -572,7 +586,7 @@ void BondDefiner::fill_impropers() {
 
 //! Function makes special pairs and common 1-4 pairs - ALSO.
 void BondDefiner::fill_pairs() {
-  if (genpairs) {
+  if (genPairs) {
     // including single pair definition
     TopCoord tpc;
     tpc.type = TPP_TTYPE_PAIR;
@@ -596,7 +610,7 @@ void BondDefiner::fill_pairs() {
 
 void BondDefiner::bond_align() {
   try {
-    fill_bonds();
+    fillBonds();
     fill_angles();
     fill_special();
     fill_dihedrals();

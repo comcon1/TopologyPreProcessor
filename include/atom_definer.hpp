@@ -169,9 +169,13 @@ namespace tpp {
         */
       void logScores();
 
-
+      /** \brief The first stage procedure: filling scores tables.
+        */
       void proceed();
-      void atom_align();
+
+      /** \brief The second stage procedure: atomtype attribution.
+        */
+      void atomAlign();
 
     private:
       AtomDefiner::Settings atomSettings;
@@ -180,27 +184,32 @@ namespace tpp {
       //! atom ID -> { atomtype ID -> score }
       std::map<int, std::map<int, int> > scores;
 
+      /** Generate initial *scores* map, filling it with zero-sets
+        */
       void scoresZeroFill();
 
       /**
        * Function fill *scores* map according to `atom_patterns`
        * table of the database.
        */
-      void smart_fit();
-
-
-      std::map<int, std::set<std::string> > nbSuite;                     //!< atom ID -> {atom valence type}
-      std::map<detail::Spec2<int>, std::set<detail::Spec2_<std::string> > > bondSuite;   //!< (atom ID, atom ID) -> { (a.v.t, a.v.t.) }
-      std::map<detail::Spec3<int>, std::set<detail::Spec3_<std::string> > > angleSuite;  //!< (atom ID, atom ID, atom ID) -> { (a.v.t, a.v.t., a.v.t.) }
-      std::map<detail::Spec4<int>, std::set<detail::Spec4_<std::string> > > dihdSuite;   //!< (atom ID, atom ID, atom ID, atom ID) -> { (a.v.t, a.v.t., a.v.t., a.v.t.) }
-
-      std::map<int, std::map<std::string, int> > avtScores;                 //!< SCORE for valence type (name) of an atom
+      void smartFit();
 
       /**
        * \brief Function matches atomtypes according only to atomic number.
        * Result is filling *nbSuite* map.
        */
       void fillNB();
+
+      std::map<int, std::set<std::string> > nbSuite;      //!< atom ID -> {atom valence type}
+      std::map<int, std::set<std::string> > mapAItoAVT;   //! atomuc.num -> {A.V.T. set}
+
+      std::string getSQLSet(int);                      //! get a.v.t. set in SQL form by atomic num
+
+      std::map<detail::Spec2<int>, std::set<detail::Spec2_<std::string> > > bondSuite;   //!< (atom ID, atom ID) -> { (a.v.t, a.v.t.) }
+      std::map<detail::Spec3<int>, std::set<detail::Spec3_<std::string> > > angleSuite;  //!< (atom ID, atom ID, atom ID) -> { (a.v.t, a.v.t., a.v.t.) }
+      std::map<detail::Spec4<int>, std::set<detail::Spec4_<std::string> > > dihdSuite;   //!< (atom ID, atom ID, atom ID, atom ID) -> { (a.v.t, a.v.t., a.v.t., a.v.t.) }
+
+      std::map<int, std::map<std::string, int> > avtScores;                 //!< SCORE for valence type (name) of an atom
 
       /**
        * \brief Function matches bondtypes according to existing bonds in DB.
@@ -232,7 +241,9 @@ namespace tpp {
         */
       void printScores(std::ostream &os);
 
-      void smart_cgnr();
+      /** \brief Charge group definition
+        */
+      void smartCgnr();
 
     protected:
 

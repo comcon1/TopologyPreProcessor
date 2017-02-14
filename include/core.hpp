@@ -37,11 +37,11 @@
 #define TPP_MAX_LONGTAIL_DEEP 10
 
 /// definitions of atom definer
-#define TPP_SMART_COEFF 10
-#define TPP_ZNUC_COEFF  10000
-#define TPP_BOND_COEFF  2
-#define TPP_ANGLE_COEFF 4
-#define TPP_DIHED_COEFF 8
+#define TPP_SMART_COEFF 100
+#define TPP_ZNUC_COEFF  100000
+#define TPP_BOND_COEFF  1
+#define TPP_ANGLE_COEFF 2
+#define TPP_DIHED_COEFF 3
 
 /** \namespace tpp is used for scoping TPP specific variables.
  *

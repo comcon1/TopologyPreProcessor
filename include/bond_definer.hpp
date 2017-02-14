@@ -13,10 +13,10 @@ namespace tpp {
     public:
 
       /// Calculation settings.
-      struct Settings{
+      struct Settings {
         std::string ffName; /// forcefield name
-        bool noqalculate; /// What an interesting word, 'noqalculate'
-        bool verbose; /// print additional info
+        bool noqalculate;   /// What an interesting word, 'noqalculate'
+        bool verbose;       /// print additional info
       };
 
       BondDefiner(const DbBase::Settings& s1,
@@ -31,15 +31,19 @@ namespace tpp {
       InternalsArray bonds;
       Topology &tp;
       std::map<std::string, std::string> namemap; //! map of uname -> name
-      short ffID; // why not in settings?
-      bool genpairs;
+      short ffID;    // why not in settings?
+      bool genPairs;
       std::ofstream qalcfile;
 
       bool verbose;
 
       // methods
       bool connectDB() override;
-      void fill_bonds();
+
+      /** \brief Complete bonds exploiting DB definitions.
+        */
+      void fillBonds();
+
       void fill_angles();
       void fill_dihedrals();
       void fill_special();

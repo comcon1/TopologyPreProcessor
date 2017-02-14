@@ -176,8 +176,7 @@ int main(int argc, char * argv[]) {
     // starting program body
     tpp::AtomDefiner AD(baseSettings, atomSettings, TOP);
     AD.proceed();
-    AD.logScores();
-    AD.atom_align();
+    AD.atomAlign();
     tpp::BondDefiner BD(baseSettings, bondSettings, TOP);
     BD.bond_align();
     tpp::save_topology(TOP, output_file.c_str(), bondSettings.noqalculate);
