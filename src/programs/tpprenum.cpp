@@ -33,7 +33,7 @@ using std::endl;
 using std::string;
 using namespace boost::numeric;
 
-void print_help();
+void print_help(p_o::options_description const&);
 void print_info();
 
 string extension(const std::string& filename){
@@ -58,28 +58,27 @@ int main(int argc, char * argv[]) {
           p_o::value<std::string>()->required(),
           "Output filename (any format)")
       ("hex,x",
-          p_o::value<bool>()->default_value(false)->implicit_value(false),
+          p_o::bool_switch()->default_value(false),
           "Hexadecimal numbering of main chain")
       ("verbose,v",
-          p_o::value<bool>()->default_value(false)->implicit_value(false),
+          p_o::bool_switch()->default_value(false),
           "Verbose mode")
       ("ignore-index,g",  // TODO:this should be without negation!
-          p_o::value<bool>()->default_value(false)->implicit_value(false),
+          p_o::bool_switch()->default_value(false),
           "Don't ignore index")
       ("rtpoutput-file,r",
-          p_o::value<bool>()->default_value(false)->implicit_value(false),
+          p_o::bool_switch()->default_value(false),
           "????") // TODO: add description
-      ("help,h", "Print this message")
+      ("help,h", p_o::bool_switch()->default_value(false),
+          "Print detailed help message")
       ;
   try {
     p_o::store(p_o::parse_command_line(argc, argv, desc), vars);
-    p_o::notify(vars);
-
-    if (vars.count("help"))
-    {
-      print_help();
-      return 0;
+    if (vars["help"].as<bool>()) {
+        print_help(desc);
+        return 0;
     }
+    p_o::notify(vars);
 
     bool verbose = vars["verbose"].as<bool>();
     bool hex_flag = vars["hex"].as<bool>();
@@ -199,7 +198,7 @@ void print_info()
    *   Moscow, Lomonosov's Moscow State University                      *\n\
    *   for more info, see homepage  http://erg.biophys.msu.ru/          *\n\
    *                                                                    *\n\
-   *   Authors:       comcon1, dr.zoidberg, piton                       *\n\
+   *   Authors:       comcon1, dr.zoidberg, piton, month                *\n\
    *                                                                    *\n\
    *   Product:       program  TPPRENUM-%1$-6s                          *\n\
    *                                                                    *\n\
@@ -216,7 +215,7 @@ void print_info()
 /*!
  * \brief Prints program info and usage to stdout.
  */
-void print_help()
+void print_help(p_o::options_description const&_desc)
 {
     cout << format("\n\
 --------------------------------*****---------------------------------\n\
@@ -225,7 +224,7 @@ void print_help()
                                           Biology faculty, MSU, Russia\n\
 \n\
            THE PART OF TOPOLOGY PREPROCESSOR PROJECT                  \n\
-        ---      (comcon1, zoidberg, piton)       ---                 \n\
+        ---      (comcon1, zoidberg, piton, month)       ---          \n\
   TPP version: %1$-3s, compiled at %2$-8s on GCC %3$s.\n\
   BOOST version:  %4$-8s \n\
   OpenBabel version: %5$-8s \n\
@@ -237,19 +236,12 @@ void print_help()
  You need to run TPPRENUM when atoms in your PDB file are posed in  \n\
  chaotic order.                                                     \n\
 \n\
- USAGE: \n\
- tpprenum -i <input> -o <output> [-v]   \n\
-      -i  the name of (I)nput-file, in PDB or GRO/G96 format.           \n\
-      -o  the name of (O)utput-file, contained prepared structure.      \n\
-      -v  (V)erbose mode, typing more information during the execution\n\
-      -x  he(X)adecimal numbering of main (heavy-atom) chain          \n\
-      -g  Do not i(G)nore index in PDB (vs sequental order).    \n\
-      -h  print this message.                                         \n\
-\n\
+"   ) % PACKAGE_VERSION % CONFIGURE_CDATE % __VERSION__ % BOOST_LIB_VERSION
+         % BABEL_VERSION % BABEL_DATADIR
+   << _desc <<
+"\n\
 --------------------------------*****---------------------------------\n\
-") % PACKAGE_VERSION % CONFIGURE_CDATE % __VERSION__ % BOOST_LIB_VERSION
-         % BABEL_VERSION % BABEL_DATADIR << endl;
-    throw 0;
+"  << endl;
 }
 
 
