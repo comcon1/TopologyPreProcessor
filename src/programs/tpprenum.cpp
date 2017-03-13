@@ -21,8 +21,8 @@
 #include <boost/program_options/parsers.hpp>
 #include <boost/format.hpp>
 
-#define TPP_LOADFILE_TIMELIMIT 60
-#define TPP_RENUMBER_TIMELIMIT 60
+#define TPP_LOADFILE_TIMELIMIT 600
+#define TPP_RENUMBER_TIMELIMIT 600
 
 namespace p_o = boost::program_options;
 
@@ -57,9 +57,9 @@ int main(int argc, char * argv[]) {
       ("output,o",
           p_o::value<std::string>()->required(),
           "Output filename (any format)")
-      ("hex,x",
+      ("base36,x",
           p_o::bool_switch()->default_value(false),
-          "Hexadecimal numbering of main chain")
+          "Numbering of heavy atoms in base36")
       ("verbose,v",
           p_o::bool_switch()->default_value(false),
           "Verbose mode")
@@ -81,7 +81,7 @@ int main(int argc, char * argv[]) {
     p_o::notify(vars);
 
     bool verbose = vars["verbose"].as<bool>();
-    bool hex_flag = vars["hex"].as<bool>();
+    bool b36Flag = vars["base36"].as<bool>();
     bool ignore_index = !vars["ignore-index"].as<bool>(); // for some reason, this flag is inverted
     bool rtp_file = !vars["rtpoutput-file"].as<bool>();
 
@@ -161,7 +161,7 @@ int main(int argc, char * argv[]) {
         [&]() {
           tpp::Renumberer rnr(topology.mol, verbose);
           std::vector<unsigned> tail1 = rnr.findLongestChain();
-          topology.atoms = rnr.molRenumber(topology.atoms, tail1, hex_flag);
+          topology.atoms = rnr.molRenumber(topology.atoms, tail1, b36Flag);
           } );
 
     io.saveToFile(topology, oform, output_file.c_str());

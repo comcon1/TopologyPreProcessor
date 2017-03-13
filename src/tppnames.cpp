@@ -86,26 +86,66 @@ namespace tpp {
     return string("-");
   }
 
+  /**
+   *  \brief Conversion to base36 digit
+   *
+   *  Function is local and not used outside the module.
+   */
+  std::string to_base36(unsigned int val) {
+      static std::string base36 = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+      std::string result;
+      result.reserve(14);
+      do {
+          result = base36[val % 36] + result;
+      } while (val /= 36);
+      return result;
+  }
+
+  /**
+   *  \brief Namer initialization
+   *
+   */
+  AtomNameGenerator &AtomNameGenerator::setNums(unsigned hv_, unsigned lt_, bool flag_) {
+
+    heavyNum = hv_;
+    lightNum = lt_;
+    b36Flag = flag_;
+
+    if ( (heavyNum > 99) && !b36Flag ) {
+      tpp::Exception e("Error in atom naming.");
+      e.add("procname", "tpp::AtomNameGenerator::getName");
+      e.add("error", "Too many atoms to number. Try to turn Base36 mode. ");
+      throw e;
+    }
+
+    if ( heavyNum > 1295 ) {
+      tpp::Exception e("Error in atom naming.");
+      e.add("procname", "tpp::AtomNameGenerator::getName");
+      e.add("error", "Too many atoms for unique naming. Try to decrease the residue. ");
+      throw e;
+    }
+
+    return *this;
+  }
+
+
   /** \brief Main chain private numbering function
    *
    */
   string AtomNameGenerator::getName() {
     char *rrr = new char[4];
-    if ( (heavyNum > 255) && !hexFlag ) {
-      tpp::Exception e("Error in atom naming.");
-      e.add("procname", "tpp::AtomNameGenerator::getName");
-      e.add("error", "Too many atoms to number. Try to turn HEX mode. ");
-      throw e;
-    }
+
     ostringstream os;
-    if (hexFlag) {
+    if (b36Flag) {
       if (instance.ncharge == 1)
-        os << lightNum;
-      os << format("%s%-2X") % an2str(instance.ncharge) % heavyNum;
+        os << format("%1d%1s%s") % lightNum % an2str(instance.ncharge) % to_base36(heavyNum);
+      else 
+        os << format("%2s%s")   % an2str(instance.ncharge) % to_base36(heavyNum);
     } else {
       if (instance.ncharge == 1)
-        os << lightNum;
-      os << format("%s%-2d") % an2str(instance.ncharge) % heavyNum;
+        os << format("%1d%1s%-2d") % lightNum % an2str(instance.ncharge) % heavyNum;
+      else
+        os << format("%2s%-2d") % an2str(instance.ncharge) % heavyNum;
     }
     return os.str();
   } // end ANG::getName

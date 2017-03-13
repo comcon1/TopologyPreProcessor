@@ -52,16 +52,13 @@ namespace tpp {
     protected:
       unsigned heavyNum = 0;
       unsigned lightNum = 1;
-      bool hexFlag = false;
+      bool b36Flag = false;
       const char* defaultAtomName = "X";
       std::string an2str(int);
     public:
       AtomNameGenerator(tpp::Atom &i): NameGenerator<tpp::Atom>(i) {;}
-      AtomNameGenerator &setNums(unsigned h, unsigned l, bool f) {
-        heavyNum = h;
-        lightNum = l;
-        return *this;
-      }
+      AtomNameGenerator &setNums(unsigned h, unsigned l, bool f);
+
       virtual std::string getName();
   };
 

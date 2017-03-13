@@ -108,7 +108,7 @@ namespace tpp {
   }
 
   // implementation of cor renumber function
-  AtomArray Renumberer::molRenumber(AtomArray &ar, std::vector<unsigned> tail, bool hexFlag) {
+  AtomArray Renumberer::molRenumber(AtomArray &ar, std::vector<unsigned> tail, bool b36Flag) {
 
     TPPI << "Starting C1 renumerator alrogithm.";
   #ifdef DEBUG
@@ -125,7 +125,7 @@ namespace tpp {
     unsigned h = 0; // hard atom counter
 
     // STARTING RECURSION
-    recurseMolRenum(ar, tail, tailed, A, n, h, hexFlag);
+    recurseMolRenum(ar, tail, tailed, A, n, h, b36Flag);
 
     { // output block
       ostringstream os;
@@ -151,7 +151,7 @@ namespace tpp {
 
   // Recursion function of the renumerator algorithm
   void Renumberer::recurseMolRenum(const AtomArray &_ar, std::vector<unsigned> &_tail,
-        std::set<unsigned> &_tailed, AtomArray &_A, unsigned &_n, unsigned &_h, bool hexFlag) {
+        std::set<unsigned> &_tailed, AtomArray &_A, unsigned &_n, unsigned &_h, bool b36Flag) {
 
       // append <tailed> array
       for (auto p: _tail)
@@ -177,7 +177,7 @@ namespace tpp {
           tat.coord(2) = pA->GetZ();
           tat.ncharge = pA->GetAtomicNum();
           AtomNameGenerator ang(tat);
-          tat.atom_name = ang.setNums(_h,0,hexFlag).getName();
+          tat.atom_name = ang.setNums(_h,0,b36Flag).getName();
           assert(_A.insert(tat).second);
           int k = 0; // hydrogen local counter
           // arrange hydrogens
@@ -192,7 +192,7 @@ namespace tpp {
             tat.coord(1) = pQ->GetY();
             tat.coord(2) = pQ->GetZ();
             AtomNameGenerator ang(tat);
-            tat.atom_name = ang.setNums(_h,k,hexFlag).getName();
+            tat.atom_name = ang.setNums(_h,k,b36Flag).getName();
             if ( ! _A.insert(tat).second) {
               TPPE << format("Problems in renumbering hydrogen No.%d!") % pQ->GetIdx();
             }
@@ -202,7 +202,7 @@ namespace tpp {
         while (true) {
           std::vector<unsigned> newtail = findLongestChain(_tailed, p );
           if (newtail.size() == 0) break;
-          recurseMolRenum(_ar, newtail, _tailed, _A, _n, _h, hexFlag);
+          recurseMolRenum(_ar, newtail, _tailed, _A, _n, _h, b36Flag);
         }
       } // end cycle over longtail
 
