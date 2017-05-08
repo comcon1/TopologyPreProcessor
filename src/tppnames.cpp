@@ -139,7 +139,7 @@ namespace tpp {
     if (b36Flag) {
       if (instance.ncharge == 1)
         os << format("%1d%1s%s") % lightNum % an2str(instance.ncharge) % to_base36(heavyNum);
-      else 
+      else
         os << format("%2s%s")   % an2str(instance.ncharge) % to_base36(heavyNum);
     } else {
       if (instance.ncharge == 1)
@@ -155,7 +155,7 @@ namespace tpp {
   string ResidueNameGenerator::getName() {
     string rsn;
     for (auto i: instance) {
-      if ( isalnum(i) ) {
+      if ( std::isalnum(i) ) {
         rsn += toupper(i);
       }
     }
@@ -163,6 +163,8 @@ namespace tpp {
       if (rsn.length() == 2) rsn += "X";
       else if (rsn.length() == 1) rsn += "XX";
       else { rsn = "XXX"; }
+    } else {
+      rsn = rsn.substr(0,3);
     }
     return rsn;
   }

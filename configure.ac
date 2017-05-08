@@ -223,7 +223,7 @@ tmpvar=`LANG="C" date`
 AC_DEFINE_UNQUOTED([CONFIGURE_CDATE],["$tmpvar"],[Date of last confiugration.])
 #CONFIGURE_CDATE=`LANG="C" date`
 
-DB_MN="0001a"
+DB_MN="0001b"
 AC_DEFINE_UNQUOTED([DB_MAGICNUMBER],["$DB_MN"],
                    [Number of Database version the code is designed for.])
 echo

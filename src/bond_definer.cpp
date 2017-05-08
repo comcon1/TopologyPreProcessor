@@ -1,6 +1,7 @@
 #include "bond_definer.hpp"
 #include "logger.hpp"
 #include "tppnames.hpp"
+#include "strutil.hpp"
 
 #include <mysql.h>
 #include <assert.h>
@@ -47,41 +48,18 @@ namespace tpp {
   bool BondDefiner::connectDB() {
     DbBase::connectDB();
 
-    int cat, cbon, cang, cdih, cnb;
-
-    // get ffID
-    mysqlpp::Query qu = con->query();
-    QueryResult res;
-    mysqlpp::Row row;
-    TPPD << "Request if we should generate pairs.";
-    ostringstream os;
-    os << format("SELECT id, generate_pairs FROM forcefield WHERE name='%1$s'")
-            % bondSettings.ffName.c_str();
-    #ifdef SQLDEBUG
-    TPPD << os.str();
-    #endif // SQLDEBUG
-    qu << os.str();
-    res = qu.store();
-    if (!res) {
-      SqlException e("SQL query failed!");
-      e.add("procname", "tpp::BondDefiner::connectDB");
-      e.add("error", "SQL query error");
-      e.add("sql_error", qu.error());
-      throw e;
-    }
-    if (res.num_rows() == 0) {
-      Exception e("Force field not found!");
-      e.add("procname", "tpp::BondDefiner::connectDB");
-      e.add("error", "Error in parameters");
-      throw e;
-    }
-    ffID = res.at(0)["id"];
-    genPairs = (bool) (res.at(0)["generate_pairs"]);
+    genPairs = strutil::split(tp.ffdefaults, " ")[2] == "yes";
     TPPD << format("Generating pairs flag: %d") % genPairs;
     if (genPairs && bondSettings.verbose) {
       cout << "1-4 pair generation is required for FF." << endl;
     }
-    qu.reset();
+
+    int cat, cbon, cang, cdih, cnb;
+    mysqlpp::Query qu = con->query();
+    ostringstream os;
+    QueryResult res;
+    mysqlpp::Row row;
+    mysqlpp::Row::size_type co;
 
     // molecule stuff ))
     FOR_ATOMS_OF_MOL(it,tp.mol) {
@@ -92,7 +70,7 @@ namespace tpp {
     }
     TPPD << "Request information about every atom used.";
     os.str("");
-    os << format("SELECT `uname`,`name` FROM `atoms` WHERE `ffield` = %1$d and `uname` IN ") % ffID;
+    os << format("SELECT `uname`,`name` FROM `atoms` WHERE `ffield` = %1$d and `uname` IN ") % bondSettings.ffID;
     os << "('Fvyxag8T*8dgw'"; // phrase that never meet in real table
     for (auto ii: namemap) {
       os << ",'" << ii.first << "'";
@@ -141,7 +119,7 @@ namespace tpp {
         " WHERE (bonds.ffield = %3$d) AND "
         "  ( (bonds.i = '%1$s' and bonds.j = '%2$s') OR "
         "    (bonds.i = '%2$s' and bonds.j = '%1$s') "
-        "  )") % typ1 % typ2 % ffID;
+        "  )") % typ1 % typ2 % bondSettings.ffID;
       #ifdef SQLDEBUG
       TPPD << os.str();
       #endif // SQLDEBUG
@@ -155,7 +133,7 @@ namespace tpp {
         throw e;
       }
       if ( res.num_rows() == 0 ) {
-        if (bondSettings.noqalculate) {
+        if (bondSettings.finalize) { //TODO: change behaviour
           Exception e("Bond definition error!");
           e.add("procname", "tpp::BondDefiner::fill_bonds");
           e.add("error", string("Bond not found between ") + typ1 + " and " + typ2 + "!" );
@@ -186,7 +164,7 @@ namespace tpp {
       tp.parameters.insert(tpc);
     } // end FOR_BONDS_OF_MOL
 
-  // clearing the same bond types
+    // clearing the same bond types
     for (TopMap::nth_index<1>::type::iterator it =
         tp.parameters.get<1>().lower_bound(TPP_TTYPE_BON);
         it != tp.parameters.get<1>().upper_bound(TPP_TTYPE_BON); ++it)
@@ -213,6 +191,8 @@ namespace tpp {
             tp.elements.get<1>().replace(fnd, emod); // correctly replacement with multi_index
           }
       }
+    // end clearing the same bond types
+
     // erasing non-meaning parameters
     for (TopMap::nth_index<1>::type::iterator it =
         tp.parameters.get<1>().lower_bound(TPP_TTYPE_BON);
@@ -223,71 +203,78 @@ namespace tpp {
 
   } // end fillBonds
 
-void BondDefiner::fill_angles() {
+void BondDefiner::fillAngles() {
   mysqlpp::Query qu = con->query();
+  ostringstream os;
   QueryResult res;
   mysqlpp::Row row;
   string query;
   int co = 0;
-  FOR_ANGLES_OF_MOL(it,tp.mol){
-  co++;
-  qu.reset();
-  string typ2 = namemap.find( tp.atoms.find((*it)[0]+1)->atom_type)->second;
-  string typ1 = namemap.find( tp.atoms.find((*it)[1]+1)->atom_type) ->second;
-  string typ3 = namemap.find( tp.atoms.find((*it)[2]+1)->atom_type) ->second;
-  qu << format("\
-SELECT id,f,c1,c2 \
-FROM angles \
-WHERE (angles.ffield = %4$d) AND \
-  ( (angles.i = '%1$s' and angles.j = '%2$s' and angles.k = '%3$s') OR \
-    (angles.i = '%3$s' and angles.j = '%2$s' and angles.k = '%1$s')\
-  )") % typ1 % typ2 % typ3 % ffID;
-  res = qu.store();
+  FOR_ANGLES_OF_MOL(it,tp.mol) {
+    co++;
+    qu.reset();
+    string typ2 = namemap.find( tp.atoms.find((*it)[0]+1)->atom_type)->second;
+    string typ1 = namemap.find( tp.atoms.find((*it)[1]+1)->atom_type)->second;
+    string typ3 = namemap.find( tp.atoms.find((*it)[2]+1)->atom_type)->second;
+    os.str("");
+    os << format("\
+  SELECT id,f,c1,c2 \
+  FROM angles \
+  WHERE (angles.ffield = %4$d) AND \
+    ( (angles.i = '%1$s' and angles.j = '%2$s' and angles.k = '%3$s') OR \
+      (angles.i = '%3$s' and angles.j = '%2$s' and angles.k = '%1$s')\
+    )") % typ1 % typ2 % typ3 % bondSettings.ffID;
+    #ifdef SQLDEBUG
+    TPPD << os.str();
+    #endif
+    qu << os.str();
+    res = qu.store();
 
-  if (!res) {
-    SqlException e("SQL query failed!");
-    e.add("procname", "tpp::BondDefiner::fill_angles");
-    e.add("error", "SQL query error");
-    e.add("sql_error", qu.error() );
-    throw e;
-  }
-
-  if (res.num_rows() == 0 ) {
-
-    if (bondSettings.noqalculate) {
-      Exception e("Bond definition error!");
+    if (!res) {
+      SqlException e("SQL query failed!");
       e.add("procname", "tpp::BondDefiner::fill_angles");
-      e.add("error", string("Angle not found between ") + typ1 + " and " + typ2 + " and " + typ3 + "!" );
+      e.add("error", "SQL query error");
+      e.add("query", os.str() );
+      e.add("sql_error", qu.error() );
       throw e;
-    } else {
-      ostringstream os;
-      os << format("Angle not found between %1$s, %2$s and %3$s!") % typ1 % typ2 % typ3;
-      TPPD<<os.str();
-      if (bondSettings.verbose) {
-        cout << "[LACK] " << os.str() << endl;
-      }
     }
 
-  }
+    if (res.num_rows() == 0 ) {
 
-  TopCoord tpc;
-  TopElement tel;
-  tel.i = (*it)[1]+1;
-  tel.j = (*it)[0]+1;
-  tel.k = (*it)[2]+1;
-  tpc.type = TPP_TTYPE_ANG;
-  tpc.f = (res.num_rows() > 0) ? res.at(0)["f"] : -1;
-  tpc.c0 = (res.num_rows() > 0) ? res.at(0)["c1"] : 0.00;
-  tpc.c1 = (res.num_rows() > 0) ? res.at(0)["c2"] : 0.00;
-  tpc.dbid = (res.num_rows() > 0) ? res.at(0)["id"] : -1;
-  tel.defname = TTCNameGenerator(tpc).set_btypes( {typ1,typ2,typ3}).getName();
-  tpc.defname = tel.defname;
-  tp.elements.push_back(tel);
-  tp.parameters.insert(tpc);
+      if (bondSettings.finalize) { //TODO: change behaviour
+        Exception e("Bond definition error!");
+        e.add("procname", "tpp::BondDefiner::fill_angles");
+        e.add("error", string("Angle not found between ") + typ1 + " and " + typ2 + " and " + typ3 + "!" );
+        throw e;
+      } else {
+        ostringstream os;
+        os << format("Angle not found between %1$s, %2$s and %3$s!") % typ1 % typ2 % typ3;
+        TPPD << os.str();
+        if (bondSettings.verbose) {
+          cout << "[LACK] " << os.str() << endl;
+        }
+      }
 
-} // end FOR_BONDS_OF_MOL
+    }
 
-// clearing the same bond types
+    TopCoord tpc;
+    TopElement tel;
+    tel.i = (*it)[1]+1;
+    tel.j = (*it)[0]+1;
+    tel.k = (*it)[2]+1;
+    tpc.type = TPP_TTYPE_ANG;
+    tpc.f = (res.num_rows() > 0) ? res.at(0)["f"] : -1;
+    tpc.c0 = (res.num_rows() > 0) ? res.at(0)["c1"] : 0.00;
+    tpc.c1 = (res.num_rows() > 0) ? res.at(0)["c2"] : 0.00;
+    tpc.dbid = (res.num_rows() > 0) ? res.at(0)["id"] : -1;
+    tel.defname = TTCNameGenerator(tpc).set_btypes( {typ1,typ2,typ3}).getName();
+    tpc.defname = tel.defname;
+    tp.elements.push_back(tel);
+    tp.parameters.insert(tpc);
+
+  } // end FOR_ANGLES_OF_MOL
+
+  // clearing the same angle types
   for (TopMap::nth_index<1>::type::iterator it =
       tp.parameters.get<1>().lower_bound(TPP_TTYPE_ANG);
       it != tp.parameters.get<1>().upper_bound(TPP_TTYPE_ANG); ++it)
@@ -312,6 +299,7 @@ WHERE (angles.ffield = %4$d) AND \
           tp.elements.get<1>().replace(fnd, emod); // correctly replacement with multi_index
         }
     }
+  // end clearing the same angle types
 
   // erasing non-meaning parameters
   for (TopMap::nth_index<1>::type::iterator it =
@@ -320,127 +308,134 @@ WHERE (angles.ffield = %4$d) AND \
     if (tp.elements.get<1>().find(it->defname)
         == tp.elements.get<1>().end())
       tp.parameters.get<1>().erase(it);
-}
+} // end fillAngles
 
-void BondDefiner::fill_special() {
+void BondDefiner::fillSpecial() {
   // TODO: add special dihedrals according to SMARTS
 }
 
-void BondDefiner::fill_dihedrals() {
+void BondDefiner::fillDihedrals() {
   mysqlpp::Query qu = con->query();
+  ostringstream os;
   QueryResult res;
   mysqlpp::Row row;
   string query;
   int co = 0;
-  FOR_TORSIONS_OF_MOL(it,tp.mol){
-  // TODO: check if special dihedral doesn't match
-  co++;
-  qu.reset();
-  string typ1 = namemap.find( tp.atoms.find((*it)[0]+1)->atom_type) ->second;
-  string typ2 = namemap.find( tp.atoms.find((*it)[1]+1)->atom_type)->second;
-  string typ3 = namemap.find( tp.atoms.find((*it)[2]+1)->atom_type) ->second;
-  string typ4 = namemap.find( tp.atoms.find((*it)[3]+1)->atom_type) ->second;
-  qu << format("\
-SELECT id,f,c1,c2,c3,c4,c5,c6 \
-FROM dihedrals \
-WHERE (dihedrals.ffield = %5$d) AND \
-  ( (dihedrals.i IN ('%1$s','X') and dihedrals.j IN ('%2$s','X') and dihedrals.k IN ('%3$s','X') and dihedrals.l IN ('%4$s','X') ) OR \
-    (dihedrals.i IN ('%4$s','X') and dihedrals.j IN ('%3$s','X') and dihedrals.k IN ('%2$s','X') and dihedrals.l IN ('%1$s','X') )\
-  )") % typ1 % typ2 % typ3 % typ4 % ffID;
-  res = qu.store();
-  if (!res) {
-    SqlException e("SQL query failed!");
-    e.add("procname", "tpp::BondDefiner::fill_dihedrals");
-    e.add("error", "SQL query error");
-    e.add("sql_error", qu.error() );
-    throw e;
-  }
-  TopCoord tpc;
-  TopElement tel;
-  tel.i = (*it)[0]+1;
-  tel.j = (*it)[1]+1;
-  tel.k = (*it)[2]+1;
-  tel.l = (*it)[3]+1;
-  if (res.num_rows() > 0) {
-    tpc.f = (int)res.at(0)["f"];
-    tpc.dbid = (int)res.at(0)["id"];
-    switch (tpc.f) {
-      case 3:
-      tpc.type = TPP_TTYPE_RBDIH;
-      tpc.c0 = (double)res.at(0)["c1"];
-      tpc.c1 = (double)res.at(0)["c2"];
-      tpc.c2 = (double)res.at(0)["c3"];
-      tpc.c3 = (double)res.at(0)["c4"];
-      tpc.c4 = (double)res.at(0)["c5"];
-      tpc.c5 = (double)res.at(0)["c6"];
-      break;
-      case 2:
-      tpc.type = TPP_TTYPE_IMPDIH;
-      tpc.c0 = (double)res.at(0)["c1"];
-      tpc.c1 = (double)res.at(0)["c2"];
-      tpc.c2 = (double)res.at(0)["c3"];
-      tpc.c3 = 0;
-      tpc.c4 = 0;
-      tpc.c5 = 0;
-      break;
-      case 1:
-      tpc.type = TPP_TTYPE_SYMDIH;
-      tpc.c0 = (double)res.at(0)["c1"];
-      tpc.c1 = (double)res.at(0)["c2"];
-      tpc.c2 = (double)res.at(0)["c3"];
-      tpc.c3 = 0;
-      tpc.c4 = 0;
-      tpc.c5 = 0;
-      break;
-      default: throw std::runtime_error("Wrong dihedral type");
-    };
-  } else {
-    tpc.f = -1;
-    //TODO: tpc type of undefined dihedral should come from FF defaults
-    tpc.type = TPP_TTYPE_RBDIH;
-    tpc.dbid = -1;
-    tpc.c0 = 0.00;
-    tpc.c1 = 0.00;
-    tpc.c2 = 0.00;
-    tpc.c3 = 0.00;
-    tpc.c4 = 0.00;
-
-    if (bondSettings.noqalculate) {
-      TopElement tel_;
-      tel_.defname = "ONE_PAIR";
-      tel_.i = (*it)[0]+1;
-      tel_.j = (*it)[3]+1;
-      tp.elements.push_back(tel_);
-
-      cout << format("[LACK] Additional pair was added instead of dihedral: %1$d-%1$d-%1$d-%1$d. \n") %
-      tel.i % tel.j % tel.k % tel.l;
-
-      /* // make pair instead of error
-       *
-       Parameters params;
-       params.add("procname", "tpp::BondDefiner::fill_dihedrals");
-       ostringstream os;
-       os << format("Angle not found between %1$s, %2$s, %3$s and %4$s!") % typ1 % typ2 % typ3 % typ4;
-       params.add("error", os.str() );
-       throw Exception("Bond definition error!", params);
-       */
-    } else {
-      ostringstream os;
-      os << format("Dihedral not found between %1$s, %2$s, %3$s and %4$s!") % typ1 % typ2 % typ3 % typ4;
-      TPPD<<os.str();
-      if (bondSettings.verbose) {
-        cout << "[LACK] " << os.str() << endl;
-      }
+  FOR_TORSIONS_OF_MOL(it,tp.mol) {
+    // TODO: check if special dihedral doesn't match
+    co++;
+    qu.reset();
+    string typ1 = namemap.find( tp.atoms.find((*it)[0]+1)->atom_type) ->second;
+    string typ2 = namemap.find( tp.atoms.find((*it)[1]+1)->atom_type)->second;
+    string typ3 = namemap.find( tp.atoms.find((*it)[2]+1)->atom_type) ->second;
+    string typ4 = namemap.find( tp.atoms.find((*it)[3]+1)->atom_type) ->second;
+    os.str("");
+    os << format("\
+  SELECT id,f,c1,c2,c3,c4,c5,c6 \
+  FROM dihedrals \
+  WHERE (dihedrals.ffield = %5$d) AND \
+    ( (dihedrals.i IN ('%1$s','X') and dihedrals.j IN ('%2$s','X') and dihedrals.k IN ('%3$s','X') and dihedrals.l IN ('%4$s','X') ) OR \
+      (dihedrals.i IN ('%4$s','X') and dihedrals.j IN ('%3$s','X') and dihedrals.k IN ('%2$s','X') and dihedrals.l IN ('%1$s','X') )\
+    )") % typ1 % typ2 % typ3 % typ4 % bondSettings.ffID;
+    #ifdef SQLDEBUG
+    TPPD << os.str();
+    #endif // SQLDEBUG
+    qu << os.str();
+    res = qu.store();
+    if (!res) {
+      SqlException e("SQL query failed!");
+      e.add("procname", "tpp::BondDefiner::fill_dihedrals");
+      e.add("error", "SQL query error");
+      e.add("query", os.str() );
+      e.add("sql_error", qu.error() );
+      throw e;
     }
+    TopCoord tpc;
+    TopElement tel;
+    tel.i = (*it)[0]+1;
+    tel.j = (*it)[1]+1;
+    tel.k = (*it)[2]+1;
+    tel.l = (*it)[3]+1;
+    if (res.num_rows() > 0) {
+      tpc.f = (int)res.at(0)["f"];
+      tpc.dbid = (int)res.at(0)["id"];
+      switch (tpc.f) {
+        case 3:
+        tpc.type = TPP_TTYPE_RBDIH;
+        tpc.c0 = (double)res.at(0)["c1"];
+        tpc.c1 = (double)res.at(0)["c2"];
+        tpc.c2 = (double)res.at(0)["c3"];
+        tpc.c3 = (double)res.at(0)["c4"];
+        tpc.c4 = (double)res.at(0)["c5"];
+        tpc.c5 = (double)res.at(0)["c6"];
+        break;
+        case 2:
+        tpc.type = TPP_TTYPE_IMPDIH;
+        tpc.c0 = (double)res.at(0)["c1"];
+        tpc.c1 = (double)res.at(0)["c2"];
+        tpc.c2 = (double)res.at(0)["c3"];
+        tpc.c3 = 0;
+        tpc.c4 = 0;
+        tpc.c5 = 0;
+        break;
+        case 1:
+        tpc.type = TPP_TTYPE_SYMDIH;
+        tpc.c0 = (double)res.at(0)["c1"];
+        tpc.c1 = (double)res.at(0)["c2"];
+        tpc.c2 = (double)res.at(0)["c3"];
+        tpc.c3 = 0;
+        tpc.c4 = 0;
+        tpc.c5 = 0;
+        break;
+        default: throw std::runtime_error("Wrong dihedral type");
+      };
+    } else {
+      tpc.f = -1;
+      //TODO: tpc type of undefined dihedral should come from FF defaults
+      tpc.type = TPP_TTYPE_RBDIH;
+      tpc.dbid = -1;
+      tpc.c0 = 0.00;
+      tpc.c1 = 0.00;
+      tpc.c2 = 0.00;
+      tpc.c3 = 0.00;
+      tpc.c4 = 0.00;
 
-  }
-  tel.defname = TTCNameGenerator(tpc).set_btypes( {typ1,typ2,typ3,typ4}).getName();
-  tpc.defname = tel.defname;
-  tp.elements.push_back(tel);
-  tp.parameters.insert(tpc);
-} // end FOR_BONDS_OF_MOL
+      if (bondSettings.finalize) { //TODO: change behaviour
+        TopElement tel_;
+        tel_.defname = "ONE_PAIR";
+        tel_.i = (*it)[0]+1;
+        tel_.j = (*it)[3]+1;
+        tp.elements.push_back(tel_);
 
-// clearing the same bond types
+        cout << format("[LACK] Additional pair was added instead of dihedral: %1$d-%1$d-%1$d-%1$d. \n") %
+        tel.i % tel.j % tel.k % tel.l;
+
+        /* // make pair instead of error
+         *
+         Parameters params;
+         params.add("procname", "tpp::BondDefiner::fill_dihedrals");
+         ostringstream os;
+         os << format("Angle not found between %1$s, %2$s, %3$s and %4$s!") % typ1 % typ2 % typ3 % typ4;
+         params.add("error", os.str() );
+         throw Exception("Bond definition error!", params);
+         */
+      } else {
+        ostringstream os;
+        os << format("Dihedral not found between %1$s, %2$s, %3$s and %4$s!") % typ1 % typ2 % typ3 % typ4;
+        TPPD << os.str();
+        if (bondSettings.verbose) {
+          cout << "[LACK] " << os.str() << endl;
+        }
+      }
+
+    }
+    tel.defname = TTCNameGenerator(tpc).set_btypes( {typ1,typ2,typ3,typ4}).getName();
+    tpc.defname = tel.defname;
+    tp.elements.push_back(tel);
+    tp.parameters.insert(tpc);
+  } // end FOR_TORSIONS_OF_MOL
+
+  // clearing the same bond types
   for (TopMap::nth_index<1>::type::iterator it =
       tp.parameters.get<1>().lower_bound(TPP_TTYPE_RBDIH);
       it != tp.parameters.get<1>().upper_bound(TPP_TTYPE_SYMDIH); ++it)
@@ -466,6 +461,7 @@ WHERE (dihedrals.ffield = %5$d) AND \
           tp.elements.get<1>().replace(fnd, emod); // correctly replacement with multi_index
         }
     }
+  // end clearing the same bond types
 
   // erasing non-meaning parameters
   for (TopMap::nth_index<1>::type::iterator it =
@@ -475,21 +471,25 @@ WHERE (dihedrals.ffield = %5$d) AND \
         == tp.elements.get<1>().end())
       tp.parameters.get<1>().erase(it);
 
-}
+} // end fillTorsions
 
 //! use for clever choosing and posing improper dihedrals
-void BondDefiner::fill_impropers() {
-  TPPD<<"Starting curious SMART-improper-dihedral fitting.\n";
+void BondDefiner::fillImpropers() {
+  TPPD << "Starting curious SMART-improper-dihedral fitting.\n";
   mysqlpp::Query qu = con->query();
-  qu
-      << format(
+  ostringstream os;
+  os << format(
           "SELECT ip.id, ip.PAT, ip.order, ia.name, ip.impid, \
           ia.f, ia.c1, ia.c2, ia.c3, ia.c4, ia.c5, ia.c6 \
         FROM improper_patterns as ip \
         RIGHT JOIN impropers as ia ON ia.id = ip.impid \
         WHERE ip.ffield = %1$d and ip.override = 0 ")
-          % this->ffID;
-  TPPD<<"Loading IMPROPER patterns from DB..";
+          % bondSettings.ffID;
+  #ifdef SQLDEBUG
+  TPPD << os.str();
+  #endif // SQLDEBUG
+  qu << os.str();
+  TPPD << "Loading IMPROPER patterns from DB..";
   cout << "IMPROPER patterns are loading. Please wait.." << flush;
   QueryResult res;
   res = qu.store();
@@ -501,10 +501,9 @@ void BondDefiner::fill_impropers() {
     e.add("sql_query", qu.str());
     throw e;
   }
-  TPPD<<"OK!";;
+  TPPD << "OK!";;
   cout << " finished.\n" << "Starting SMART-fit." << endl;
   cout << (format("Patterns checked: %1$4d.") % 0) << flush;
-  std::ostringstream os;
   mysqlpp::Row::size_type co;
   mysqlpp::Row row;
   OBSmartsPattern pat;
@@ -585,7 +584,7 @@ void BondDefiner::fill_impropers() {
 } // end fill_special
 
 //! Function makes special pairs and common 1-4 pairs - ALSO.
-void BondDefiner::fill_pairs() {
+void BondDefiner::fillPairs() {
   if (genPairs) {
     // including single pair definition
     TopCoord tpc;
@@ -595,36 +594,36 @@ void BondDefiner::fill_pairs() {
     tp.parameters.insert(tpc);
     // generating pairs
     cout << "Generating 1-4 pairs for FF needs.." << flush;
-    FOR_TORSIONS_OF_MOL(it,tp.mol){
-    TopElement tel;
-    tel.defname = "ONE_PAIR";
-    assert(tp.atoms.find((*it)[0]+1) != tp.atoms.end());
-    tel.i = tp.atoms.find((*it)[0]+1)->index;
-    assert(tp.atoms.find((*it)[1]+1) != tp.atoms.end());
-    tel.j = tp.atoms.find((*it)[3]+1)->index;
-    tp.elements.push_back(tel);
-  }
+    FOR_TORSIONS_OF_MOL(it,tp.mol) {
+      TopElement tel;
+      tel.defname = "ONE_PAIR";
+      assert(tp.atoms.find((*it)[0]+1) != tp.atoms.end());
+      tel.i = tp.atoms.find((*it)[0]+1)->index;
+      assert(tp.atoms.find((*it)[1]+1) != tp.atoms.end());
+      tel.j = tp.atoms.find((*it)[3]+1)->index;
+      tp.elements.push_back(tel);
+    }
     cout << "ok." << endl;
   }
-}
+} // end fillPairs
 
-void BondDefiner::bond_align() {
+void BondDefiner::bondAlign() {
   try {
     fillBonds();
-    fill_angles();
-    fill_special();
-    fill_dihedrals();
-    fill_impropers();
-    fill_pairs();
+    fillAngles();
+    fillSpecial(); // THAT ORDER?
+    fillDihedrals();
+    fillImpropers();
+    fillPairs();
   } catch (const DbException &e) {
     cout << "..something fails." << endl;
-    TPPD<<e.what();
+    TPPD << e.what();
   } catch (const SqlException &e) {;
     cout << "..something fails." << endl;
-    TPPD<<e.what();
+    TPPD << e.what();
   } catch (const Exception &e) {
     cout << "..something fails." << endl;
-    TPPD<<e.what();
+    TPPD << e.what();
   }
 }
 

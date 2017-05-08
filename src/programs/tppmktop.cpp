@@ -65,9 +65,12 @@ int main(int argc, char * argv[]) {
         ("lack-file,l",
             p_o::value<std::string>()->default_value("lack.itp"),
             "Topology lack filename (default 'lack.itp')")
-        ("nocalculate,n",
+        ("expanded",
             p_o::value<bool>()->default_value(false)->implicit_value(false),
-            "Create final topology (don't create lack-file)")
+            "Create expanded topology (do not required FF includes)")
+        ("finalize",
+            p_o::value<bool>()->default_value(false)->implicit_value(false),
+            "Create final topology (don't create lack-file, overwrite dihedrals with pairs)")
         ("max-bonds,m",
             p_o::value<bool>()->default_value(false)->implicit_value(false),
             "Maximize amount of bonds, angles and dihedrals by selecting other atom-types.")
@@ -113,8 +116,8 @@ int main(int argc, char * argv[]) {
     bool verbose = vars["verbose"].as<bool>();
 
     bondSettings.verbose = verbose;
-    bondSettings.noqalculate = vars.count("nocalculate") == 1;
-    bondSettings.ffName = forcefield;
+    bondSettings.expanded = vars["expanded"].as<bool>();
+    bondSettings.finalize = vars["finalize"].as<bool>();
 
     atomSettings.maxbonds = vars.count("max-bonds") == 1;
     atomSettings.maxdihedrals = atomSettings.maxbonds;
@@ -163,25 +166,42 @@ int main(int argc, char * argv[]) {
     }
     if (verbose) {
        cout << tpp::in_fmt_descr(iform)<<endl;
-     }
+    }
 
-  if (bondSettings.noqalculate) {
-    cout << "TPPMKTOP will try to make full-determined topology [DANGEROUS]!" << endl;
-  }
+    if (bondSettings.finalize)
+      TPPI << "TPPMKTOP will try to make final topology!";
+    if (bondSettings.expanded)
+      TPPI << "TPPMKTOP will make self-consistent topology in separate file.";
 
-  // Main  program body
+    if (rtpout.size() > 0) {
+      bfs::path ro_path(rtpout);
+      ro_path = bfs::weakly_canonical(ro_path);
+      string ro_ext = strutil::toLower( ro_path.stem().string() );
+      if (ro_ext != ".rtp") ro_path = bfs::path(ro_path.string()+".rtp");
+      TPPI << ("Output RTP: " + ro_path.string() );
+      TPPD << ("Output RTP [full path]: " + bfs::absolute(ro_path).string());
+      if ( bfs::exists(ro_path) ) {
+        TPPI << "RTP output exists. File will be overwritten." ;
+      }
+    }
+
+    // Main  program body
     tpp::Topology TOP;
     tpp::StructureIO sio(false, rtpout.size() > 0); // it seems that ignore index has no meaning here
-    tpp::ResidueNameGenerator rng(input_file);
-    TOP.res_name = rng.getName();
     TOP.nrexcl = 3;
     sio.loadFromFile(TOP, iform, input_file.c_str());
+    tpp::ResidueNameGenerator rng(if_path.filename().stem().string());
+    TOP.res_name = rng.getName();
+    TPPD << ("Using residue name: " + TOP.res_name);
 
     // initial DB queries
     tpp::DbInfo DI(baseSettings, forcefield);
     atomSettings.ffID = DI.getFFID();
+    bondSettings.ffID = DI.getFFID();
     TOP.ffinclude = DI.getFFInclude().c_str();
     TOP.ffinfo = forcefield + " revision " + DI.getFFRev();
+    TOP.ffdefaults = DI.getFFDefaults();
+    TPPD << ("Force field defaults: "+TOP.ffdefaults);
     if (verbose) {
       cout << DI.getStatistics();
     }
@@ -190,8 +210,8 @@ int main(int argc, char * argv[]) {
     AD.proceed();
     AD.atomAlign();
     tpp::BondDefiner BD(baseSettings, bondSettings, TOP);
-    BD.bond_align();
-    tpp::save_topology(TOP, output_file.c_str(), bondSettings.noqalculate);
+    BD.bondAlign();
+    tpp::save_topology(TOP, output_file.c_str(), false); //TODO: finalize & expanded
     tpp::save_lack(TOP, lackfile.c_str());
     if (rtpout.size() > 0) {
       tpp::save_topology_rtp(TOP, rtpout.c_str());

@@ -12,8 +12,10 @@ namespace tpp {
   class NameGenerator {
     protected:
      const T &instance;
+     T instance2;
     public:
-     NameGenerator(const T &i): instance(i) {;}
+     NameGenerator(T &i): instance(i) {;}
+     NameGenerator(const T &i): instance2(i), instance(instance2) {;}
      virtual ~NameGenerator() {};
      virtual std::string getName() = 0;
   };
@@ -66,7 +68,10 @@ namespace tpp {
    */
   class ResidueNameGenerator: NameGenerator<std::string> {
     public:
-      ResidueNameGenerator(std::string &i): NameGenerator<std::string>(i) {;}
+      ResidueNameGenerator(const std::string &i): NameGenerator<std::string>(i) {;}
+
+      /** \brief Guess residue name from filename
+        */
       virtual std::string getName();
   };
 

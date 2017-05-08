@@ -78,6 +78,7 @@ namespace tpp {
       std::string ffName;         //!< Name of the force field
       std::string ffDesc;         //!< USE SOMEWHERE?? Description of the force field (add to ITP header)
       std::string ffInclude;      //!< DEPRECATED
+      std::string ffDefaults;     //!< defaults string for forcefield.itp
 
       /** \brief Revision of the force field
         *
@@ -96,6 +97,7 @@ namespace tpp {
       int getFFID() { return ffID; }                    //!< Public alias to ffID
       std::string getFFInclude() { return ffInclude; }  //!< Public alias to ffInclude [DEPRECATED]
       std::string getFFRev() { return ffRev; }          //!< Public alias to ffRev
+      std::string getFFDefaults() { return ffDefaults; }//!< String of FF defaults [for EXPANDED mode]
 
       /** \brief Function that gives string statistics about current force field.
         *

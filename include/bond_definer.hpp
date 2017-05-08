@@ -14,8 +14,9 @@ namespace tpp {
 
       /// Calculation settings.
       struct Settings {
-        std::string ffName; /// forcefield name
-        bool noqalculate;   /// What an interesting word, 'noqalculate'
+        int ffID;           /// forcefield ID
+        bool finalize;      /// create finalized topology
+        bool expanded;      /// create expanded topology
         bool verbose;       /// print additional info
       };
 
@@ -23,7 +24,7 @@ namespace tpp {
                   const BondDefiner::Settings& s2,
                   Topology &);
       ~BondDefiner();
-      void bond_align();
+      void bondAlign();
       void log_needed_bonds();
 
     private:
@@ -31,7 +32,6 @@ namespace tpp {
       InternalsArray bonds;
       Topology &tp;
       std::map<std::string, std::string> namemap; //! map of uname -> name
-      short ffID;    // why not in settings?
       bool genPairs;
       std::ofstream qalcfile;
 
@@ -44,11 +44,25 @@ namespace tpp {
         */
       void fillBonds();
 
-      void fill_angles();
-      void fill_dihedrals();
-      void fill_special();
-      void fill_impropers();
-      void fill_pairs();
+      /** \brief Complete angles exploting DB definitions.
+        */
+      void fillAngles();
+
+      /** \brief Complete dihedrals exploiting DB definitions.
+        */
+      void fillDihedrals();
+
+      /** \brief Complete extra dihedrals exploiting DB definitions [NOT IMPLEMENTED].
+        */
+      void fillSpecial();
+
+      /** \brief Complete improper dihedrals exploiting DB definitions.
+        */
+      void fillImpropers();
+
+      /** \brief Complete pairs according to requirements of the force field.
+        */
+      void fillPairs();
   };
 } // of namespace tpp
 
