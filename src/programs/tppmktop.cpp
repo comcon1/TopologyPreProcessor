@@ -44,24 +44,40 @@ int main(int argc, char * argv[]) {
   tpp::initiate_logging("tppmktop.log");
   string progname("Execution rules for TPPMKTOP ");
   progname = progname + VERSION;
-  p_o::options_description desc(progname);
+  p_o::options_description desc(progname), mandatory("Mandatory settings"),
+    optional("Optional settings"), dbopts("Database settings");
   p_o::variables_map vars;
-  desc.add_options()
+
+  mandatory.add_options()
         ("input,i",
             p_o::value<std::string>()->required(),
             "Input filename (any format)")
         ("output,o",
             p_o::value<std::string>()->required(),
             "Output filename (itp format)")
+        ("forcefield,f",
+            p_o::value<std::string>()->required(),
+            "Forcefield name");
+  optional.add_options()
         ("rtp-output,r",
             p_o::value<std::string>()->default_value(""),
             "Output filename (rtp format)")
-        ("forcefield,f",
-            p_o::value<std::string>()->required(),
-            "Forcefield name")
         ("lack-file,l",
             p_o::value<std::string>()->default_value("lack.itp"),
             "Topology lack filename (default 'lack.itp')")
+        ("nocalculate,n",
+            p_o::value<bool>()->default_value(false)->implicit_value(false),
+            "Create final topology (don't create lack-file)")
+        ("max-bonds,m",
+            p_o::value<bool>()->default_value(false)->implicit_value(false),
+            "Maximize amount of bonds, angles and dihedrals by selecting other atom-types.")
+        ("verbose,v",
+            p_o::value<bool>()->default_value(false)->implicit_value(false),
+            "Verbose mode")
+        ("help,h", p_o::bool_switch()->default_value(false),
+          "Print detailed help message")
+          ;
+  dbopts.add_options()
         ("sqlserver,s",
             p_o::value<std::string>()->default_value("localhost"),
             "Mysql-server adress (default 'localhost')")
@@ -74,18 +90,8 @@ int main(int argc, char * argv[]) {
         ("sqlpassword,p",
             p_o::value<std::string>()->default_value("estatic"),
             "Mysql-password (default 'estatic')")
-        ("nocalculate,n",
-            p_o::value<bool>()->default_value(false)->implicit_value(false),
-            "Create final topology (don't create lack-file)")
-        ("max-bonds,m",
-            p_o::value<bool>()->default_value(false)->implicit_value(false),
-            "Maximize amount of bonds, angles and dihedrals by selecting other atom-types.")
-        ("verbose,v",
-            p_o::value<bool>()->default_value(false)->implicit_value(false),
-            "Verbose mode")
-      ("help,h", p_o::bool_switch()->default_value(false),
-          "Print detailed help message")
           ;
+    desc.add(mandatory).add(optional).add(dbopts);
   try {
     p_o::store(p_o::parse_command_line(argc, argv, desc), vars);
     if (vars["help"].as<bool>()) {
@@ -160,7 +166,7 @@ int main(int argc, char * argv[]) {
      }
 
   if (bondSettings.noqalculate) {
-    cout << "TPPMKTOP will try to make full-determined topology!" << endl;
+    cout << "TPPMKTOP will try to make full-determined topology [DANGEROUS]!" << endl;
   }
 
   // Main  program body

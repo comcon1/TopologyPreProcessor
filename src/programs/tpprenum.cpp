@@ -54,15 +54,18 @@ int main(int argc, char * argv[]) {
   tpp::initiate_logging("tpprenum.log");
   string progname("Execution rules for TPPRENUM ");
   progname += PACKAGE_VERSION;
-  p_o::options_description desc(progname);
+  p_o::options_description desc(progname), mandatory("Mandatory settings"),
+    optional("Optional settings");
   p_o::variables_map vars;
-  desc.add_options()
+  mandatory.add_options()
       ("input,i",
           p_o::value<std::string>()->required(),
           "Input filename (any format)")
       ("output,o",
           p_o::value<std::string>()->required(),
           "Output filename (any format)")
+          ;
+  optional.add_options()
       ("base36,x",
           p_o::bool_switch()->default_value(false),
           "Numbering of heavy atoms in base36")
@@ -78,6 +81,7 @@ int main(int argc, char * argv[]) {
       ("help,h", p_o::bool_switch()->default_value(false),
           "Print detailed help message")
       ;
+  desc.add(mandatory).add(optional);
   try {
     p_o::store(p_o::parse_command_line(argc, argv, desc), vars);
     if (vars["help"].as<bool>()) {
