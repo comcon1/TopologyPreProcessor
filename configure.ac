@@ -36,6 +36,10 @@ AC_CHECK_LIB([boost_log_setup], [main],[],
              [AC_MSG_ERROR([Can not link to boost_log_setup!])] )
 AC_CHECK_LIB([boost_log], [main],[],
              [AC_MSG_ERROR([Can not link to boost_log!])] )
+AC_CHECK_LIB([boost_filesystem], [main],[],
+             [AC_MSG_ERROR([Can not link to boost_filesystem!])] )
+AC_CHECK_LIB([boost_system], [main],[],
+             [AC_MSG_ERROR([Can not link to boost_system!])] )
 
 echo 'Pthread flags:'
 echo $CXXFLAGS

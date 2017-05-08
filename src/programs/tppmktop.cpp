@@ -14,35 +14,31 @@
 #include "tppnames.hpp"
 #include "atom_definer.hpp"
 #include "bond_definer.hpp"
+#include "strutil.hpp"
 
 #include <boost/program_options/variables_map.hpp>
 #include <boost/program_options/errors.hpp>
 #include <boost/program_options/options_description.hpp>
 #include <boost/program_options/parsers.hpp>
+#include <boost/filesystem.hpp>
 
 #include <boost/format.hpp>
+#include <sstream>
 
 namespace p_o = boost::program_options;
-
-using boost::format;
+namespace bfs = boost::filesystem;
 
 using std::cout;
 using std::cerr;
 using std::endl;
-
 using std::string;
-void printHelp();
+using std::ostringstream;
+using boost::format;
+
+void printHelp(p_o::options_description const&);
 void printInfo();
 
 double sumcharge(const tpp::Topology &);
-
-string extension(const std::string& filename){
-  string::size_type ind = filename.find(".", 0);
-  if (ind == string::npos) {
-       return "";
-  }
-  return filename.substr(ind + 1);
-}
 
 int main(int argc, char * argv[]) {
   tpp::initiate_logging("tppmktop.log");
@@ -87,15 +83,16 @@ int main(int argc, char * argv[]) {
         ("verbose,v",
             p_o::value<bool>()->default_value(false)->implicit_value(false),
             "Verbose mode")
-        ("help,h", "Print this message");
+      ("help,h", p_o::bool_switch()->default_value(false),
+          "Print detailed help message")
+          ;
   try {
     p_o::store(p_o::parse_command_line(argc, argv, desc), vars);
-    p_o::notify(vars);
-
-    if (vars.count("help")){
-      printHelp();
-      return 0;
+    if (vars["help"].as<bool>()) {
+        printHelp(desc);
+        return 0;
     }
+    p_o::notify(vars);
 
     string input_file = vars["input"].as<string>();
     string output_file = vars["output"].as<string>();
@@ -133,24 +130,33 @@ int main(int argc, char * argv[]) {
     }
     // INPUT analysing
     tpp::InputFormat iform;
-    string in_ext = extension(input_file);
-    if (in_ext == "pdb")
+    bfs::path if_path(input_file);
+    if (! bfs::is_regular_file(if_path) ) {
+        tpp::Exception e("Error in input file.");
+        e.add("error","Input file '"+if_path.filename().string()+"' is not a regular file!");
+        throw e;
+    }
+    string in_ext = if_path.has_extension() ? if_path.extension().string() : "";
+    in_ext = strutil::toLower(in_ext);
+    if (in_ext == ".pdb")
       iform = tpp::TPP_IF_PDB;
-    else if (in_ext == "gro")
+    else if (in_ext == ".gro")
       iform = tpp::TPP_IF_GRO;
-    else if (in_ext == "g96")
+    else if (in_ext == ".g96")
       iform = tpp::TPP_IF_G96;
-    else if ((in_ext == "log") || (in_ext == "out"))
+    else if ((in_ext == ".log") || (in_ext == ".out"))
       iform = tpp::TPP_IF_GAMSP;
     else {
-      cerr << "ERROR:\n";
-      cerr << "Couldn't determine format of input file. "
+       ostringstream os;
+       tpp::Exception e("Couldn't determine format of input file. ");
+       os <<
               "Unknown extension: \"" << in_ext <<"\" "
               "Please specify other extension.\n";
-      return 1;
+       e.add("error", os.str());
+       throw e;
     }
     if (verbose) {
-       cout<<tpp::in_fmt_descr(iform)<<endl;
+       cout << tpp::in_fmt_descr(iform)<<endl;
      }
 
   if (bondSettings.noqalculate) {
@@ -225,7 +231,7 @@ void printInfo(){
 *   Moscow, Lomonosov's Moscow State University                      *\n\
 *   for more info, see homepage  http://erg.biophys.msu.ru/          *\n\
 *                                                                    *\n\
-*   Authors:       comcon1, dr.zoidberg, piton, leela                *\n\
+*   Authors:       comcon1, dr.zoidberg, piton, leela, month         *\n\
 *                                                                    *\n\
 *   Product:       program  TPPMKTOP-%1$-6s                          *\n\
 *                                                                    *\n\
@@ -239,7 +245,10 @@ void printInfo(){
             % PACKAGE_VERSION % CONFIGURE_CDATE;
 }
 
-void printHelp() {
+/*!
+ * \brief Prints program info and usage to stdout.
+ */
+void printHelp(p_o::options_description const&_desc) {
   cout
       << format(
           "\n\
@@ -249,7 +258,7 @@ void printHelp() {
                                           Biology faculty, MSU, Russia\n\
 \n\
            THE PART OF TOPOLOGY PREPROCESSOR PROJECT                  \n\
-        ---      (comcon1, zoidberg, piton, leela)      ---           \n\
+        ---      (comcon1, zoidberg, piton, leela, month)      ---    \n\
   TPP version: %1$-3s, compiled at %2$-8s on GCC %3$s.\n\
   BOOST version:  %4$-8s \n\
   OpenBabel version: %5$-8s \n\
@@ -260,29 +269,12 @@ void printHelp() {
 programs.  Also it adapts names and  position of atoms in file to make\n\
 following topology file more obvious.\n\
 \n\
- USAGE: \n\
- tppmktop -i <inp> -o <out> -f <f.field> [-l <lack>] [other opt-s]\n\
-\n\
-      -i  the name of (I)nput-file, in PDB or GRO/G96 format.           \n\
-      -o  the name of (O)utput-file, contained prepared structure.      \n\
-      -f  the (F)orcefield name (f.i. OPLS-AA)                          \n\
-      -v  (V)erbose mode, typing more information during the execution\n\
- [ special topopolgy generation settings ]\n\
-      -n  do (N)ot calculate force parameters. Write final ITP.\n\
-      -l  specify topology (L)ACK-file definition.\n\
-      -m  (M)aximize amount of bonded interactions.\n\
- [ database options ] \n\
-      -s  MySQL (S)erver host name or IP\n\
-      -t  MySQL server (P)ort number\n\
-      -u  MySQL (U)ser\n\
-      -p  MySQL (P)assword\n\
-      -h  print this message.                                         \n\
-\n\
+")        % PACKAGE_VERSION % CONFIGURE_CDATE % __VERSION__ % BOOST_LIB_VERSION
+          % BABEL_VERSION % BABEL_DATADIR
+      << _desc << "\n\
 --------------------------------*****---------------------------------\n\
-")
-          % PACKAGE_VERSION % CONFIGURE_CDATE % __VERSION__ % BOOST_LIB_VERSION
-          % BABEL_VERSION % BABEL_DATADIR << endl;
-  throw 0;
+"
+    << endl;
 }
 
 double sumcharge(const tpp::Topology &tp) {

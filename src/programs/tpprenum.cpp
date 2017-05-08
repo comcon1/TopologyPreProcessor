@@ -14,27 +14,33 @@
 #include "pdbutils.hpp"
 #include "structio.hpp"
 #include "async_call.hpp"
+#include "strutil.hpp"
 
 #include <boost/program_options/variables_map.hpp>
 #include <boost/program_options/errors.hpp>
 #include <boost/program_options/options_description.hpp>
 #include <boost/program_options/parsers.hpp>
 #include <boost/format.hpp>
+#include <boost/filesystem.hpp>
+
+#include <sstream>
 
 #define TPP_LOADFILE_TIMELIMIT 600
 #define TPP_RENUMBER_TIMELIMIT 600
 
 namespace p_o = boost::program_options;
+namespace bfs = boost::filesystem;
 
 using boost::format;
 using std::cout;
 using std::cerr;
 using std::endl;
 using std::string;
+using std::ostringstream;
 using namespace boost::numeric;
 
-void print_help(p_o::options_description const&);
-void print_info();
+void printHelp(p_o::options_description const&);
+void printInfo();
 
 string extension(const std::string& filename){
   string::size_type ind = filename.find(".", 0);
@@ -75,7 +81,7 @@ int main(int argc, char * argv[]) {
   try {
     p_o::store(p_o::parse_command_line(argc, argv, desc), vars);
     if (vars["help"].as<bool>()) {
-        print_help(desc);
+        printHelp(desc);
         return 0;
     }
     p_o::notify(vars);
@@ -98,49 +104,60 @@ int main(int argc, char * argv[]) {
     //
 
     if (verbose) {
-      print_info();
+      printInfo();
     } else {
       TPPI << format("Starting TPPRENUM-%1$s program.") % VERSION;
     }
-
-    // INPUT analysing
     tpp::InputFormat iform;
-    tpp::OutputFormat oform;
-    string in_ext = extension(input_file);
-    if (in_ext == "pdb")
+    // INPUT analysing
+    bfs::path if_path(input_file);
+    if (! bfs::is_regular_file(if_path) ) {
+        tpp::Exception e("Error in input file.");
+        e.add("error","Input file '"+if_path.filename().string()+"' is not a regular file!");
+        throw e;
+    }
+    string in_ext = if_path.has_extension() ? if_path.extension().string() : "";
+    in_ext = strutil::toLower(in_ext);
+    if (in_ext == ".pdb")
       iform = tpp::TPP_IF_PDB;
-    else if (in_ext == "gro")
+    else if (in_ext == ".gro")
       iform = tpp::TPP_IF_GRO;
-    else if (in_ext == "g96")
+    else if (in_ext == ".g96")
       iform = tpp::TPP_IF_G96;
-    else if ((in_ext == "log") || (in_ext == "out"))
+    else if ((in_ext == ".log") || (in_ext == ".out"))
       iform = tpp::TPP_IF_GAMSP;
     else {
-      cerr << "ERROR:\n";
-      cerr << "Couldn't determine format of input file. "
+       ostringstream os;
+       tpp::Exception e("Couldn't determine format of input file. ");
+       os <<
               "Unknown extension: \"" << in_ext <<"\" "
               "Please specify other extension.\n";
-      return 1;
+       e.add("error", os.str());
+       throw e;
     }
 
     if (verbose) {
       TPPI<<tpp::in_fmt_descr(iform);
     }
 
+    tpp::OutputFormat oform;
     // OUTPUT analysing
-    string out_ext = extension(output_file);
-    if (out_ext == "pdb")
+    string out_ext = if_path.has_extension() ? if_path.extension().string() : "";
+    out_ext = strutil::toLower(out_ext);
+    if (out_ext == ".pdb")
       oform = tpp::TPP_OF_PDB;
-    else if (out_ext == "gro")
+    else if (out_ext == ".gro")
       oform = tpp::TPP_OF_GRO;
-    else if (out_ext == "g96")
+    else if (out_ext == ".g96")
       oform = tpp::TPP_OF_G96;
     else {
-      TPPE << "ERROR:\n"
-           << "Couldn't determine format of output file."
-              "Unknown extension: \"" << out_ext <<"\""
-              " Please specify other extension.";
-      return 1;
+       ostringstream os;
+       tpp::Exception e("Couldn't determine format of output file. ");
+       os <<
+              "Unknown extension: \"" << out_ext <<"\" "
+              "Please specify other extension.\n";
+       e.add("error", os.str());
+       throw e;
     }
 
     if (verbose) {
@@ -152,12 +169,12 @@ int main(int argc, char * argv[]) {
     tpp::Topology topology;
     tpp::StructureIO io(ignore_index, rtp_file);
 
-    tpp::run_with_timeout<void>(TPP_LOADFILE_TIMELIMIT, 
+    tpp::run_with_timeout<void>(TPP_LOADFILE_TIMELIMIT,
             [&]() { io.loadFromFile(topology, iform, input_file.c_str()); }
              );
-    
 
-    tpp::run_with_timeout<void>(TPP_RENUMBER_TIMELIMIT, 
+
+    tpp::run_with_timeout<void>(TPP_RENUMBER_TIMELIMIT,
         [&]() {
           tpp::Renumberer rnr(topology.mol, verbose);
           std::vector<unsigned> tail1 = rnr.findLongestChain();
@@ -175,14 +192,12 @@ int main(int argc, char * argv[]) {
     TPPE << "TPP crashed with tpp::exception: "<< e.what();
     return 2;
   }
-  catch(const std::exception& e)
-  {
-    TPPE<<"TPP crashed with std::exception: "<<e.what();
+  catch(const std::exception& e) {
+    TPPE << "TPP crashed with std::exception: "<<e.what();
     return 3;
   }
-  catch(...)
-  {
-    TPPE<<"TPP crashed with unknown type of exception!";
+  catch(...) {
+    TPPE << "TPP crashed with unknown type of exception!";
     return 3;
   }
   TPPI << "TPPRENUM finished normally!" << endl;
@@ -190,7 +205,7 @@ int main(int argc, char * argv[]) {
 }
 
 /// Prints brief information.
-void print_info()
+void printInfo()
 {
   cout << format ("\
    **********************************************************************\n\
@@ -215,7 +230,7 @@ void print_info()
 /*!
  * \brief Prints program info and usage to stdout.
  */
-void print_help(p_o::options_description const&_desc)
+void printHelp(p_o::options_description const&_desc)
 {
     cout << format("\n\
 --------------------------------*****---------------------------------\n\

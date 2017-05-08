@@ -5,7 +5,8 @@
 // by James Fancy
 ////////////////////////////////////////////////////////////////////////////////
 
-#pragma once
+#ifndef JFANCY_STRUTIL_H
+#define JFANCY_STRUTIL_H
 
 #include <string>
 #include <vector>
@@ -103,3 +104,4 @@ namespace strutil {
 
 }
 
+#endif
