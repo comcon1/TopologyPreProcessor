@@ -39,7 +39,7 @@ namespace tpp {
 
   /// implement non-bond map filling
   void AtomDefiner::fillNB() {
-    cout << "Comparing atom by elements.." << endl;
+    cout << "\n ----> Comparing atom by elements.." << endl;
     mysqlpp::Query qu = con->query();
     QueryResult res;
     mysqlpp::Row row;
@@ -52,7 +52,7 @@ namespace tpp {
       znucset.insert(pair<int, set<string> >(it->GetAtomicNum(), set<string>() ) );
     }
     // perform query for every ATOMIC NUMBER
-    cout << "Atomic numbers: [" << flush;
+    cout << "  Atomic numbers: [" << flush;
     for (auto &cur: znucset) {
       qu = con->query();
       ostringstream os;
@@ -78,7 +78,7 @@ namespace tpp {
     }
     mapAItoAVT = znucset;
     cout << format("]\n"
-      "%1$d queries proceeded on database\n") % znucset.size();
+      "  %1$d queries proceeded on database\n") % znucset.size();
     cout << flush;
     TPPD << format("%1$d queries proceeded on database") % znucset.size();
     #ifdef DEBUG
@@ -97,6 +97,7 @@ namespace tpp {
     FOR_ATOMS_OF_MOL(it, tp.mol) {
       nbSuite.insert(pair<int,set<string> >(it->GetIdx(), znucset[it->GetAtomicNum()]));
     }
+    cout << "                                   ..finished! <----" << endl;
   } // end fillNB
 
   string AtomDefiner::getSQLSet(int ai) {
@@ -113,7 +114,7 @@ namespace tpp {
 
   /// implement existing bond counting
   void AtomDefiner::fillBonds() {
-    cout << "Comparing atom by bonds.." << endl;
+    cout << "\n ----> Comparing atom by bonds.." << endl;
     mysqlpp::Query qu = con->query();
     QueryResult res;
     mysqlpp::Row row;
@@ -134,7 +135,7 @@ namespace tpp {
     }
 
     // perform query at every Bond type
-    cout << "Bonds: [" << flush;
+    cout << "  Bonds: [" << flush;
     for (auto &cur: znucset) {
       int i = cur.first.first(), j = cur.first.second();
         qu = con->query();
@@ -180,7 +181,7 @@ namespace tpp {
         cout << "." << flush;
     } // end for znucset
     cout << format("]\n"
-              "%1$d queries proceeded on database\n") % znucset.size();
+              "  %1$d queries proceeded on database\n") % znucset.size();
     cout << flush;
     TPPD << format("%1$d queries proceeded on database\n") % znucset.size();
 
@@ -220,7 +221,7 @@ namespace tpp {
         assert(0);
       }
     } // end FOR_BONDS_OF_MOL
-
+    cout << "                                ..finished! <---- " << endl;
   } // end fillBonds
 
   /// implements angle counting

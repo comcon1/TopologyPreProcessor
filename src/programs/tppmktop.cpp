@@ -41,7 +41,6 @@ void printInfo();
 double sumcharge(const tpp::Topology &);
 
 int main(int argc, char * argv[]) {
-  tpp::initiate_logging("tppmktop.log");
   string progname("Execution rules for TPPMKTOP ");
   progname = progname + VERSION;
   p_o::options_description desc(progname), mandatory("Mandatory settings"),
@@ -72,10 +71,9 @@ int main(int argc, char * argv[]) {
             p_o::value<bool>()->default_value(false)->implicit_value(false),
             "Create final topology (don't create lack-file, overwrite dihedrals with pairs)")
         ("max-bonds,m",
-            p_o::value<bool>()->default_value(false)->implicit_value(false),
+            p_o::bool_switch()->default_value(false),
             "Maximize amount of bonds, angles and dihedrals by selecting other atom-types.")
-        ("verbose,v",
-            p_o::value<bool>()->default_value(false)->implicit_value(false),
+        ("verbose,v", p_o::bool_switch()->default_value(false),
             "Verbose mode")
         ("help,h", p_o::bool_switch()->default_value(false),
           "Print detailed help message")
@@ -114,12 +112,13 @@ int main(int argc, char * argv[]) {
     tpp::BondDefiner::Settings bondSettings;
 
     bool verbose = vars["verbose"].as<bool>();
+    tpp::initiate_logging("tppmktop.log", verbose);
 
     bondSettings.verbose = verbose;
     bondSettings.expanded = vars["expanded"].as<bool>();
     bondSettings.finalize = vars["finalize"].as<bool>();
 
-    atomSettings.maxbonds = vars.count("max-bonds") == 1;
+    atomSettings.maxbonds = vars["max-bonds"].as<bool>();
     atomSettings.maxdihedrals = atomSettings.maxbonds;
     atomSettings.maxangles = atomSettings.maxbonds;
 
@@ -178,8 +177,7 @@ int main(int argc, char * argv[]) {
       ro_path = bfs::weakly_canonical(ro_path);
       string ro_ext = strutil::toLower( ro_path.stem().string() );
       if (ro_ext != ".rtp") ro_path = bfs::path(ro_path.string()+".rtp");
-      TPPI << ("Output RTP: " + ro_path.string() );
-      TPPD << ("Output RTP [full path]: " + bfs::absolute(ro_path).string());
+      TPPI << ("Output RTP: " + bfs::absolute(ro_path).string());
       if ( bfs::exists(ro_path) ) {
         TPPI << "RTP output exists. File will be overwritten." ;
       }
@@ -190,6 +188,7 @@ int main(int argc, char * argv[]) {
     tpp::StructureIO sio(false, rtpout.size() > 0); // it seems that ignore index has no meaning here
     TOP.nrexcl = 3;
     sio.loadFromFile(TOP, iform, input_file.c_str());
+
     tpp::ResidueNameGenerator rng(if_path.filename().stem().string());
     TOP.res_name = rng.getName();
     TPPD << ("Using residue name: " + TOP.res_name);
@@ -202,9 +201,8 @@ int main(int argc, char * argv[]) {
     TOP.ffinfo = forcefield + " revision " + DI.getFFRev();
     TOP.ffdefaults = DI.getFFDefaults();
     TPPD << ("Force field defaults: "+TOP.ffdefaults);
-    if (verbose) {
-      cout << DI.getStatistics();
-    }
+    TPPD << DI.getStatistics();
+
     // starting program body
     tpp::AtomDefiner AD(baseSettings, atomSettings, TOP);
     AD.proceed();

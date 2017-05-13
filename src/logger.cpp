@@ -26,7 +26,7 @@ namespace tpp {
     return logger;
   }
 
-  void initiate_logging(const std::string& logname)
+  void initiate_logging(const std::string& logname, bool verbose)
   {
     logging::add_file_log
       (
@@ -43,7 +43,9 @@ namespace tpp {
     );
     logging::add_console_log(std::cout,
                     boost::log::keywords::format = "%Message%",
-                    boost::log::keywords::filter = logging::trivial::severity >= boost::log::trivial::severity_level::info
+                    boost::log::keywords::filter =
+                      (!verbose && (logging::trivial::severity >= boost::log::trivial::severity_level::info) ) ||
+                      (verbose &&  (logging::trivial::severity >= boost::log::trivial::severity_level::debug) )
                     );
 
     logging::add_common_attributes();

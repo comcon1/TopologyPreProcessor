@@ -4,7 +4,6 @@
 #include "core.hpp"
 
 #include <boost/numeric/ublas/matrix.hpp>
-#include <iostream>
 #include <set>
 
 namespace tpp {

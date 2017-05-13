@@ -51,7 +51,6 @@ string extension(const std::string& filename){
 }
 
 int main(int argc, char * argv[]) {
-  tpp::initiate_logging("tpprenum.log");
   string progname("Execution rules for TPPRENUM ");
   progname += PACKAGE_VERSION;
   p_o::options_description desc(progname), mandatory("Mandatory settings"),
@@ -91,6 +90,7 @@ int main(int argc, char * argv[]) {
     p_o::notify(vars);
 
     bool verbose = vars["verbose"].as<bool>();
+    tpp::initiate_logging("tpprenum.log", verbose);
     bool b36Flag = vars["base36"].as<bool>();
     bool ignore_index = !vars["ignore-index"].as<bool>(); // for some reason, this flag is inverted
     bool rtp_file = !vars["rtpoutput-file"].as<bool>();

@@ -18,7 +18,7 @@ namespace tpp {
 // or above level is written to stdout (without timestamps and
 // severity levels)
 //
- void initiate_logging(const std::string& log_file_name);
+ void initiate_logging(const std::string& log_file_name, bool);
 
  Logger& get_logger();
 }

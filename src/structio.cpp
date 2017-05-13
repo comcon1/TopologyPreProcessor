@@ -85,7 +85,7 @@ namespace tpp {
           throw e;
       }
       // reading from file with OpenBabel function
-      TPPI << "Start reading by OpenBabel.";
+      TPPI << "Reading molecule by OpenBabel..";
       OBMol mol;
       if ( (!conv.Read(&mol)) || (!mol.NumAtoms()) ) {
         Exception e("Can't read file format.");
@@ -93,11 +93,11 @@ namespace tpp {
         e.add("error", "OpenBabel: parsing error");
         throw e;
       }
-      TPPI << "Reading from openbabel: DONE.";
+      TPPI << "                               ..DONE.";
 
       tp.mol = mol;
 
-      TPPI << "Start reading by internal procedure.";
+      TPPI << " ----> Reading molecule by internal procedure..";
       // Reading molecule in AtomArray format
       // ---------------------------------------
       switch(ifm) {
@@ -214,7 +214,7 @@ namespace tpp {
                     cur0.coord(2)  = numeric_cast<double>(__z);
                     cur0.comment   = string("QMname: ") + _qName;
 
-                    TPPD << format("%s - %s: %d(%d) [%8.3f,%8.3f,%8.3f] %s") % cur0.res_name % cur0.atom_name
+                    TPPD << format("  %4s - %4s: %3d(%3d) [%8.3f,%8.3f,%8.3f] %s") % cur0.res_name % cur0.atom_name
                           % cur0.oldindex % cur0.index % cur0.coord(0) % cur0.coord(1) % cur0.coord(2) % cur0.comment;
                     at_it = tp.atoms.insert( cur0 );
 
@@ -281,12 +281,16 @@ namespace tpp {
         e.add("error", "no atoms");
         throw e;
       } else {
-        TPPI << format("Successfully readed %d atoms!") % tp.atoms.size();
+        TPPD << "  ========";
+        TPPI << format("  Successfully readed %d atoms!") % tp.atoms.size();
       }
+//              ----> Reading molecule by internal procedure..
+      TPPI << "                                               ..DONE. <----";
     } catch(const Exception &e) {
       //e.fix_log();
       throw e;
     }
+
   } // end loadFromStream
 
   void StructureIO::saveToFile(Topology &tp, OutputFormat ofm, const char *fname) {

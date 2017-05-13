@@ -82,7 +82,7 @@ namespace tpp {
     assert(cur_mn == required_mn);
 
     os << "Required magic number: " << required_mn << endl;
-    os << "Current  magic number: " << cur_mn << endl;
+    os << "Current  magic number: " << cur_mn;
 
     TPPD << os.str();
 
@@ -175,7 +175,7 @@ namespace tpp {
     mysqlpp::Query qu = this->con->query();
     QueryResult res;
     mysqlpp::Row row;
-    ostringstream os;
+    ostringstream os, retos;
     os << format("\
 SELECT\n\
  (SELECT COUNT(*) FROM atoms WHERE ffield = %1$d) as count_atoms,\n\
@@ -196,8 +196,7 @@ SELECT\n\
       e.add("query", os.str());
       throw e;
     }
-    os.str("");
-    os << format("\
+    retos << format("\
 Forcefield %1$s was found in database.\n\
 Description: %7$s.\n\
 Total statistics:\n\
@@ -206,7 +205,6 @@ Total statistics:\n\
       % this->ffName.c_str() % res.at(0)["count_atoms"] % res.at(0)["count_bonds"]
       % res.at(0)["count_angles"] % res.at(0)["count_dihedrals"] % res.at(0)["count_nonbond"]
       % this->ffDesc;
-
     //TODO: this query does not show last INSERT events. Should fix.
     qu.reset();
     os.str("");
@@ -232,11 +230,11 @@ Total statistics:\n\
         ss.push_back(string(row["Update_time"]));
     }
     std::sort(ss.begin(), ss.end());
-    os << "Database last update: " << ss.back() << endl;
+    retos << "Database last update: " << ss.back() << endl;
 
     // force field revision
-    os << format("Force field %1$s DB revision: %2$s.") % this->ffName % this->ffRev  << endl;
-    return os.str();
+    retos << format("Force field %1$s DB revision: %2$s.") % this->ffName % this->ffRev  << endl;
+    return retos.str();
   } // end get Statistics
 
 }
