@@ -6,6 +6,7 @@ AC_INIT([Topology PreProcessor], [0.2], [comconadin@gmail.com])
 AM_INIT_AUTOMAKE([])
 AC_CONFIG_SRCDIR([src/logger.cpp])
 AC_CONFIG_HEADERS([config.h])
+AC_CONFIG_MACRO_DIR([m4])
 
 
 # Checks for programs.
@@ -14,6 +15,24 @@ AC_PROG_CC
 AC_PROG_MAKE_SET
 
 AC_LANG([C++])
+
+AX_BOOST_BASE([1.60],, [AC_MSG_ERROR([TppMKTOP needs Boost, but it was not found in your system])])
+AX_BOOST_THREAD
+AX_BOOST_LOG
+AX_BOOST_LOG_SETUP
+AX_BOOST_FILESYSTEM
+AX_BOOST_PROGRAM_OPTIONS
+AX_BOOST_SYSTEM
+
+echo
+echo '>> After BOOST checks'
+echo
+
+echo $CPPFLAGS
+echo $CXXFLAGS
+echo $LIBS
+echo $LDFLAGS
+
 
 echo
 echo '>> Checking for common requirements of TPPMKTOP'
@@ -28,18 +47,6 @@ echo
 AC_CHECK_LIB(pthread, pthread_create, [PTHREAD_CFLAGS+=-pthread])
 #AC_PTHREAD()
 
-AC_CHECK_LIB([boost_system], [main],[],
-             [AC_MSG_ERROR([Can not link to boost_system!])] )
-AC_CHECK_LIB([boost_thread], [main],[],
-             [AC_MSG_ERROR([Can not link to boost_thread!])] )
-AC_CHECK_LIB([boost_log_setup], [main],[],
-             [AC_MSG_ERROR([Can not link to boost_log_setup!])] )
-AC_CHECK_LIB([boost_log], [main],[],
-             [AC_MSG_ERROR([Can not link to boost_log!])] )
-AC_CHECK_LIB([boost_filesystem], [main],[],
-             [AC_MSG_ERROR([Can not link to boost_filesystem!])] )
-AC_CHECK_LIB([boost_system], [main],[],
-             [AC_MSG_ERROR([Can not link to boost_system!])] )
 
 echo 'Pthread flags:'
 echo $CXXFLAGS
@@ -49,15 +56,20 @@ echo $PTHREAD_CC
 echo $PTHREAD_LIBS
 echo 'end of flags'
 
-
+CPPFLAGS="$BOOST_CPPFLAGS $CPPFLAGS"
+LDFLAGS="$LDFLAGS $BOOST_LDFLAGS"
 CXXFLAGS="-DBOOST_LOG_DYN_LINK $PTHREAD_CFLAGS $CXXFLAGS"
-LIBS="$PTHREAD_LIBS $LIBS"
+LIBS="$PTHREAD_LIBS $LIBS $BOOST_LOG_LIB $BOOST_LOG_SETUP_LIB \
+ $BOOST_PROGRAM_OPTIONS_LIB $BOOST_FILESYSTEM_LIB $BOOST_SYSTEM_LIB \
+ $BOOST_THREAD_LIB"
+
 # Not every required header is included into check but I think that's enough
 
 AC_CHECK_HEADERS_ONCE([boost/log/trivial.hpp boost/log/sources/severity_logger.hpp boost/log/utility/setup/file.hpp],,
                 [AC_MSG_ERROR([BOOST::LOG headers are not present!])])
 
 AC_MSG_CHECKING([for BOOST::LOG correct behavior])
+
 AC_TRY_LINK([#include <boost/log/trivial.hpp>],
             [
     BOOST_LOG_TRIVIAL(trace) << "A trace severity message";
@@ -68,10 +80,6 @@ AC_TRY_LINK([#include <boost/log/trivial.hpp>],
             [AC_MSG_ERROR([Error compiling example BOOST::LOG code! May be wrong version.])]
 )
 
-# Checks for BOOST::PROGRAM_OPTIONS
-AC_CHECK_LIB([boost_program_options], [main],,
-             [AC_MSG_ERROR([Can not link to libboost_program_options!])]
-)
 AC_CHECK_HEADERS_ONCE([boost/program_options/options_description.hpp boost/program_options/parsers.hpp boost/program_options/variables_map.hpp boost/program_options/errors.hpp],,
                 [AC_MSG_ERROR([BOOST headers are required! Install libboost-dev!])] )
 

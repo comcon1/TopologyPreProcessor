@@ -4,8 +4,8 @@
  *
  */
 
-#include "global.hpp"
 #include "core.hpp"
+#include "global.hpp"
 #include "exceptions.hpp"
 #include "logger.hpp"
 #include "topio.hpp"
