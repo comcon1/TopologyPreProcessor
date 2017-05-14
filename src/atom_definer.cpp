@@ -39,7 +39,8 @@ namespace tpp {
 
   /// implement non-bond map filling
   void AtomDefiner::fillNB() {
-    cout << "\n ----> Comparing atom by elements.." << endl;
+    cout << endl;
+    TPPI << " ----> Comparing atom by elements..";
     mysqlpp::Query qu = con->query();
     QueryResult res;
     mysqlpp::Row row;
@@ -77,10 +78,8 @@ namespace tpp {
       cout << "." << flush;
     }
     mapAItoAVT = znucset;
-    cout << format("]\n"
-      "  %1$d queries proceeded on database\n") % znucset.size();
-    cout << flush;
-    TPPD << format("%1$d queries proceeded on database") % znucset.size();
+    cout << "]" << endl;
+    TPPD << format("  %1$d queries proceeded on database") % znucset.size();
     #ifdef DEBUG
     ostringstream os;
     os << "\n-- Logging znucset for NB --" << endl;
@@ -97,7 +96,7 @@ namespace tpp {
     FOR_ATOMS_OF_MOL(it, tp.mol) {
       nbSuite.insert(pair<int,set<string> >(it->GetIdx(), znucset[it->GetAtomicNum()]));
     }
-    cout << "                                   ..finished! <----" << endl;
+    TPPI << "                                   ..finished! <----";
   } // end fillNB
 
   string AtomDefiner::getSQLSet(int ai) {
@@ -529,8 +528,6 @@ namespace tpp {
 
   /// general atomtype attribution
   void AtomDefiner::atomAlign() {
-    cout << "Starting atomAlign.." << endl;
-    TPPD << "Starting atomAlign attribution procedure";
     typedef multi_index_container<tempstruct_t,
         indexed_by<
             ordered_unique<member<tempstruct_t, int, &tempstruct_t::id> > > > AtomMapper;
@@ -539,13 +536,27 @@ namespace tpp {
     QueryResult res;
     mysqlpp::Row row;
     mysqlpp::Row::size_type co;
-    TPPD << "Requesting full atomtype table.";
-    qu
-        << "SELECT id, uname, name, charge, mass, comment FROM atoms WHERE ffield = "
+    ostringstream os;
+
+    TPPI << " ----> Finalization of atomtype attribution..";
+
+    TPPD << "  Requesting full atomtype table.";
+    os << "SELECT id, uname, name, charge, mass, comment FROM atoms WHERE ffield = "
         << atomSettings.ffID;
+    #ifdef SQLDEBUG
+    TPPD << os.str();
+    #endif // SQLDEBUG
+    qu << os.str();
     res = qu.store();
-    assert(res);
-    cout << "Filling map ..." << flush;
+    if (!res) {
+      SqlException e("Error in SQL request.");
+      e.add("procname", "tpp::AtomDefiner::atomAlign");
+      e.add("error", "SQL query error");
+      e.add("sql_error", qu.error() );
+      e.add("query", os.str());
+      throw e;
+    }
+    TPPD << "  Forming atomtype map.";
     for (co = 0; co < res.num_rows(); ++co) {
       row = res.at(co);
       tempstruct_t t0;
@@ -557,12 +568,18 @@ namespace tpp {
       t0.comment = row["comment"].c_str();
       atom_mapper.insert(t0);
     }
-    assert(co > 1);
+    if (!co) {
+      SqlException e("Empty atomtype list resulted.");
+      e.add("procname", "tpp::AtomDefiner::atomAlign");
+      e.add("error", "SQL query error");
+      e.add("sql_error", qu.error() );
+      e.add("query", os.str());
+      throw e;
+    }
     qu.reset();
-    cout << "done." << endl;
+
     // finding atoms with maximum scores
-    cout << "Applying scores..." << endl;
-    TPPD << "Applying scores...";
+    TPPI << "  Applying scores.";
     AtomMapper::iterator chk0;
     AtomArray::iterator newa_;
     int max, max_;
@@ -588,15 +605,19 @@ namespace tpp {
       newa.comment = chk0->comment;
       tp.atoms.replace(newa_, newa);
     }
+
     smartCgnr();
+
+    TPPI << "                                             ..DONE. <----";
   } // end atomAlign procedure
 
   /// count scores for znuc, atoms, bonds and dihedrals
   void AtomDefiner::countAVTScores() {
     map<string, int> tmp1, tmp2;
-    TPPD << "avtScores are cleared";
+    TPPD << "Valence-type scores (avtScores) are cleared.";
     avtScores.clear();
-    cout << " ----> Calculating scores for every atom.." << endl;
+    cout << endl;
+    TPPI << " ----> Calculating scores for every atom..";
 
     // init avtScores, znuc scores apply
     for (auto nb: nbSuite) {
@@ -605,7 +626,7 @@ namespace tpp {
         tmp1.insert(pair<string, int>(subnb, TPP_ZNUC_COEFF));
       avtScores.insert(pair<int, map<string, int> >(nb.first, tmp1));
     }
-    TPPD << "Atomic number map was applied.";
+    TPPD << "  Atomic number map was applied.";
 
     if (atomSettings.maxbonds) {
       // bond scores apply
@@ -622,7 +643,7 @@ namespace tpp {
         }
       }
     } // endif maxbond
-    TPPD << "Valence bond map was applied.";
+    TPPD << "  Valence bond map was applied.";
 
     if (atomSettings.maxangles) {
       // angle scores apply
@@ -640,7 +661,7 @@ namespace tpp {
         }
       }
     } // endif angles
-    TPPD << "Valence anlge map was applied.";
+    TPPD << "  Valence anlge map was applied.";
 
     if (atomSettings.maxdihedrals) {
       // dihedral scores apply
@@ -659,10 +680,10 @@ namespace tpp {
         }
       }
     } // end dihedrals
-    TPPD << "Dihedral angle map was applied.";
+    TPPD << "  Dihedral angle map was applied.";
 
     convertAVTtoScores();
-    cout << "                                           ..finished! <---- " << endl;
+    TPPI << "                                           ..finished! <---- ";
   }
 
   void AtomDefiner::printScores(std::ostream &os) {
@@ -689,6 +710,8 @@ namespace tpp {
   AtomDefiner::AtomDefiner(const DbBase::Settings& s1,
                            const AtomDefiner::Settings& s2,
                            Topology &tp_) : DbBase(s1), atomSettings(s2),tp(tp_) {
+    cout << endl;
+    TPPI << "== Starting AtomDefiner ==";
     connectDB();
     scoresZeroFill();
   }
@@ -894,7 +917,8 @@ namespace tpp {
             j.second = 0;
 
         // next work with copied sf_scores
-        TPPD << "Starting curious SMART-fitting procedure.\n";
+        cout << endl;
+        TPPI << " ----> Performing SMART-based atomtype attribution..";
         mysqlpp::Query qu = con->query();
         QueryResult res;
         mysqlpp::Row    row;
@@ -916,8 +940,7 @@ namespace tpp {
         TPPD << os.str();
         #endif // SQLDEBUG
         qu << os.str();
-        TPPD << "Loading patterns from database...";
-        cout << "Patterns are loading. Please wait.." << flush;
+        TPPI << "  Loading patterns from database.";
         res = qu.store();
         if (!res) {
           SqlException e("SQL query failed!");
@@ -926,19 +949,19 @@ namespace tpp {
           e.add("sql_error", qu.error() );
           throw e;
         }
-        TPPD << "OK!";
-        cout << " finished." << endl;
-        cout << "Starting SMART-fit." << endl;
-        cout << ( format("Patterns checked: %1$4d.") % 0 ) << flush;
+        TPPD << "  SMART patterns have been loaded from DB.";
+        TPPI << "  Checking every SMART-pattern.";
+        if (!atomSettings.verbose)
+          cout << ( format("  Patterns checked: %1$4d.") % 0 ) << flush;
 
         // process every pattern while reading DB rows
-        for(co=0; co < res.num_rows(); ++co) {
+        for (co=0; co < res.num_rows(); ++co) {
           row = res.at(co);
           pat.Init(row["PAT"]);
           std::ostringstream os;
-          os << format("[OB] Process PAT: %1$s having %2$d atoms.\n")
+          os << format("  ** [OB] Process PAT: %1$s having %2$d atoms.")
               % row["PAT"] % pat.NumAtoms();
-          TPPD<<os.str();
+          TPPD << os.str();
           pat.Match(tp.mol);
           maplist.clear();
           atoms_suite.clear();
@@ -969,14 +992,20 @@ namespace tpp {
             }
 
           }
-          cout << ( format("\b\b\b\b\b%1$4d.") % (int)co ) << flush;
+          if (!atomSettings.verbose)
+            cout << ( format("\b\b\b\b\b%1$4d.") % (int)co ) << flush;
         } // scanning over every smarts
-        cout << "\n";
+
+        if (!atomSettings.verbose)
+          cout << "\n";
 
         // apply smart scores to main scores map
         for (auto &i : sf_scores)
           for (auto &j : i.second)
             scores[i.first][j.first] += TPP_SMART_COEFF * j.second;
+
+        // I << " ----> Performing SMART-based atomtype attribution..";
+        TPPI << "                                                    ..DONE. <----";
   } // end smartfit
 
 } // tpp namespace

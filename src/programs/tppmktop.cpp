@@ -118,6 +118,7 @@ int main(int argc, char * argv[]) {
     bondSettings.expanded = vars["expanded"].as<bool>();
     bondSettings.finalize = vars["finalize"].as<bool>();
 
+    atomSettings.verbose  = verbose;
     atomSettings.maxbonds = vars["max-bonds"].as<bool>();
     atomSettings.maxdihedrals = atomSettings.maxbonds;
     atomSettings.maxangles = atomSettings.maxbonds;
@@ -163,9 +164,9 @@ int main(int argc, char * argv[]) {
        e.add("error", os.str());
        throw e;
     }
-    if (verbose) {
-       cout << tpp::in_fmt_descr(iform)<<endl;
-    }
+    if_path = bfs::weakly_canonical(if_path);
+    TPPI << ("Input structure: " + bfs::absolute(if_path).string());
+    TPPD << tpp::in_fmt_descr(iform);
 
     if (bondSettings.finalize)
       TPPI << "TPPMKTOP will try to make final topology!";

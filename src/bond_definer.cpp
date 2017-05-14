@@ -37,6 +37,8 @@ namespace tpp {
                            Topology &_tp) : DbBase(s1),
                                            bondSettings(s2),
                                            tp(_tp) {
+    cout << endl;
+    TPPI << "== Starting BondDefiner ==";
     connectDB();
   }
 

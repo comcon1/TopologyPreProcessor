@@ -57,17 +57,21 @@ namespace tpp {
     mysqlpp::Query qu = this->con->query();
     QueryResult res;
     mysqlpp::Row row;
-    ostringstream os;
+    ostringstream os,os2;
 
     os << "Checking DB version." << endl;
-
-    qu << "SELECT `id`,`keyword`,`value` FROM `properties` WHERE keyword='magic_number'";
+    os2 << "SELECT `id`,`keyword`,`value` FROM `properties` WHERE keyword='magic_number'";
+    #ifdef SQLDEBUG
+    TPPD << os2.str();
+    #endif // SQLDEBUG
+    qu << os2.str();
     res = qu.store();
     if (!res) {
       SqlException e("SQL query failed: may be you have incorrect DataBase!");
       e.add("procname", "tpp::DbInfo::connectDB");
       e.add("error", "SQL query error");
       e.add("sql_error", qu.error() );
+      e.add("query", os2.str());
       throw e;
     }
     if (res.num_rows() != 1) {
@@ -81,15 +85,14 @@ namespace tpp {
     string required_mn(DB_MAGICNUMBER);
     assert(cur_mn == required_mn);
 
-    os << "Required magic number: " << required_mn << endl;
-    os << "Current  magic number: " << cur_mn;
+    os << format("Required|current magic number: %s | %s") % required_mn % cur_mn;
 
     TPPD << os.str();
 
     if (cur_mn.c_str()[4] > required_mn.c_str()[4]) {
       TPPE << "\n"
-"Your DataBase version is slightly higher. Program should work but\n"
-"this behavior may be unpredictable. It is better to update the code." << endl;
+"** Your DataBase version is slightly higher. Program should work but\n"
+"** this behavior may be unpredictable. It is better to update the code.\n";
     }
 
     return true;
@@ -233,7 +236,7 @@ Total statistics:\n\
     retos << "Database last update: " << ss.back() << endl;
 
     // force field revision
-    retos << format("Force field %1$s DB revision: %2$s.") % this->ffName % this->ffRev  << endl;
+    retos << format("Force field %1$s DB revision: %2$s.") % this->ffName % this->ffRev;
     return retos.str();
   } // end get Statistics
 

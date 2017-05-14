@@ -154,6 +154,7 @@ namespace tpp {
       /// Parameters for caluclations
       struct Settings {
         short ffID;        //!< id of current forcefield
+        bool verbose;      //!< if the output is verbosed
         bool maxbonds;     //!< try to maximize count of known bonds [EXPERIMENTAL]
         bool maxdihedrals; //!< try to maximize count of known dihedrals [EXPERIMENTAL]
         bool maxangles;    //!< try to maximize count of known angles [EXPERIMENTAL]

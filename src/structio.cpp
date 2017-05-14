@@ -14,34 +14,38 @@
 
 #include <cctype>
 
-using std::string;
-using std::to_string;
-using std::pair;
-using std::ios;
-using std::fstream;
-
-using boost::numeric_cast;
-using boost::lexical_cast;
-using boost::format;
-
-using OpenBabel::OBConversion;
-using OpenBabel::OBMol;
-using OpenBabel::OBMolAtomIter;
-using OpenBabel::OBAtomAtomIter;
-
 namespace tpp {
 
+  using std::string;
+  using std::to_string;
+  using std::pair;
+  using std::ios;
+  using std::fstream;
+  using std::cout;
+  using std::endl;
+  using std::flush;
+
+  using boost::numeric_cast;
+  using boost::lexical_cast;
+  using boost::format;
+
+  using OpenBabel::OBConversion;
+  using OpenBabel::OBMol;
+  using OpenBabel::OBMolAtomIter;
+  using OpenBabel::OBAtomAtomIter;
 
   StructureIO::StructureIO(bool ign, bool rtp) : ignoreIndexFlag(ign), rtpoutput_file(rtp){
     // TODO: some interface stuff
-    ;
+    cout << endl;
+    TPPI << "== Starting StructureIO ==";
+    cout << endl;
   }
 
 
   void StructureIO::loadFromFile(Topology &tp, InputFormat ifm,
                                  const char *fname)  {
     // test if file exists
-    TPPI << format("Trying to read structure from '%s' ..") % fname;
+    TPPI << format("Structure will be read from '%s'.") % fname;
     fstream inf(fname, ios::in);
     if (!inf.is_open()) {
       TPPE << "Fail to open file for read.";
@@ -85,7 +89,7 @@ namespace tpp {
           throw e;
       }
       // reading from file with OpenBabel function
-      TPPI << "Reading molecule by OpenBabel..";
+      TPPI << "Reading molecule by OpenBabel.";
       OBMol mol;
       if ( (!conv.Read(&mol)) || (!mol.NumAtoms()) ) {
         Exception e("Can't read file format.");
@@ -93,7 +97,6 @@ namespace tpp {
         e.add("error", "OpenBabel: parsing error");
         throw e;
       }
-      TPPI << "                               ..DONE.";
 
       tp.mol = mol;
 
@@ -282,7 +285,7 @@ namespace tpp {
         throw e;
       } else {
         TPPD << "  ========";
-        TPPI << format("  Successfully readed %d atoms!") % tp.atoms.size();
+        TPPI << format("  Successfully read %d atoms!") % tp.atoms.size();
       }
 //              ----> Reading molecule by internal procedure..
       TPPI << "                                               ..DONE. <----";
