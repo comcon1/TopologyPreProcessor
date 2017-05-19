@@ -135,7 +135,8 @@ int main(int argc, char * argv[]) {
     if (verbose) {
       printInfo();
     } else {
-      cout << format("Starting %1$s program.\n") % "TPPMKTOP";
+      TPPI << format("Starting %s %s program.") % "TPPMKTOP" % PACKAGE_VERSION;
+      cout << "------------------------------------------\n" << endl;
     }
     // INPUT analysing
     tpp::InputFormat iform;

@@ -39,6 +39,7 @@ namespace tpp {
                                            tp(_tp) {
     cout << endl;
     TPPI << "== Starting BondDefiner ==";
+    cout << endl;
     connectDB();
   }
 
@@ -477,7 +478,7 @@ void BondDefiner::fillDihedrals() {
 
 //! use for clever choosing and posing improper dihedrals
 void BondDefiner::fillImpropers() {
-  TPPD << "Starting curious SMART-improper-dihedral fitting.\n";
+  TPPI << " ----> Performing automatic improper dihedral assignment..";
   mysqlpp::Query qu = con->query();
   ostringstream os;
   os << format(
@@ -491,8 +492,7 @@ void BondDefiner::fillImpropers() {
   TPPD << os.str();
   #endif // SQLDEBUG
   qu << os.str();
-  TPPD << "Loading IMPROPER patterns from DB..";
-  cout << "IMPROPER patterns are loading. Please wait.." << flush;
+  TPPI << "  Loading IMPROPER patterns from DB.";
   QueryResult res;
   res = qu.store();
   if (!res) {
@@ -503,9 +503,9 @@ void BondDefiner::fillImpropers() {
     e.add("sql_query", qu.str());
     throw e;
   }
-  TPPD << "OK!";;
-  cout << " finished.\n" << "Starting SMART-fit." << endl;
-  cout << (format("Patterns checked: %1$4d.") % 0) << flush;
+  TPPI << "  Process loaded SMART patterns." << endl;
+  if (!bondSettings.verbose)
+    cout << (format("  Patterns checked: %4d.") % 0) << flush;
   mysqlpp::Row::size_type co;
   mysqlpp::Row row;
   OBSmartsPattern pat;
@@ -516,21 +516,21 @@ void BondDefiner::fillImpropers() {
     row = res.at(co);
     pat.Init(row["PAT"]);
     os
-        << format("[OB] Process PAT: %1$s having %2$d atoms.\n")
+        << format("  ** [OB] Process PAT: %1$s having %2$d atoms.\n")
             % row["PAT"] % pat.NumAtoms();
-    TPPD<<os.str();
+    TPPD << os.str();
     pat.Match(tp.mol);
     assert(pat.NumAtoms() == 4);
     maplist.clear();
     maplist = pat.GetUMapList();
-#ifdef CDB
+    #ifdef CDB
     cout << "============> " << row["PAT"] << "\n"
     << "Matches: " << maplist.size() << endl;
-#endif
+    #endif
     os
-        << format("[OB] Pattern %1$s matches %2$d times.\n")
+        << format("  ** [OB] Pattern %1$s matches %2$d times.\n")
             % row["PAT"] % maplist.size();
-    TPPD<<os.str();
+    TPPD << os.str();
     // manipulating matches
     for (int i = 0; i < maplist.size(); ++i) {
       int oo = (int) (row["order"]);
@@ -553,9 +553,9 @@ void BondDefiner::fillImpropers() {
               && (tp.atoms.find(tel.j) != tp.atoms.end())
               && (tp.atoms.find(tel.k) != tp.atoms.end())
               && (tp.atoms.find(tel.l) != tp.atoms.end()));
-#ifdef CDB
+      #ifdef CDB
       cout << format(" --- %1$d  %2$d  %3$d  %4$d ---") % tel.i % tel.j % tel.k % tel.l << endl;
-#endif
+      #endif
       // element is adding unconditionally
       tp.elements.push_back(tel);
       // top-coord is added only once
@@ -573,15 +573,18 @@ void BondDefiner::fillImpropers() {
         tp.parameters.insert(tpc);
       } // end if
     } // end for (matches)
-#ifdef CDB
+    #ifdef CDB
     cout << endl;
-#endif
-    cout << (format("\b\b\b\b\b%1$4d.") % (int) co) << flush;
+    #endif
+    if (!bondSettings.verbose)
+      cout << (format("\b\b\b\b\b%1$4d.") % (int) co) << flush;
   } // end for (rows)
 
-  cout << endl;
+  if (!bondSettings.verbose)
+    cout << endl;
 
   //TODO: remove impropers if duplicate for specials
+  TPPI << "                                                          .. DONE. <----";
 
 } // end fill_special
 
