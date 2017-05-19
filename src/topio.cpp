@@ -86,7 +86,8 @@ namespace tpp {
   using OpenBabel::OBAtomAtomIter;
   using namespace phoenix;
 
-  void save_topology_rtp(const Topology &tp, const char *fname) {
+  // save RTP format
+  void TopologyIO::saveRTP(const Topology &tp, const char *fname) {
     // test if file exists
     TPPD << format("Trying to write RTP-topology into '%s'.")  % fname;
     fstream out(fname, ios::out);
@@ -195,10 +196,11 @@ namespace tpp {
     out << "; end of TPPMKTOP topology" << endl;
     out.close();
     TPPD << "Topology has been succesfully written.";
-  } // save_topology_rtp
+  } // saveRTP
 
 
-  void save_topology(const Topology &tp, const char *fname, bool ncf) {
+  // save topology to file in GMX
+  void TopologyIO::saveITP(const Topology &tp, const char *fname, bool ncf) {
     TPPD << format("Trying to write ITP-topology into '%s'.")  % fname;
     fstream out(fname, ios::out);
     if (!out.is_open()) {
@@ -326,7 +328,7 @@ namespace tpp {
   } // save_topology
 
   // save information about lacking topology
-  void save_lack(const Topology &tp, const char *fname) {
+  void TopologyIO::saveAbsentParametersITP(const Topology &tp, const char *fname) {
         TPPI << format("TPP will write %1$d lack parameters to %2$s.\n")
           % tp.parameters.get<2>().count(-1) % fname;
         std::ofstream qalcfile(fname, ios::out);

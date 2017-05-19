@@ -53,8 +53,8 @@ namespace tpp {
 
     genPairs = strutil::split(tp.ffdefaults, " ")[2] == "yes";
     TPPD << format("Generating pairs flag: %d") % genPairs;
-    if (genPairs && bondSettings.verbose) {
-      cout << "1-4 pair generation is required for FF." << endl;
+    if (genPairs ) {
+      TPPD << "1-4 pair generation is required for FF.";
     }
 
     int cat, cbon, cang, cdih, cnb;
@@ -503,7 +503,7 @@ void BondDefiner::fillImpropers() {
     e.add("sql_query", qu.str());
     throw e;
   }
-  TPPI << "  Process loaded SMART patterns." << endl;
+  TPPI << "  Processing loaded SMART patterns.";
   if (!bondSettings.verbose)
     cout << (format("  Patterns checked: %4d.") % 0) << flush;
   mysqlpp::Row::size_type co;
@@ -516,7 +516,7 @@ void BondDefiner::fillImpropers() {
     row = res.at(co);
     pat.Init(row["PAT"]);
     os
-        << format("  ** [OB] Process PAT: %1$s having %2$d atoms.\n")
+        << format("  ** [OB] Process PAT: %1$s having %2$d atoms.")
             % row["PAT"] % pat.NumAtoms();
     TPPD << os.str();
     pat.Match(tp.mol);
@@ -528,7 +528,7 @@ void BondDefiner::fillImpropers() {
     << "Matches: " << maplist.size() << endl;
     #endif
     os
-        << format("  ** [OB] Pattern %1$s matches %2$d times.\n")
+        << format("  ** [OB] Pattern %1$s matches %2$d times.")
             % row["PAT"] % maplist.size();
     TPPD << os.str();
     // manipulating matches
@@ -598,7 +598,7 @@ void BondDefiner::fillPairs() {
     tpc.f = 1;
     tp.parameters.insert(tpc);
     // generating pairs
-    cout << "Generating 1-4 pairs for FF needs.." << flush;
+    TPPI << "Generating 1-4 pairs.";
     FOR_TORSIONS_OF_MOL(it,tp.mol) {
       TopElement tel;
       tel.defname = "ONE_PAIR";
@@ -608,7 +608,6 @@ void BondDefiner::fillPairs() {
       tel.j = tp.atoms.find((*it)[3]+1)->index;
       tp.elements.push_back(tel);
     }
-    cout << "ok." << endl;
   }
 } // end fillPairs
 

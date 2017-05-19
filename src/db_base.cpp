@@ -83,11 +83,17 @@ namespace tpp {
 
     string cur_mn(res.at(0)["value"]);
     string required_mn(DB_MAGICNUMBER);
-    assert(cur_mn == required_mn);
 
     os << format("Required|current magic number: %s | %s") % required_mn % cur_mn;
 
     TPPD << os.str();
+
+    if (cur_mn.substr(0,4) != required_mn.substr(0,4)) {
+      Exception e("Your DataBase has incompatible version!");
+      e.add("procname", "tpp::DbInfo::connectDB");
+      e.add("error", "Error in DB check.");
+      throw e;
+    }
 
     if (cur_mn.c_str()[4] > required_mn.c_str()[4]) {
       TPPE << "\n"
@@ -162,11 +168,11 @@ namespace tpp {
     #endif // SQLDEBUG
     res = qu.store();
     if ( (!res) || res.size() == 0 || (!res.at(0)) ) {
-      SqlException e("SQL force field revision is unknown!");
+      SqlException e("Error in SQL or force field revision is unknown!");
       e.add("procname", "tpp::atom_definer::connectDB");
-      e.add("error", "SQL query error");
+      e.add("error", (!res) ? "SQL query error" : "Revision not found");
       e.add("sql_error", qu.error() );
-      e.add("query", qu.str());
+      e.add("query", os.str());
       throw e;
     }
     this->ffRev = res.at(0)["value"].c_str();

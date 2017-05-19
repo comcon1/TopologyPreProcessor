@@ -12,26 +12,50 @@
 
 namespace tpp {
 
-
-  /**
-   *  \brief Hm. Writes topology to file, I guess?
+  /** \brief Communication class for running IO procedures under needed
+   * environment.
    *
-   *  \param top topology to be written
-   *  \param fname output file name
-   *  \param ncf ???
+   * @TODO: ... some long desc ...
    *
    */
-  void save_topology(const Topology & top, const char * fname, bool ncf) ;
+  class TopologyIO {
 
-  void save_topology_rtp(const Topology &, const char *);
+    public:
+
+      /**
+       *  \brief Write topology to file in GMX format.
+       *
+       *  \param top topology to be written
+       *  \param fname output file name
+       *  \param ncf no-calculate format
+       *
+       */
+      void saveITP(const Topology & top, const char * fname, bool ncf) ;
+
+      /** \brief Save information about force parameters that are absent in the FF.
+        *
+        * \param top topology object
+        * \param fname output file name
+        *
+        */
+      void saveAbsentParametersITP(const Topology &top, const char *fname);
+
+
+      /** \brief Save pre-topology in RTP format.
+        *
+        * \param top topology object
+        * \param fname output RTP file name
+        */
+      void saveRTP(const Topology &top, const char *fname);
+  };
+
+  // @TODO: describe in details below functions
 
   void load_topology(Topology &, const char *);
 
   void load_lack(Topology &, const char *);
 
   void check_topology(Topology &) ;
-
-  void save_lack(const Topology &, const char *);
 
 #if ENABLE_GAMESS_FEATURES
   void load_hessian(ublas::matrix<double>&, const char *);

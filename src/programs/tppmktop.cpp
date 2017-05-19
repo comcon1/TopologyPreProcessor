@@ -91,6 +91,9 @@ int main(int argc, char * argv[]) {
         ("sqlpassword,p",
             p_o::value<std::string>()->default_value("estatic"),
             "Mysql-password (default 'estatic')")
+        ("sqldb",
+            p_o::value<std::string>()->default_value("tppforcefield"),
+            "Mysql database (default 'tppforcefield')")
           ;
     desc.add(mandatory).add(optional).add(dbopts);
   try {
@@ -127,7 +130,7 @@ int main(int argc, char * argv[]) {
     baseSettings.user     = vars["sqluser"].as<string>();
     baseSettings.password = vars["sqlpassword"].as<string>();
     baseSettings.port     = vars["sqlport"].as<unsigned>();
-    baseSettings.dbname   = "tppforcefield"; // TODO remove hard code
+    baseSettings.dbname   = vars["sqldb"].as<string>();
 
     // finish analysing
     // starting work with input and output files
@@ -211,12 +214,16 @@ int main(int argc, char * argv[]) {
     AD.atomAlign();
     tpp::BondDefiner BD(baseSettings, bondSettings, TOP);
     BD.bondAlign();
-    tpp::save_topology(TOP, output_file.c_str(), false); //TODO: finalize & expanded
-    tpp::save_lack(TOP, lackfile.c_str());
+
+    // TODO: finalize & expanded
+    tpp::TopologyIO tio;
+    tio.saveITP(TOP, output_file.c_str(), false);
+    tio.saveAbsentParametersITP(TOP, lackfile.c_str());
     if (rtpout.size() > 0) {
-      tpp::save_topology_rtp(TOP, rtpout.c_str());
+      tio.saveRTP(TOP, rtpout.c_str());
     }
-    cout << format("Please, correct your charges according to sum: %1$8.3f.\n") % sumcharge(TOP);
+    TPPI << format("Please, correct your charges according to sum: %1$8.3f.\n") % sumcharge(TOP);
+
   } // of global try
   catch (const tpp::SqlException &e) {
     TPPE << "TPP_SQL_EXCEPTION: " << e.what() << endl;

@@ -9,7 +9,7 @@ namespace tpp {
   /** \brief Communication class for running IO procedures under needed
    * environment.
    *
-   * ... some long desc ...
+   * @TODO: ... some long desc ...
    *
    */
   class StructureIO {
@@ -31,8 +31,8 @@ namespace tpp {
       /**
        * \brief The default constructor.
        *
-       * \param
-       * \param
+       * \param ignoreIndex ignore numeration in file
+       * \param rtpout modify atom names compatible with RTP GMX format
        */
       StructureIO(bool ignoreIndex, bool rtpout);
 
