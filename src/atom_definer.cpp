@@ -825,7 +825,7 @@ namespace tpp {
             for(std::map<int, vector<string> >::iterator it
                     = sized_patterns.begin(); it != sized_patterns.end();
                     ++it) {
-                TPPD << format("  Aplying PATTERNS of size %1$d (%2$d total): \n")
+                TPPD << format("  Aplying PATTERNS of size %1$d (%2$d total):")
                     % it->first % it->second.size();
                 for(vector<string>::iterator ci = it->second.begin();
                         ci != it->second.end(); ++ci) {

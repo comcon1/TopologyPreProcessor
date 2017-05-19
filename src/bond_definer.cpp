@@ -67,6 +67,15 @@ namespace tpp {
     // molecule stuff ))
     FOR_ATOMS_OF_MOL(it,tp.mol) {
       AtomArray::iterator pa = tp.atoms.find(it->GetIdx());
+
+      // self-consistency check
+      if ( pa == tp.atoms.end() ) {
+        Exception e("OBMol - tpp::AtomArray inconsistensy!");
+        e.add("procname", "tpp::BondDefiner::connectDB");
+        e.add("error", "There are atom which is absent in tp.atoms: "+boost::lexical_cast<string>(it->GetIdx()) );
+        throw e;
+      }
+
       namemap.insert(pair<string, string>(
               pa->atom_type, string("") )
       );
@@ -107,14 +116,22 @@ namespace tpp {
     QueryResult res;
     mysqlpp::Row row;
     ostringstream os;
+    AtomArray::iterator p1, p2;
+    string typ1, typ2;
     int co = 0;
-    TPPD << "Defining bonds ...";
+    TPPI << " ----> Performing bond assignment..";
     FOR_BONDS_OF_MOL(it, tp.mol) {
       co++;
       qu.reset();
-      TPPD << format("%1$d->%2$d") % it->GetBeginAtomIdx() % it->GetEndAtomIdx();
-      string typ1 = namemap.find( tp.atoms.find(it->GetBeginAtomIdx())->atom_type )->second;
-      string typ2 = namemap.find( tp.atoms.find(it->GetEndAtomIdx())->atom_type) ->second;
+      p1 = tp.atoms.find(it->GetBeginAtomIdx());
+      p2 = tp.atoms.find(it->GetEndAtomIdx());
+
+      typ1 = namemap.find( p1->atom_type )->second;
+      typ2 = namemap.find( p2->atom_type) ->second;
+
+      TPPD << format("  %4d - %4d | %4s - %4s | %3s - %3s") % it->GetBeginAtomIdx() % it->GetEndAtomIdx()
+                % p1->atom_name % p2->atom_name % typ1 % typ2;
+
       os.str("");
       os << format(
         " SELECT id,f,c1,c2 "
@@ -133,6 +150,7 @@ namespace tpp {
         e.add("procname", "tpp::BondDefiner::fill_bonds");
         e.add("error", "SQL query error");
         e.add("sql_error", qu.error() );
+        e.add("sql_query", os.str() );
         throw e;
       }
       if ( res.num_rows() == 0 ) {
@@ -203,7 +221,7 @@ namespace tpp {
       if (tp.elements.get<1>().find(it->defname)
           == tp.elements.get<1>().end())
         tp.parameters.get<1>().erase(it);
-
+    TPPI << "                                   ..DONE. <----";
   } // end fillBonds
 
 void BondDefiner::fillAngles() {
@@ -527,9 +545,8 @@ void BondDefiner::fillImpropers() {
     cout << "============> " << row["PAT"] << "\n"
     << "Matches: " << maplist.size() << endl;
     #endif
-    os
-        << format("  ** [OB] Pattern %1$s matches %2$d times.")
-            % row["PAT"] % maplist.size();
+    os.str("");
+    os << format("  **      Pattern matches %d times.") % maplist.size();
     TPPD << os.str();
     // manipulating matches
     for (int i = 0; i < maplist.size(); ++i) {
