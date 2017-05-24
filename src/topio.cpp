@@ -102,8 +102,10 @@ namespace tpp {
     // header
     out << format("\
   %1%\
-  [ %2$4s ]\n\
-  ") % top_comment % tp.res_name;
+; RTP works properly only with FF: %3%\n\
+  \
+[ %2$4s ]\n\
+  ") % top_comment % tp.res_name % tp.ffinfo;
 
     // atoms specification
     out << "\n[ atoms ]\n";
