@@ -26,21 +26,27 @@ namespace tpp {
     return logger;
   }
 
+
   void initiate_logging(const std::string& logname, bool verbose)
   {
-    logging::add_file_log
-      (
-      keywords::file_name = logname,
-      keywords::format =
-      (
-        expr::stream
-        << "["
-        << expr::format_date_time<boost::posix_time::ptime>("TimeStamp", "%Y-%m-%d %H:%M:%S")
+    auto logformat = expr::stream << "["
+        << expr::format_date_time<boost::posix_time::ptime>("TimeStamp", "%H:%M:%S")
         << "]"
-        << "[" << logging::trivial::severity
-        << "]:  " << expr::smessage
-        )
+        << "["
+        << expr::if_ ( logging::trivial::severity == boost::log::trivial::severity_level::info) [
+          expr::stream << "i" ]
+        << expr::if_ ( logging::trivial::severity == boost::log::trivial::severity_level::debug) [
+          expr::stream << "D" ]
+        << expr::if_ ( logging::trivial::severity == boost::log::trivial::severity_level::error) [
+          expr::stream << "ERROR" ]
+        << "]:  " << expr::smessage;
+    // @TODO: think about printing SCOPE with special boost instruments
+
+    logging::add_file_log (
+      keywords::file_name = logname,
+      keywords::format = logformat
     );
+
     logging::add_console_log(std::cout,
                     boost::log::keywords::format = "%Message%",
                     boost::log::keywords::filter =

@@ -987,7 +987,7 @@ namespace tpp {
             if ( (int)row["good"] > score_subit->second ) {
               score_subit->second = row["good"];
               os.str("");
-              os << format(" <=== No %-2d \"%s\"") % row["pos"] % row["PAT"] << flush;
+              os << format(" <=== Good: %-4d No %-2d Pat \"%s\"") % (int)row["good"] % row["pos"] % row["PAT"] << flush;
               sf_scores_smarts[*set_it][row["atom_ids"]] = os.str();
             }
 
@@ -1013,6 +1013,13 @@ namespace tpp {
   /// print SMART fit statistics
   void AtomDefiner::printSmartFitStats(map<int, map<int,int> > &_sfscores,
     map<int,map<int,string> > &_sfsmarts) {
+      TPPD << "Generation of SMART statistics started.\n\n";
+      TPPD << "                   SMART FIT STATISTICS\n";
+      TPPD << "========================================================================";
+      TPPD << " id | name  |  uname        | v.name  | smart score|pos in pt.| pattern ";
+      TPPD << "------------------------------------------------------------------------";
+      // the following strings are generated in report:
+             //   1: C1   ==> opls_145        CA    <=== Good: 140  No 1  Pat "[cr6]"
       // finding the best one!
       for (auto i : _sfscores) {
         auto maxptr = std::max_element(
@@ -1027,7 +1034,7 @@ namespace tpp {
         TPPD << format("%4d: %-4s ==> %-15s %-4s %s")
          % i.first % atom->atom_name % atit->type % atit->type2 % smartStr;
       }
-
+      TPPD << "========================================================================\n\n";
   } // end printSmartFitStats
 
 } // tpp namespace
