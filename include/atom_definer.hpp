@@ -6,6 +6,7 @@
 #include <cassert>
 
 namespace tpp {
+  using namespace boost::multi_index;
 
   /**
     *	\bief Auxilary classes for AtomDefiner
@@ -160,6 +161,22 @@ namespace tpp {
         bool maxangles;    //!< try to maximize count of known angles [EXPERIMENTAL]
       };
 
+      /// Structure for atomtype table loading
+      struct tempstruct_t {
+        int id;
+        std::string type;
+        std::string type2;
+        double charge;
+        double mass;
+        std::string comment;
+      }; // @TODO: rename properly
+
+      /// Type for atomtype table loading
+      typedef multi_index_container<tempstruct_t,
+        indexed_by<
+            ordered_unique<member<tempstruct_t, int,
+              &tempstruct_t::id> > > > AtomMapper; // @TODO: rename properly
+
       /** \brief Constructor defines initial parameters of atom definition
         */
       AtomDefiner(const DbBase::Settings&,
@@ -230,7 +247,8 @@ namespace tpp {
       void countAVTScores();
 
       /**
-       * << WHAT IS THIS ?? >>
+       * \brief Apply scores calculated in fill_bon/ang/dih to global atomtype scores.
+       *
        * To spread scores found for bonded type (name-type) to all nb types
        * (uname) that corresponds to this bonded type.
        * Makes sense only if fill_bon/ang/dih are used.
@@ -247,11 +265,21 @@ namespace tpp {
       void smartCgnr();
 
     protected:
+      AtomMapper atom_mapper; //!< map of atomtypes loaded completely from DB
 
       /** \brief Now this function is not overriden.
         * See parent function for details.
         */
       virtual bool connectDB();
+
+      /** \brief Prints useful information about SMART fit procedure results.
+        *
+        *  According to this output user can decide if SMART fit was performed
+        * good or not. All fit results are summarized in a single table and fill_*
+        * scores (AVT scores) are not considered here.
+        */
+      void printSmartFitStats(std::map<int, std::map<int,int> > &_sfscores,
+        std::map<int, std::map<int, std::string> > &_sfsmarts);
 
   };
   // of atom definer

@@ -186,6 +186,7 @@ int main(int argc, char * argv[]) {
       if ( bfs::exists(ro_path) ) {
         TPPI << "RTP output exists. File will be overwritten." ;
       }
+      rtpout = ro_path.string();
     }
 
     // Main  program body

@@ -24,7 +24,6 @@ namespace tpp {
 
   using boost::format;
   using boost::lexical_cast;
-  using namespace boost::multi_index;
 
   using namespace OpenBabel;
   using namespace tpp::detail;
@@ -517,67 +516,9 @@ namespace tpp {
     } // end filling score
   }
 
-  typedef struct {
-    int id;
-    string type;
-    string type2;
-    double charge;
-    double mass;
-    string comment;
-  } tempstruct_t;
-
   /// general atomtype attribution
   void AtomDefiner::atomAlign() {
-    typedef multi_index_container<tempstruct_t,
-        indexed_by<
-            ordered_unique<member<tempstruct_t, int, &tempstruct_t::id> > > > AtomMapper;
-    AtomMapper atom_mapper;
-    mysqlpp::Query qu = con->query();
-    QueryResult res;
-    mysqlpp::Row row;
-    mysqlpp::Row::size_type co;
-    ostringstream os;
-
     TPPI << " ----> Finalization of atomtype attribution..";
-
-    TPPD << "  Requesting full atomtype table.";
-    os << "SELECT id, uname, name, charge, mass, comment FROM atoms WHERE ffield = "
-        << atomSettings.ffID;
-    #ifdef SQLDEBUG
-    TPPD << os.str();
-    #endif // SQLDEBUG
-    qu << os.str();
-    res = qu.store();
-    if (!res) {
-      SqlException e("Error in SQL request.");
-      e.add("procname", "tpp::AtomDefiner::atomAlign");
-      e.add("error", "SQL query error");
-      e.add("sql_error", qu.error() );
-      e.add("query", os.str());
-      throw e;
-    }
-    TPPD << "  Forming atomtype map.";
-    for (co = 0; co < res.num_rows(); ++co) {
-      row = res.at(co);
-      tempstruct_t t0;
-      t0.id = (int) row["id"];
-      t0.type = row["uname"].c_str();
-      t0.type2 = row["name"].c_str();
-      t0.charge = (double) row["charge"];
-      t0.mass = (double) row["mass"];
-      t0.comment = row["comment"].c_str();
-      atom_mapper.insert(t0);
-    }
-    if (!co) {
-      SqlException e("Empty atomtype list resulted.");
-      e.add("procname", "tpp::AtomDefiner::atomAlign");
-      e.add("error", "SQL query error");
-      e.add("sql_error", qu.error() );
-      e.add("query", os.str());
-      throw e;
-    }
-    qu.reset();
-
     // finding atoms with maximum scores
     TPPI << "  Applying scores.";
     AtomMapper::iterator chk0;
@@ -720,7 +661,49 @@ namespace tpp {
   bool AtomDefiner::connectDB() {
     DbBase::connectDB();
 
-    ; // what do we need ?
+    mysqlpp::Query qu = con->query();
+    QueryResult res;
+    mysqlpp::Row row;
+    mysqlpp::Row::size_type co;
+    ostringstream os;
+
+    TPPD << "  Requesting full atomtype table.";
+    os << "SELECT id, uname, name, charge, mass, comment FROM atoms WHERE ffield = "
+        << atomSettings.ffID;
+    #ifdef SQLDEBUG
+    TPPD << os.str();
+    #endif // SQLDEBUG
+    qu << os.str();
+    res = qu.store();
+    if (!res) {
+      SqlException e("Error in SQL request.");
+      e.add("procname", "tpp::AtomDefiner::atomAlign");
+      e.add("error", "SQL query error");
+      e.add("sql_error", qu.error() );
+      e.add("query", os.str());
+      throw e;
+    }
+    TPPD << "  Forming atomtype map.";
+    for (co = 0; co < res.num_rows(); ++co) {
+      row = res.at(co);
+      tempstruct_t t0;
+      t0.id = (int) row["id"];
+      t0.type = row["uname"].c_str();
+      t0.type2 = row["name"].c_str();
+      t0.charge = (double) row["charge"];
+      t0.mass = (double) row["mass"];
+      t0.comment = row["comment"].c_str();
+      atom_mapper.insert(t0);
+    }
+    if (!co) {
+      SqlException e("Empty atomtype list resulted.");
+      e.add("procname", "tpp::AtomDefiner::atomAlign");
+      e.add("error", "SQL query error");
+      e.add("sql_error", qu.error() );
+      e.add("query", os.str());
+      throw e;
+    }
+    qu.reset();
 
     return true;
   } // connectDB
@@ -931,6 +914,16 @@ namespace tpp {
         for (auto &i : sf_scores)
           for (auto &j : i.second)
             j.second = 0;
+        // make map of fitted patterns & fill it with empty strings
+        map<int, map<int, string> > sf_scores_smarts;
+        for (auto &i: sf_scores) {
+          map<int,string> m0;
+          for (auto &j: i.second) {
+            m0.insert(pair<int,string>(j.first, ""));
+          }
+          sf_scores_smarts.insert(pair<int, map<int,string> >(i.first, m0) );
+        }
+
 
         // next work with copied sf_scores
         cout << endl;
@@ -993,6 +986,9 @@ namespace tpp {
             // fixing bug with summarizing equimatching smarts weights
             if ( (int)row["good"] > score_subit->second ) {
               score_subit->second = row["good"];
+              os.str("");
+              os << format(" <=== No %-2d \"%s\"") % row["pos"] % row["PAT"] << flush;
+              sf_scores_smarts[*set_it][row["atom_ids"]] = os.str();
             }
 
           }
@@ -1003,6 +999,8 @@ namespace tpp {
         if (!atomSettings.verbose)
           cout << "\n";
 
+        printSmartFitStats(sf_scores, sf_scores_smarts);
+
         // apply smart scores to main scores map
         for (auto &i : sf_scores)
           for (auto &j : i.second)
@@ -1011,6 +1009,26 @@ namespace tpp {
         // I << " ----> Performing SMART-based atomtype attribution..";
         TPPI << "                                                    ..DONE. <----";
   } // end smartfit
+
+  /// print SMART fit statistics
+  void AtomDefiner::printSmartFitStats(map<int, map<int,int> > &_sfscores,
+    map<int,map<int,string> > &_sfsmarts) {
+      // finding the best one!
+      for (auto i : _sfscores) {
+        auto maxptr = std::max_element(
+          std::begin(i.second), std::end(i.second),
+          [] (const pair<int,int> & p1, const pair<int,int> & p2) {
+              return p1.second < p2.second;
+          }
+        );
+        string smartStr = _sfsmarts[i.first][maxptr->first];
+        auto atit = atom_mapper.find(maxptr->first);
+        auto atom = tp.atoms.find(i.first);
+        TPPD << format("%4d: %-4s ==> %-15s %-4s %s")
+         % i.first % atom->atom_name % atit->type % atit->type2 % smartStr;
+      }
+
+  } // end printSmartFitStats
 
 } // tpp namespace
 
