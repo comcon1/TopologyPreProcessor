@@ -3,6 +3,8 @@
 
 AC_PREREQ([2.69])
 AC_INIT([Topology PreProcessor], [0.2], [comconadin@gmail.com])
+: ${CXXFLAGS=""}
+: ${CFLAGS=""}
 AM_INIT_AUTOMAKE([])
 AC_CONFIG_SRCDIR([src/logger.cpp])
 AC_CONFIG_HEADERS([config.h])
@@ -13,6 +15,28 @@ AC_CONFIG_MACRO_DIR([m4])
 AC_PROG_CXX
 AC_PROG_CC
 AC_PROG_MAKE_SET
+
+
+# Debug mode
+AC_ARG_ENABLE(debugmode,
+     AS_HELP_STRING([--enable-debugmode],
+                [enable debugging, default: no]),
+     [case "${enableval}" in
+       yes) debugmodefe=1 ;;
+       no)  debugmodefe=0 ;;
+       *) AC_MSG_ERROR([bad value ${enableval} for --enable-debugmode]) ;;
+     esac],[debugmodefe=0])
+
+AC_DEFINE_UNQUOTED([ENABLE_DEBUGMODE],[$debugmodefe],[Turn on DEBUG mode.])
+AM_CONDITIONAL(DEBUGMODE, test x$debugmodefe = x1)
+
+if test x$debugmodefe = x1; then
+
+  echo
+  echo '>> Turning on DEBUG mode'
+  echo
+  
+fi
 
 AC_LANG([C++])
 
@@ -218,9 +242,6 @@ if test x$selftestfe = x1; then
   AC_MSG_RESULT([>> No specific tests are required yet.])
 
 fi
-
-#TODO: make compiler flags conditional
-CXXFLAGS="-g $CXXFLAGS"
 
 # FIXME: unit test with ENABLE option
 

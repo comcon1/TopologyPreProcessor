@@ -1,6 +1,15 @@
 AUTOMAKE_OPTIONS = subdir-objects
 AM_CPPFLAGS = -I../include
-AM_CXXFLAGS = -std=c++11
+
+if DEBUGMODE
+AM_CFLAGS = -g3 -O0
+AM_CXXFLAGS = -g3 -O0
+else
+AM_CFLAGS = -O3
+AM_CXXFLAGS = -O3
+endif
+AM_CXXFLAGS += -std=c++11
+
 bin_PROGRAMS = programs/tpprenum programs/tppmktop
 MODULES = strutil.cpp structio.cpp tppnames.cpp exceptions.cpp logger.cpp bond_matrix.cpp core.cpp
 if GAMESSFEATURES
