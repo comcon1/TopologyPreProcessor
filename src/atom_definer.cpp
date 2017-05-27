@@ -653,8 +653,24 @@ namespace tpp {
                            Topology &tp_) : DbBase(s1), atomSettings(s2),tp(tp_) {
     cout << endl;
     TPPI << "== Starting AtomDefiner ==";
+    checkAtomlistConsistency();
     connectDB();
     scoresZeroFill();
+  }
+
+  /// crucial internal check
+  void AtomDefiner::checkAtomlistConsistency() {
+    FOR_ATOMS_OF_MOL(it,tp.mol) {
+      AtomArray::iterator pa = tp.atoms.find(it->GetIdx());
+
+      // self-consistency check
+      if ( pa == tp.atoms.end() ) {
+        Exception e("OBMol - tpp::AtomArray inconsistensy!");
+        e.add("procname", "tpp::AtomDefiner::checkAtomlistConsistency");
+        e.add("error", "There are atom which is absent in tp.atoms: "+boost::lexical_cast<string>(it->GetIdx()) );
+        throw e;
+      }
+    }
   }
 
   /// Standard connection to DB

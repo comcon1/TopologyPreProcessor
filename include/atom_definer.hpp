@@ -281,6 +281,9 @@ namespace tpp {
       void printSmartFitStats(std::map<int, std::map<int,int> > &_sfscores,
         std::map<int, std::map<int, std::string> > &_sfsmarts);
 
+      /** \brief Checks if atoms in tp.atoms and atoms in tp.mol are consistent.
+        */
+      void checkAtomlistConsistency();
   };
   // of atom definer
 }// of namespace tpp
