@@ -455,21 +455,12 @@ namespace tpp {
 
   /// .. scores is filled with zeroes ..
   void AtomDefiner::scoresZeroFill() {
-    mysqlpp::Query qu = con->query();
-    QueryResult res;
-    mysqlpp::Row row;
-    mysqlpp::Row::size_type co;
-    qu << format("SELECT `id` FROM `atoms` WHERE `ffield` = %1$d") % atomSettings.ffID;
-    res = qu.store();
-    // !! removing all scores data !!
-    scores.clear();
-    assert(res.num_rows());
+    scores.clear();   // !! removing all scores data !!
+
     map<int, int> zeromap;
-    for (co = 0; co < res.num_rows(); ++co) {
-      row = res.at(co);
-      zeromap.insert(pair<int, int> ( (int) row["id"], 0 ) );
+    for (auto it = atom_mapper.begin(); it != atom_mapper.end(); ++it) {
+      zeromap.insert(pair<int, int> ( it->id, 0 ) );
     }
-    qu.reset();
 
     FOR_ATOMS_OF_MOL(it, tp.mol) {
       scores.insert( pair<int, map<int,int> > ( it->GetIdx(), zeromap) );
@@ -700,6 +691,18 @@ namespace tpp {
       throw e;
     }
     TPPD << "  Forming atomtype map.";
+    // add UNDEF atom
+    {
+      tempstruct_t t0;
+      t0.id = -1;
+      t0.type = "undef";
+      t0.type2 = "UU";
+      t0.charge = 0.0;
+      t0.mass = 0.0;
+      t0.comment = "Undefined type [has no sense]";
+      atom_mapper.insert(t0);
+    }
+    // add normat atomtype
     for (co = 0; co < res.num_rows(); ++co) {
       row = res.at(co);
       tempstruct_t t0;
@@ -988,7 +991,7 @@ namespace tpp {
             atoms_suite.insert( maplist[i][row["pos"]-1] );
           }
 
-          for(set_it = atoms_suite.begin(); set_it != atoms_suite.end(); ++set_it) {
+          for (set_it = atoms_suite.begin(); set_it != atoms_suite.end(); ++set_it) {
             score_it = sf_scores.find(*set_it);
             assert( score_it != sf_scores.end() );
             score_subit = score_it->second.find( row["atom_ids"] );
@@ -1016,6 +1019,35 @@ namespace tpp {
           cout << "\n";
 
         printSmartFitStats(sf_scores, sf_scores_smarts);
+
+        // check for SMART was found for every atom
+        int bad_atom_num = 0;
+        for (auto &i : sf_scores) {
+          auto maxptr = std::max_element(
+            std::begin(i.second), std::end(i.second),
+            [] (const pair<int,int> & p1, const pair<int,int> & p2) {
+                return p1.second < p2.second;
+            }
+          );
+          if (maxptr->second < 50) { // TODO: define 50 as settable threshold
+            bad_atom_num++;
+          }
+        }
+        if (bad_atom_num) {
+          TPPI << format("Atoms not normally recognized with SMARTS: %d") % bad_atom_num;
+
+          if (!atomSettings.maxbonds && !atomSettings.maxangles && !atomSettings.maxdihedrals) {
+              Exception e("UNRECOGNIZED ATOMS IN YOUR SYSTEM!");
+              e.add("procname", "tpp::AtomDefiner::smartfit");
+              e.add("error",
+                "Your molecule have atoms in unrecognized chemical environment. "
+                "See SMART FIT STATISTICS in your log file for details. "
+                "You can not proceed topology construction without additional atomtype searching steps. "
+                "It is recomended to add unrecognized type to DB. "
+                "If you are not going to modify DB, please try to rerun with --max-bonds. ");
+              throw e;
+          }
+        }
 
         // apply smart scores to main scores map
         for (auto &i : sf_scores)

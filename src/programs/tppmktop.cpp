@@ -234,12 +234,12 @@ int main(int argc, char * argv[]) {
     return 2;
   }
   catch (boost::program_options::error & e) {
-    cerr << format("\nTPPRENUM %1% : Error in input parameters.\n\n") % VERSION;
+    cerr << format("\nTPPMKTOP %1% : Error in input parameters.\n\n") % VERSION;
     cerr << desc;
     return 1;
   }
   catch (const tpp::Exception &e) {
-    TPPE << "  TPP_EXCEPTION: " << e.what() << endl;
+    TPPE << "\n  TPP_EXCEPTION: " << e.what() << endl;
     return 2;
   }
   catch(const std::exception& e)
