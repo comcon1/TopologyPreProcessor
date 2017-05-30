@@ -4,8 +4,8 @@
  *
  */
 
-#ifndef TPP_TOPIO_H
-#define TPP_TOPIO_H
+#ifndef TPP_TOPWRITER_H
+#define TPP_TOPWRITER_H
 
 #include "core.hpp"
 #include "global.hpp"
@@ -18,9 +18,18 @@ namespace tpp {
    * @TODO: ... some long desc ...
    *
    */
-  class TopologyIO {
+  class TopologyWriter {
 
     public:
+
+      /// Parameters for caluclations
+      struct Settings {
+        bool ffSeparate;   //!< print separate
+        bool ffFullPrint;  //!< print nonbonded & impropers also
+        bool finalize;     //!< do everything to get production topology
+      };
+
+      TopologyWriter(Settings _s): settings(_s) {;}
 
       /**
        *  \brief Write topology to file in GMX format.
@@ -30,7 +39,7 @@ namespace tpp {
        *  \param ncf no-calculate format
        *
        */
-      void saveITP(const Topology & top, const char * fname, bool ncf) ;
+      void saveITP(const Topology &top, const char * fname, bool ncf) ;
 
       /** \brief Save information about force parameters that are absent in the FF.
         *
@@ -47,19 +56,10 @@ namespace tpp {
         * \param fname output RTP file name
         */
       void saveRTP(const Topology &top, const char *fname);
+
+    private:
+      Settings settings;
   };
-
-  // @TODO: describe in details below functions
-
-  void load_topology(Topology &, const char *);
-
-  void load_lack(Topology &, const char *);
-
-  void check_topology(Topology &) ;
-
-#if ENABLE_GAMESS_FEATURES
-  void load_hessian(ublas::matrix<double>&, const char *);
-#endif
 
   //TODO: also serialization should be included
 

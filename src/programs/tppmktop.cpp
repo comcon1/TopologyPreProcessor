@@ -8,7 +8,7 @@
 #include "global.hpp"
 #include "exceptions.hpp"
 #include "logger.hpp"
-#include "topio.hpp"
+#include "topwriter.hpp"
 #include "structio.hpp"
 #include "db_base.hpp"
 #include "tppnames.hpp"
@@ -113,6 +113,7 @@ int main(int argc, char * argv[]) {
     tpp::DbBase::Settings      baseSettings;
     tpp::AtomDefiner::Settings atomSettings;
     tpp::BondDefiner::Settings bondSettings;
+    tpp::TopologyWriter::Settings twSettings;
 
     bool verbose = vars["verbose"].as<bool>();
     tpp::initiate_logging("tppmktop.log", verbose);
@@ -217,7 +218,7 @@ int main(int argc, char * argv[]) {
     BD.bondAlign();
 
     // TODO: finalize & expanded
-    tpp::TopologyIO tio;
+    tpp::TopologyWriter tio(twSettings);
     tio.saveITP(TOP, output_file.c_str(), false);
     tio.saveAbsentParametersITP(TOP, lackfile.c_str());
     if (rtpout.size() > 0) {
