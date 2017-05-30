@@ -80,14 +80,14 @@ namespace strutil {
     }
 
     string toLower(const string& str) {
-        string t = str;
-//        transform(t.begin(), t.end(), t.begin(), tolower);
+        string t(str);
+        std::transform(t.begin(), t.end(), t.begin(), (int (*)(int))std::tolower);
         return t;
     }
 
     string toUpper(const string& str) {
-        string t = str;
-//        transform(t.begin(), t.end(), t.begin(), toupper);
+        string t(str);
+        std::transform(t.begin(), t.end(), t.begin(), (int (*)(int))std::toupper);
         return t;
     }
 

@@ -15,13 +15,14 @@
 #include "atom_definer.hpp"
 #include "bond_definer.hpp"
 #include "strutil.hpp"
+#include "process_options.hpp"
 
 #include <boost/program_options/variables_map.hpp>
 #include <boost/program_options/errors.hpp>
 #include <boost/program_options/options_description.hpp>
 #include <boost/program_options/parsers.hpp>
-#include <boost/filesystem.hpp>
 
+#include <boost/filesystem.hpp>
 #include <boost/format.hpp>
 #include <sstream>
 
@@ -67,6 +68,9 @@ int main(int argc, char * argv[]) {
         ("expanded",
             p_o::value<bool>()->default_value(false)->implicit_value(false),
             "Create expanded topology (do not required FF includes)")
+        ("separate",
+            p_o::bool_switch()->default_value(false),
+            "Create separated FF file <filename>_ff.itp")
         ("finalize",
             p_o::value<bool>()->default_value(false)->implicit_value(false),
             "Create final topology (don't create lack-file, overwrite dihedrals with pairs)")
@@ -106,6 +110,7 @@ int main(int argc, char * argv[]) {
 
     string input_file = vars["input"].as<string>();
     string output_file = vars["output"].as<string>();
+    string output_ff("");
     string forcefield = vars["forcefield"].as<string>();
     string lackfile = vars["lack-file"].as<string>();
     string rtpout = vars["rtp-output"].as<string>();
@@ -132,6 +137,8 @@ int main(int argc, char * argv[]) {
     baseSettings.password = vars["sqlpassword"].as<string>();
     baseSettings.port     = vars["sqlport"].as<unsigned>();
     baseSettings.dbname   = vars["sqldb"].as<string>();
+
+    twSettings.ffSeparate = vars["separate"].as<bool>();
 
     // finish analysing
     // starting work with input and output files
@@ -179,15 +186,12 @@ int main(int argc, char * argv[]) {
       TPPI << "TPPMKTOP will make self-consistent topology in separate file.";
 
     if (rtpout.size() > 0) {
-      bfs::path ro_path(rtpout);
-      ro_path = bfs::weakly_canonical(ro_path);
-      string ro_ext = strutil::toLower( ro_path.stem().string() );
-      if (ro_ext != ".rtp") ro_path = bfs::path(ro_path.string()+".rtp");
-      TPPI << ("Output RTP: " + bfs::absolute(ro_path).string());
-      if ( bfs::exists(ro_path) ) {
-        TPPI << "RTP output exists. File will be overwritten." ;
-      }
-      rtpout = ro_path.string();
+      tpp::processOutputWithExt(rtpout, ".rtp");
+    }
+    tpp::processOutputWithExt(output_file, ".itp");
+    if (twSettings.ffSeparate) {
+      output_ff = output_file;
+      tpp::processOutputWithExt(output_ff, ".itp", "_ff");
     }
 
     // Main  program body
@@ -219,7 +223,7 @@ int main(int argc, char * argv[]) {
 
     // TODO: finalize & expanded
     tpp::TopologyWriter tio(twSettings);
-    tio.saveITP(TOP, output_file.c_str(), false);
+    tio.saveITP(TOP, output_file.c_str());
     tio.saveAbsentParametersITP(TOP, lackfile.c_str());
     if (rtpout.size() > 0) {
       tio.saveRTP(TOP, rtpout.c_str());

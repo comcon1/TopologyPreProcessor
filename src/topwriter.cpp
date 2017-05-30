@@ -171,7 +171,7 @@ namespace tpp {
 
 
   // save topology to file in GMX
-  void TopologyWriter::saveITP(const Topology &tp, const char *fname, bool ncf) {
+  void TopologyWriter::saveITP(const Topology &tp, const char *fname) {
     TPPD << format("Trying to write ITP-topology into '%s'.")  % fname;
     fstream out(fname, ios::out);
     if (!out.is_open()) {
@@ -196,7 +196,7 @@ namespace tpp {
     // force constants parameters '#define's
     for (auto it = tp.parameters.get<1>().begin();
           it != tp.parameters.get<1>().upper_bound(TPP_TTYPE_SYMDIH); ++it) {
-      if ( (it->f != -1) ^  ncf ) {
+      if ( (it->f != -1) ^  settings.ffFullPrint ) {
         switch (it->type) {
          case TPP_TTYPE_BON:   out << format("#define %1$-25s %2$1d %3$8.3f %4$9.2e ;1\n")
                                 % it->defname % it->f % it->c0 % it->c1; break;
@@ -227,7 +227,7 @@ namespace tpp {
            it != tp.parameters.get<1>().upper_bound(TPP_TTYPE_BON); ++it)
         for (auto it0 = tp.elements.get<1>().lower_bound(it->defname);
              it0 != tp.elements.get<1>().upper_bound(it->defname); ++it0)
-          if (ncf && (it->f != -1) )
+          if (settings.ffFullPrint && (it->f != -1) )
             out << format("%1$3d %2$3d  %3$2d\n") % (int)it0->i % (int)it0->j % it->f;
           else
             out << format("%1$3d %2$3d  %3$-15s\n") % (int)it0->i % (int)it0->j % it0->defname;
@@ -239,7 +239,7 @@ namespace tpp {
            it != tp.parameters.get<1>().upper_bound(TPP_TTYPE_ANG); ++it)
         for (auto it0 = tp.elements.get<1>().lower_bound(it->defname);
              it0 != tp.elements.get<1>().upper_bound(it->defname); ++it0)
-          if (ncf && (it->f != -1) )
+          if (settings.ffFullPrint && (it->f != -1) )
             out << format("%1$3d %2$3d %3$3d  %4$2d\n") % (int)it0->i % (int)it0->j % (int)it0->k % it->f;
           else
             out << format("%1$3d %2$3d %3$3d  %4$-15s\n") % (int)it0->i % (int)it0->j % (int)it0->k % it0->defname;
@@ -254,7 +254,7 @@ namespace tpp {
            it != tp.parameters.get<1>().upper_bound(TPP_TTYPE_SYMDIH); ++it)
         for (auto it0 = tp.elements.get<1>().lower_bound(it->defname);
              it0 != tp.elements.get<1>().upper_bound(it->defname); ++it0)
-          if (ncf && (it->f != -1) )
+          if (settings.ffFullPrint && (it->f != -1) )
             out << format("%1$3d %2$3d %3$3d %4$3d  %5$2d\n") % (int)it0->i % (int)it0->j % (int)it0->k % (int)it0->l % it->f;
           else
             out << format("%1$3d %2$3d %3$3d %4$3d  %5$-15s\n") % (int)it0->i % (int)it0->j % (int)it0->k % (int)it0->l % it0->defname;

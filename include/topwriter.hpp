@@ -39,7 +39,7 @@ namespace tpp {
        *  \param ncf no-calculate format
        *
        */
-      void saveITP(const Topology &top, const char * fname, bool ncf) ;
+      void saveITP(const Topology &top, const char * fname);
 
       /** \brief Save information about force parameters that are absent in the FF.
         *
