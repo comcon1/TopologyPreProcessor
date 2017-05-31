@@ -112,7 +112,7 @@ namespace tpp {
 
     TPPI << "Starting C1 renumerator alrogithm.";
   #ifdef DEBUG
-    FOR_ATOMS_OF_MOL(pt, mol) {
+    FOR_ATOMS_OF_MOL(pt, const_cast<OBMol&>(mol) ) {
       cout << format(" %1$3d %2$4s %3$3d\n") %pt->GetIdx() % pt->GetType() % pt->GetAtomicNum();
     }
     cout << "================================" << endl;
@@ -252,7 +252,7 @@ namespace tpp {
       // TODO: prefer tail which contains more carbon atoms
   #ifdef DEBUG
       cout << "CDB:RMS: " << std::flush;
-      cout << tail;
+      std::copy(tail.begin(), tail.end(), std::ostream_iterator<int>(cout));
       cout << " --]] " << std::endl;
   #endif
       if (tail.size() > 0) {

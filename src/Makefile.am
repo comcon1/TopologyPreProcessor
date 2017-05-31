@@ -2,11 +2,11 @@ AUTOMAKE_OPTIONS = subdir-objects
 AM_CPPFLAGS = -I../include
 
 if DEBUGMODE
-AM_CFLAGS = -g3 -O0
-AM_CXXFLAGS = -g3 -O0
+AM_CFLAGS = -g3 -O0 -DDEBUG
+AM_CXXFLAGS = -g3 -O0 -DDEBUG
 else
-AM_CFLAGS = -O3
-AM_CXXFLAGS = -O3
+AM_CFLAGS = -O3 -DNDEBUG
+AM_CXXFLAGS = -O3 -DNDEBUG
 endif
 AM_CXXFLAGS += -std=c++11 -fpermissive
 
