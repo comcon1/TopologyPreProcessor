@@ -1,6 +1,7 @@
 #include "core.hpp"
 #include "logger.hpp"
 #include "process_options.hpp"
+#include "exceptions.hpp"
 
 #include <boost/filesystem.hpp>
 #include <boost/format.hpp>
@@ -26,11 +27,24 @@ namespace tpp {
       TPPI << format("Output %s: %s") % strutil::toUpper(ro_ext)
               % bfs::absolute(ro_parent).string();
       if ( bfs::exists(ro_path) ) {
+        if (! bfs::is_regular_file(ro_path) ) {
+            tpp::Exception e("Error in output file.");
+            e.add("error","Input file '"+ro_path.filename().string()+"' is not a regular file!");
+            throw e;
+        }
         TPPI << "Output file exists and will be overwritten." ;
       }
   }
 
-  void processInput(string &fname) {
+  void processInput(string fname) {
+    bfs::path if_path(fname);
+    if (! bfs::is_regular_file(if_path) ) {
+        tpp::Exception e("Error in input file.");
+        e.add("error","Input file '"+if_path.filename().string()+"' is not a regular file!");
+        throw e;
+    }
+    if_path = bfs::weakly_canonical(if_path);
+    TPPI << ("Input file: " + bfs::absolute(if_path).string());
   }
 
 }

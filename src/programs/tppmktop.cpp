@@ -149,14 +149,11 @@ int main(int argc, char * argv[]) {
       TPPI << format("Starting %s %s program.") % "TPPMKTOP" % PACKAGE_VERSION;
       cout << "------------------------------------------\n" << endl;
     }
+    TPPI << "  == Verifying input & output ==";
     // INPUT analysing
+    tpp::processInput(input_file);
     tpp::InputFormat iform;
     bfs::path if_path(input_file);
-    if (! bfs::is_regular_file(if_path) ) {
-        tpp::Exception e("Error in input file.");
-        e.add("error","Input file '"+if_path.filename().string()+"' is not a regular file!");
-        throw e;
-    }
     string in_ext = if_path.has_extension() ? if_path.extension().string() : "";
     in_ext = strutil::toLower(in_ext);
     if (in_ext == ".pdb")
@@ -176,8 +173,6 @@ int main(int argc, char * argv[]) {
        e.add("error", os.str());
        throw e;
     }
-    if_path = bfs::weakly_canonical(if_path);
-    TPPI << ("Input structure: " + bfs::absolute(if_path).string());
     TPPD << tpp::in_fmt_descr(iform);
 
     if (bondSettings.finalize)
@@ -193,6 +188,7 @@ int main(int argc, char * argv[]) {
       output_ff = output_file;
       tpp::processOutputWithExt(output_ff, ".itp", "_ff");
     }
+    tpp::processOutputWithExt(lackfile, ".itp");
 
     // Main  program body
     tpp::Topology TOP;

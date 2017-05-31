@@ -16,6 +16,14 @@ namespace tpp {
     *  @param[in]     suffix Suffix to file stem (default NULL)
     */
   void processOutputWithExt(std::string &fname, const char *ext, const char *suffix = NULL);
+
+  /** \brief Check if file is ready to be used as an input file.
+    *
+    * @param[in]      fname String file name
+    *
+    * Function checks for existence and regularity of the file.
+    */
+  void processInput(std::string fname);
 }
 
 #endif

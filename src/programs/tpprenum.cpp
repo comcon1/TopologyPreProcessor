@@ -15,6 +15,7 @@
 #include "structio.hpp"
 #include "async_call.hpp"
 #include "strutil.hpp"
+#include "process_options.hpp"
 
 #include <boost/program_options/variables_map.hpp>
 #include <boost/program_options/errors.hpp>
@@ -114,12 +115,8 @@ int main(int argc, char * argv[]) {
     }
     tpp::InputFormat iform;
     // INPUT analysing
+    tpp::processInput(input_file);
     bfs::path if_path(input_file);
-    if (! bfs::is_regular_file(if_path) ) {
-        tpp::Exception e("Error in input file.");
-        e.add("error","Input file '"+if_path.filename().string()+"' is not a regular file!");
-        throw e;
-    }
     string in_ext = if_path.has_extension() ? if_path.extension().string() : "";
     in_ext = strutil::toLower(in_ext);
     if (in_ext == ".pdb")
@@ -144,9 +141,10 @@ int main(int argc, char * argv[]) {
       TPPI<<tpp::in_fmt_descr(iform);
     }
 
-    tpp::OutputFormat oform;
     // OUTPUT analysing
-    string out_ext = if_path.has_extension() ? if_path.extension().string() : "";
+    tpp::OutputFormat oform;
+    bfs::path of_path(output_file);
+    string out_ext = of_path.has_extension() ? of_path.extension().string() : "";
     out_ext = strutil::toLower(out_ext);
     if (out_ext == ".pdb")
       oform = tpp::TPP_OF_PDB;
@@ -163,11 +161,12 @@ int main(int argc, char * argv[]) {
        e.add("error", os.str());
        throw e;
     }
+    tpp::processOutputWithExt(output_file, out_ext.c_str());
 
     if (verbose) {
       TPPI<< tpp::out_fmt_descr(oform);
     }
-    //
+
     // Main program body
     //
     tpp::Topology topology;
