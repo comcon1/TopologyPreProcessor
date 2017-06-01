@@ -112,7 +112,7 @@ namespace tpp {
 
   /// implement existing bond counting
   void AtomDefiner::fillBonds() {
-    cout << "\n ----> Comparing atom by bonds.." << endl;
+    TPPI << " ----> Comparing atom by bonds..";
     mysqlpp::Query qu = con->query();
     QueryResult res;
     mysqlpp::Row row;
@@ -178,23 +178,20 @@ namespace tpp {
         }
         cout << "." << flush;
     } // end for znucset
-    cout << format("]\n"
-              "  %1$d queries proceeded on database\n") % znucset.size();
-    cout << flush;
-    TPPD << format("%1$d queries proceeded on database\n") % znucset.size();
-
+    cout << "]" << endl;
+    TPPI << format("  %1$d queries proceeded on database") % znucset.size();
     #ifdef DEBUG
     ostringstream os;
-    os << "\n-- Logging znucset for BONDS --" << endl;
+    TPPD << "-- Logging znucset for BONDS --";
     for (auto znucelem: znucset) {
+      os.str("");
       os << format("(%1$d-%2$d): ") % znucelem.first.first() % znucelem.first.second();
       for (auto nmpair: znucelem.second) {
         os << format("%1$s-%2$s | ") % nmpair.first() % nmpair.second();
       }
-      os << endl;
+      TPPD << os.str();
     }
-    os << "\n-- END: Logging znucset for BONDS --" << endl;
-    TPPD << os.str();
+    TPPD << "-- END: Logging znucset for BONDS --";
     #endif // DEBUG
 
     // associate znucset bondsets with every bond
@@ -203,23 +200,24 @@ namespace tpp {
       int i0 = idxBnd.first(), j0 = idxBnd.second(); // i,j
       int a1 = tp.mol.GetAtom(i0)->GetAtomicNum(),
           a2 = tp.mol.GetAtom(j0)->GetAtomicNum();
+      TPPD << format("Inserting %d - %d") % idxBnd.first() % idxBnd.second();
       if ( znucset.count(AIBondSpec(a1,a2)) ) {
         bondSuite.insert( pair<Spec2<int>, set<NMBondSpec> > (
            idxBnd, znucset[AIBondSpec(a1,a2)] ) );
       } else if ( znucset.count(AIBondSpec(a2,a1) ) ) {
         // swap first and second in the set
         tmpv1.clear();
-        for (auto ii: znucset[AIBondSpec(a1,a2)])
+        for (auto ii: znucset[AIBondSpec(a2,a1)])
           tmpv1.insert(NMBondSpec(ii.second(),ii.first()));
         bondSuite.insert( pair<Spec2<int>, set<NMBondSpec> > (
-           idxBnd, tmpv1 ) );
+           idxBnd, set<NMBondSpec>(tmpv1) ) );
       } else {
         /// This situation can not occur. Just test that the code is correct.
         TPPE << "No AIBondSpec was prepared!";
         assert(0);
       }
     } // end FOR_BONDS_OF_MOL
-    cout << "                                ..finished! <---- " << endl;
+    TPPI << "                                ..finished! <---- ";
   } // end fillBonds
 
   /// implements angle counting
@@ -323,7 +321,7 @@ namespace tpp {
       } else if ( znucset.count(AIAngleSpec(a3,a2,a1) ) ) {
         // swap first and second in the set
         tmpv1.clear();
-        for (auto ii: znucset[AIAngleSpec(a1,a2,a3)])
+        for (auto ii: znucset[AIAngleSpec(a3,a2,a1)])
           tmpv1.insert(NMAngleSpec(ii.third(),ii.second(),ii.first()));
         angleSuite.insert( pair<Spec3<int>, set<NMAngleSpec> > (
            idxAng, tmpv1 ) );
@@ -440,7 +438,7 @@ namespace tpp {
       } else if ( znucset.count(AIDihdSpec(a4,a3,a2,a1) ) ) {
         // swap first and second in the set
         tmpv1.clear();
-        for (auto ii: znucset[AIDihdSpec(a1,a2,a3,a4)])
+        for (auto ii: znucset[AIDihdSpec(a4,a3,a2,a1)])
           tmpv1.insert(NMDihdSpec(ii.fourth(),ii.third(),ii.second(),ii.first()));
         dihdSuite.insert( pair<Spec4<int>, set<NMDihdSpec> > (
            idxDih, tmpv1 ) );
