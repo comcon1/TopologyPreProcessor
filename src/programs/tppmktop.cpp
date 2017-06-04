@@ -323,9 +323,21 @@ void printHelp(p_o::options_description const&_desc) {
   OpenBabel share data: %6$-8s \n\
 \n\
                                 TPPMKTOP\n\
-   Utilite for checking your structure file to be suite for  next-step\n\
-programs.  Also it adapts names and  position of atoms in file to make\n\
-following topology file more obvious.\n\
+\n\
+Utility for automatic generation of molecular topologies. \n\
+TPPMKTOP attributes atom types according to their chemical \n\
+environment using database of SMARTS patterns and also assignes \n\
+parameters of bonded interactions according to the force field used.\n\
+\n\
+TPPMKTOP takes as input molecular structure file (-i option)\n\
+and the name of the force field to use (-f option). Current version \n\
+of the database works with OPLS-AA force field. The input structure \n\
+file should be preprocessed using TPPRENUM utility. The output \n\
+topology file is written according to the .itp format (-o option).\n\
+TPPMKTOP can produce .rtp topology files (-r option).\n\
+\n\
+Parameters of bonded inerations that were not found in the force\n\
+field are summarized in the lack file (-l option).\n\
 \n\
 ")        % PACKAGE_VERSION % CONFIGURE_CDATE % __VERSION__ % BOOST_LIB_VERSION
           % BABEL_VERSION % BABEL_DATADIR
