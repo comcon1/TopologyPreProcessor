@@ -38,6 +38,10 @@ namespace tpp {
    * \brief Standart DB connection.
    */
   bool DbBase::connectDB()  {
+    TPPD << "Performing SQL connection";
+    TPPD << format("Connection server: %s:%d") % settings.host % settings.port;
+    TPPD << format("Authorization: %s %s") % settings.user % settings.password;
+    TPPD << "Database: " + settings.dbname;
     con->connect(
         settings.dbname.c_str(),
         (settings.host + ":" + to_string(settings.port)).c_str(),
@@ -53,6 +57,7 @@ namespace tpp {
       e.add("sql_error", con->error() );
       throw e;
     }
+    TPPD << "Connection established";
 
     mysqlpp::Query qu = this->con->query();
     QueryResult res;
