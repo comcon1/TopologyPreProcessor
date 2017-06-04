@@ -12,6 +12,7 @@
 #include "structio.hpp"
 #include "db_base.hpp"
 #include "tppnames.hpp"
+#include "async_call.hpp"
 #include "atom_definer.hpp"
 #include "bond_definer.hpp"
 #include "strutil.hpp"
@@ -25,6 +26,10 @@
 #include <boost/filesystem.hpp>
 #include <boost/format.hpp>
 #include <sstream>
+
+#define TPP_LOADFILE_TIMELIMIT 600
+#define TPP_MKTOP_TIMELIMIT 600
+#define TPP_SQLCON_TIMELIMIT 10
 
 namespace p_o = boost::program_options;
 namespace bfs = boost::filesystem;
@@ -194,28 +199,46 @@ int main(int argc, char * argv[]) {
     tpp::Topology TOP;
     tpp::StructureIO sio(false, rtpout.size() > 0); // it seems that ignore index has no meaning here
     TOP.nrexcl = 3;
-    sio.loadFromFile(TOP, iform, input_file.c_str());
+
+    tpp::run_with_timeout<void>(TPP_LOADFILE_TIMELIMIT,
+            [&]() {
+      sio.loadFromFile(TOP, iform, input_file.c_str());
+    } );
 
     tpp::ResidueNameGenerator rng(if_path.filename().stem().string());
     TOP.res_name = rng.getName();
     TPPD << ("Using residue name: " + TOP.res_name);
 
     // initial DB queries
-    tpp::DbInfo DI(baseSettings, forcefield);
-    atomSettings.ffID = DI.getFFID();
-    bondSettings.ffID = DI.getFFID();
-    TOP.ffinclude = DI.getFFInclude().c_str();
-    TOP.ffinfo = forcefield + " revision " + DI.getFFRev();
-    TOP.ffdefaults = DI.getFFDefaults();
+    // @todo: check connection ..
+    tpp::DbInfo *DI;
+    tpp::run_with_timeout<void>(TPP_SQLCON_TIMELIMIT,
+        [&]() {
+      DI = new tpp::DbInfo(baseSettings, forcefield);
+        });
+    atomSettings.ffID = DI->getFFID();
+    bondSettings.ffID = DI->getFFID();
+    TOP.ffinclude = DI->getFFInclude().c_str();
+    TOP.ffinfo = forcefield + " revision " + DI->getFFRev();
+    TOP.ffdefaults = DI->getFFDefaults();
     TPPD << ("Force field defaults: "+TOP.ffdefaults);
-    TPPD << DI.getStatistics();
+    TPPD << DI->getStatistics();
+    delete DI;
+
+    tpp::AtomDefiner *AD; // @TODO: change to auto_ptr
+    tpp::BondDefiner *BD;
 
     // starting program body
-    tpp::AtomDefiner AD(baseSettings, atomSettings, TOP);
-    AD.proceed();
-    AD.atomAlign();
-    tpp::BondDefiner BD(baseSettings, bondSettings, TOP);
-    BD.bondAlign();
+    tpp::run_with_timeout<void>(TPP_MKTOP_TIMELIMIT,
+        [&]() {
+          AD = new tpp::AtomDefiner(baseSettings, atomSettings, TOP);
+          AD->proceed();
+          AD->atomAlign();
+          BD = new tpp::BondDefiner(baseSettings, bondSettings, TOP);
+          BD->bondAlign();
+        } );
+    delete AD;
+    delete BD;
 
     // TODO: finalize & expanded
     tpp::TopologyWriter tio(twSettings);
