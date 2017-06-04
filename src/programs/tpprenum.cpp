@@ -192,15 +192,17 @@ int main(int argc, char * argv[]) {
     return 1;
   }
   catch (const tpp::Exception &e) {
-    TPPE << "TPP crashed with tpp::exception: "<< e.what();
+    TPPE << "TPP crashed with tpp::exception: ";
+    TPPE << e.what();
     return 2;
   }
-  catch(const std::exception& e) {
-    TPPE << "TPP crashed with std::exception: "<<e.what();
+  catch(const std::exception& e) { // do not use TPPE here!
+    cerr << "TPP crashed with std::exception: \n";
+    cerr << e.what() << endl;
     return 3;
   }
   catch(...) {
-    TPPE << "TPP crashed with unknown type of exception!";
+    cerr << "TPP crashed with unknown type of exception!";
     return 3;
   }
   TPPI << "TPPRENUM finished normally!" << endl;
