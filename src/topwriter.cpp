@@ -408,12 +408,50 @@ namespace tpp {
       if (it->f == -1) continue; // skip non-defined bonds
       // take one element of each parameter to find atom name
       auto it0 = top.elements.get<1>().lower_bound(it->defname);
-      ofs << format("%4s %4s %1d %10.5f %10.1f\n") %
+      ofs << format("%4s %4s %2d %10.5f %10.1f\n") %
         top.atoms.find((int)it0->i)->atom_type2 %
         top.atoms.find((int)it0->j)->atom_type2 %
-        it->f % it->c0 % it->c1;
+        (int)it->f % it->c0 % it->c1;
     }
 
+    // angletype block
+    ofs << endl;
+    ofs << "[ angletypes ]\n";
+    for (auto it = top.parameters.get<1>().lower_bound(TPP_TTYPE_ANG);
+         it != top.parameters.get<1>().upper_bound(TPP_TTYPE_ANG); ++it) {
+      if (it->f == -1) continue; // skip non-defined angles
+      // take one element of each parameter to find atom name
+      auto it0 = top.elements.get<1>().lower_bound(it->defname);
+      ofs << format("%4s %4s %4s %2d %10.5f %10.1f\n") %
+        top.atoms.find((int)it0->i)->atom_type2 %
+        top.atoms.find((int)it0->j)->atom_type2 %
+        top.atoms.find((int)it0->k)->atom_type2 %
+        (int)it->f % it->c0 % it->c1;
+    }
+
+    // proper dihedral block
+    ofs << endl;
+    ofs << "[ dihedrals ]\n";
+    for (auto it = top.parameters.get<1>().lower_bound(TPP_TTYPE_RBDIH);
+         it != top.parameters.get<1>().upper_bound(TPP_TTYPE_SYMDIH); ++it) {
+      if (it->f == -1) continue; // skip non-defined angles
+      // take one element of each parameter to find atom name
+      auto it0 = top.elements.get<1>().lower_bound(it->defname);
+      ofs << format("%4s %4s %4s %4s") %
+        top.atoms.find((int)it0->i)->atom_type2 %
+        top.atoms.find((int)it0->j)->atom_type2 %
+        top.atoms.find((int)it0->k)->atom_type2 %
+        top.atoms.find((int)it0->l)->atom_type2;
+      if (it->type == TPP_TTYPE_SYMDIH)
+        ofs << format("%2d %8.1f %10.5f %d \n") %
+          (int)it->f % it->c0 % it->c1 % (int) it->c2;
+      else if (it->type == TPP_TTYPE_RBDIH)
+        ofs << format("%2d %+5.1f %+5.1f %+5.1f %+5.1f %+5.1f %+5.1f \n") %
+          (int)it->f % it->c0 % it->c1 % it->c2 % it->c3 % it->c4 % it->c5;
+      else if (it->type == TPP_TTYPE_IMPDIH)
+        ofs << format("%2d %10.5f %10.1f \n") %
+          (int)it->f % it->c0 % it->c1;
+    }
 
     ofs.close();
   }
