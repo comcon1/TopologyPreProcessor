@@ -83,11 +83,11 @@ namespace tpp {
     std::string qmname; //!< This surely means something!
   };
 
-        /** \brief Container of atoms indexed by index, name or charge group.
-         *
-         *   It is important to locate atom by name and by index. Locating by
-         *   charge group if questionable (may be should be removed).
-         */
+  /** \brief Container of atoms indexed by index, name or charge group.
+    *
+    *   It is important to locate atom by name and by index. Locating by
+    *   charge group if questionable (may be should be removed).
+    */
   typedef bmi::multi_index_container<Atom,
       bmi::indexed_by<bmi::ordered_unique<bmi::member<Atom, TppIndex, &Atom::index> >,
                         // key index (like array)
@@ -98,11 +98,11 @@ namespace tpp {
       > > AtomArray;
 
   /**
-         * \brief This enumeration specifies format of the input data.
-         *
-         * Input data can be in coordinate format (like PDB) or can be read
-         * from output of QM programs (GAMOPT).
-         */
+   * \brief This enumeration specifies format of the input data.
+   *
+   * Input data can be in coordinate format (like PDB) or can be read
+   * from output of QM programs (GAMOPT).
+   */
   typedef enum {
     TPP_IF_PDB = 0,       //!< Input in Protein Data Bank (PDB) format
     TPP_IF_GRO = 1,       //!< Input in GROMOS short format (GRO)
@@ -140,11 +140,11 @@ namespace tpp {
   } IntCoordType;
 
   /** \brief Separate internal coordinate includes
-         *
-         * Includes information about atoms forming coordinate, type of the
-         * coordinate and reference to corresponding tpp::TopCoord element
-         * associated with this coordinate.
-         */
+   *
+   * Includes information about atoms forming coordinate, type of the
+   * coordinate and reference to corresponding tpp::TopCoord element
+   * associated with this coordinate.
+   */
   typedef struct {
     IntCoordType type;    //!< type of the coordinate
     TppIndex i,  //!< atom index No.1 (for e.g. bond type only i and j make sense)
@@ -158,11 +158,11 @@ namespace tpp {
   typedef std::vector<IntCoord> InternalsArray;
 
   /** \brief Parameters of potential function associated with internal coordinate
-         *
-         * Here we do not use all possible potentials but only that which we
-         * operate.
-         * TODO: rename to TopCoordType
-         */
+   *
+   * Here we do not use all possible potentials but only that which we
+   * operate.
+   * TODO: rename to TopCoordType
+   */
   typedef enum {
     TPP_TTYPE_BON = 1,     //!< bond with square potential
     TPP_TTYPE_ANG = 2,     //!< angle with square potential
@@ -175,31 +175,31 @@ namespace tpp {
   } TopologyType;
 
   /** \brief Potential parameter set for similar internal coordinates.
-         *
-         *  This structure defines parameter set for some interaction types. It
-         *  corresponds to a separate definition in .prm file (CHARMM) or in ffbonded.itp file (GMX).
-         *
-         * TODO: rename in some way
-         */
+    *
+    *  This structure defines parameter set for some interaction types. It
+    *  corresponds to a separate definition in .prm file (CHARMM) or in ffbonded.itp file (GMX).
+    *
+    * TODO: rename in some way
+    */
   struct TopCoord {
     long int dbid;         //!< ID in corresponding SQL table
     std::string defname;   //!< define that will be reference topology in future .itp
     TopologyType type;     //!< type of the parameter set
     short f; //!< f = -1 (means parameter lack). Other correspond to ftype in GMX notation
 
-                /** \brief c0..c5 values parametrize the potential interaction
-                 * function.
-                 *
-                 * c0-5 values have different meaning for different TopCoord::type values:
-                 *
-                 * TPP_TTYPE_BON: equilibrium bond length (c0), bond spring constant (c11)
-                 * TPP_TTYPE_ANG: equilibrium angle (c0), angle spring constant (c1)
-                 * TPP_TTYPE_RBDIH: c0..c5 means coefficients in RB
-                 * TPP_TTYPE_IMPDIH: equilibrium angle (c0), angle spring constant (c1)
-                 * TPP_TTYPE_SYMDIH: equilibrium angle (c0), potential
-                 *          repeating coeff. (c1), potential amplitude (c2)
-                 * other: c0..c5 means nothing
-                 */
+    /** \brief c0..c5 values parametrize the potential interaction
+     * function.
+     *
+     * c0-5 values have different meaning for different TopCoord::type values:
+     *
+     * TPP_TTYPE_BON: equilibrium bond length (c0), bond spring constant (c11)
+     * TPP_TTYPE_ANG: equilibrium angle (c0), angle spring constant (c1)
+     * TPP_TTYPE_RBDIH: c0..c5 means coefficients in RB
+     * TPP_TTYPE_IMPDIH: equilibrium angle (c0), angle spring constant (c1)
+     * TPP_TTYPE_SYMDIH: equilibrium angle (c0), potential
+     *          repeating coeff. (c1), potential amplitude (c2)
+     * other: c0..c5 means nothing
+     */
     double c0, c1, c2, c3, c4, c5;
 
                 /*
@@ -208,24 +208,24 @@ namespace tpp {
                  */
   };
 
-        /** \brief Single record combining interaction function for exact atoms
-         * of the molecule.
-         *
-         * TopElement::defname defines interaction described in TopCoord
-         * i,j,k,l defines atom types. For pair interaction only i and j make
-         * sense. For tri-centered interactions only i,j and k make sense.
-         *
-         */
+  /** \brief Single record combining interaction function for exact atoms
+    * of the molecule.
+    *
+    * TopElement::defname defines interaction described in TopCoord
+    * i,j,k,l defines atom types. For pair interaction only i and j make
+    * sense. For tri-centered interactions only i,j and k make sense.
+    *
+    */
   struct TopElement {
     std::string defname;
-                TppIndex i, j, k, l;
+    TppIndex i, j, k, l;
   };
 
   /** \brief Container of interaction potential definitions
-         *
-         * Array can be ordered by interaction type (alphabetically), type of
-         * interaction (TopCoord::type) and by GMX interaction type f.
-         */
+    *
+    * Array can be ordered by interaction type (alphabetically), type of
+    * interaction (TopCoord::type) and by GMX interaction type f.
+    */
   typedef boost::multi_index::multi_index_container<
       TopCoord,
       boost::multi_index::indexed_by<
@@ -241,11 +241,11 @@ namespace tpp {
       >
                 > TopMap;
 
-        /** \brief Container of exact interactions
-         *
-         * Array can easily be ordered by interaction types (defname)
-         *
-         */
+  /** \brief Container of exact interactions
+   *
+   * Array can easily be ordered by interaction types (defname)
+   *
+   */
   typedef boost::multi_index::multi_index_container<
       TopElement,
       boost::multi_index::indexed_by<
@@ -257,11 +257,11 @@ namespace tpp {
            > TopArray;
 
   /** \brief Internal molecule topology definition.
-         *
-         * This class describes both molecular structure and mechanical
-         * structure (topology). Now supports single residue.
-         *
-         */
+   *
+   * This class describes both molecular structure and mechanical
+   * structure (topology). Now supports single residue.
+   *
+   */
   class Topology {
   public:
     TopMap parameters;     //!< interaction potentials definitions
@@ -291,7 +291,7 @@ namespace tpp {
     }
   };
 
-        //TODO: DO WE NEED IT?
+  //TODO: DO WE NEED IT?
   typedef std::vector<double*> t_optimize_list; /// optimize constant list
 
 }
