@@ -399,6 +399,22 @@ namespace tpp {
     "; name  bond_type    mass    charge   ptype          sigma      epsilon ";
     for(auto s: atITPList)
       ofs << s << endl;
+
+    // bondtype block
+    ofs << endl;
+    ofs << "[ bondtypes ]\n";
+    for (auto it = top.parameters.get<1>().lower_bound(TPP_TTYPE_BON);
+         it != top.parameters.get<1>().upper_bound(TPP_TTYPE_BON); ++it) {
+      if (it->f == -1) continue; // skip non-defined bonds
+      // take one element of each parameter to find atom name
+      auto it0 = top.elements.get<1>().lower_bound(it->defname);
+      ofs << format("%4s %4s %1d %10.5f %10.1f\n") %
+        top.atoms.find((int)it0->i)->atom_type2 %
+        top.atoms.find((int)it0->j)->atom_type2 %
+        it->f % it->c0 % it->c1;
+    }
+
+
     ofs.close();
   }
 
