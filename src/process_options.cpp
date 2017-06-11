@@ -24,8 +24,9 @@ namespace tpp {
       if (suffix) ro_ext = string(suffix) + ro_ext;
       ro_parent /= ro_path.stem().string()+ro_ext;
       string upro = strutil::toUpper(ro_ext.substr(1));
+      fname = bfs::absolute(ro_parent).string(); // modify input
       TPPI << format("Output %s: %s") % strutil::toUpper(ro_ext)
-              % bfs::absolute(ro_parent).string();
+              % fname;
       if ( bfs::exists(ro_path) ) {
         if (! bfs::is_regular_file(ro_path) ) {
             tpp::Exception e("Error in output file.");

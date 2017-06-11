@@ -218,6 +218,7 @@ int main(int argc, char * argv[]) {
         });
     atomSettings.ffID = DI->getFFID();
     bondSettings.ffID = DI->getFFID();
+    twSettings.ffID = DI->getFFID();
     TOP.ffinclude = DI->getFFInclude().c_str();
     TOP.ffinfo = forcefield + " revision " + DI->getFFRev();
     TOP.ffdefaults = DI->getFFDefaults();
@@ -241,11 +242,14 @@ int main(int argc, char * argv[]) {
     delete BD;
 
     // TODO: finalize & expanded
-    tpp::TopologyWriter tio(twSettings);
-    tio.saveITP(TOP, output_file.c_str());
-    tio.saveAbsentParametersITP(TOP, lackfile.c_str());
+    tpp::TopologyWriter tio(twSettings, TOP);
+    tio.saveITP(output_file.c_str());
+    tio.saveAbsentParametersITP(lackfile.c_str());
     if (rtpout.size() > 0) {
-      tio.saveRTP(TOP, rtpout.c_str());
+      tio.saveRTP(rtpout.c_str());
+    }
+    if (twSettings.ffSeparate) {
+      tio.saveFFITP(baseSettings, output_ff.c_str());
     }
     TPPI << format("Please, correct your charges according to sum: %1$8.3f.\n") % sumcharge(TOP);
 
