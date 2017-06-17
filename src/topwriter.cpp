@@ -187,16 +187,21 @@ namespace tpp {
 %1%\
 ; ----------------------------------------------\n\
 ; Topology was prepared for use with the force field:\n\
-;         %2%\n\
+; %2%\n\
+; Please include %5% into .top file\n\
+#ifndef %6%\n\
+  #error CORRECT VERSION OF FORCE FIELD [%6%] WAS NOT INCLUDED\n\
+#endif\n\
 \n\
 [ moleculetype ]\n\
  %3$4s %4$1d\n\
 \n\
-; Force constant parameters\n") % top_comment % top.ffinfo % top.res_name % (int)(top.nrexcl);
+; Force constant parameters\n") % top_comment % top.ffinfo % top.res_name
+      % (int)(top.nrexcl) % top.ffinclude % top.ffcheck;
     // force constants parameters '#define's
     for (auto it = top.parameters.get<1>().begin();
           it != top.parameters.get<1>().upper_bound(TPP_TTYPE_SYMDIH); ++it) {
-      if ( (it->f != -1) ^  settings.ffFullPrint ) {
+      if ( (it->f != -1) && settings.ffFullPrint ) {
         switch (it->type) {
          case TPP_TTYPE_BON:   out << format("#define %1$-25s %2$1d %3$8.3f %4$9.2e ;1\n")
                                 % it->defname % it->f % it->c0 % it->c1; break;
@@ -227,10 +232,10 @@ namespace tpp {
            it != top.parameters.get<1>().upper_bound(TPP_TTYPE_BON); ++it)
         for (auto it0 = top.elements.get<1>().lower_bound(it->defname);
              it0 != top.elements.get<1>().upper_bound(it->defname); ++it0)
-          if (settings.ffFullPrint && (it->f != -1) )
-            out << format("%1$3d %2$3d  %3$2d\n") % (int)it0->i % (int)it0->j % it->f;
-          else
+          if (settings.ffFullPrint || (it->f == -1) )
             out << format("%1$3d %2$3d  %3$-15s\n") % (int)it0->i % (int)it0->j % it0->defname;
+          else
+            out << format("%1$3d %2$3d  %3$2d\n") % (int)it0->i % (int)it0->j % it->f;
     }
     // angles
     if (top.parameters.get<1>().find(TPP_TTYPE_ANG) != top.parameters.get<1>().end()) {
@@ -239,10 +244,10 @@ namespace tpp {
            it != top.parameters.get<1>().upper_bound(TPP_TTYPE_ANG); ++it)
         for (auto it0 = top.elements.get<1>().lower_bound(it->defname);
              it0 != top.elements.get<1>().upper_bound(it->defname); ++it0)
-          if (settings.ffFullPrint && (it->f != -1) )
-            out << format("%1$3d %2$3d %3$3d  %4$2d\n") % (int)it0->i % (int)it0->j % (int)it0->k % it->f;
-          else
+          if (settings.ffFullPrint || (it->f == -1) )
             out << format("%1$3d %2$3d %3$3d  %4$-15s\n") % (int)it0->i % (int)it0->j % (int)it0->k % it0->defname;
+          else
+            out << format("%1$3d %2$3d %3$3d  %4$2d\n") % (int)it0->i % (int)it0->j % (int)it0->k % it->f;
     }
     // dihedrals
     if ( ( top.parameters.get<1>().find(TPP_TTYPE_RBDIH) != top.parameters.get<1>().end() ) ||
@@ -254,10 +259,10 @@ namespace tpp {
            it != top.parameters.get<1>().upper_bound(TPP_TTYPE_SYMDIH); ++it)
         for (auto it0 = top.elements.get<1>().lower_bound(it->defname);
              it0 != top.elements.get<1>().upper_bound(it->defname); ++it0)
-          if (settings.ffFullPrint && (it->f != -1) )
-            out << format("%1$3d %2$3d %3$3d %4$3d  %5$2d\n") % (int)it0->i % (int)it0->j % (int)it0->k % (int)it0->l % it->f;
-          else
+          if (settings.ffFullPrint || (it->f == -1) )
             out << format("%1$3d %2$3d %3$3d %4$3d  %5$-15s\n") % (int)it0->i % (int)it0->j % (int)it0->k % (int)it0->l % it0->defname;
+          else
+            out << format("%1$3d %2$3d %3$3d %4$3d  %5$2d\n") % (int)it0->i % (int)it0->j % (int)it0->k % (int)it0->l % it->f;
     }
     // impropers
     if ( top.parameters.get<1>().find(TPP_TTYPE_SPECIMP) != top.parameters.get<1>().end() ) {
@@ -393,12 +398,18 @@ namespace tpp {
 
   void ForceFieldWriter::writeToFile(const char *fname) {
     fstream ofs(fname, ios::out);
+    ofs << top_comment << endl;
+    ofs << "; define for recognizing with ITP" << endl;
+    ofs << "#define " << top.ffcheck << endl << endl;
+    ofs << "[ defaults ]\n"
+    "; Defaults are inherited from the mother force field\n";
+    ofs << top.ffdefaults << endl << endl;
     ofs << "[ atomtypes ]\n"
     "; This list contains only atoms that uses in the separate molecule"
     "; The complete list of atomtypes can be obtained from the full version of corresponding FF"
     "; name  bond_type    mass    charge   ptype          sigma      epsilon ";
     for(auto s: atITPList)
-      ofs << s << endl;
+      ofs << " " << s << endl;
 
     // bondtype block
     ofs << endl;
@@ -453,6 +464,7 @@ namespace tpp {
           (int)it->f % it->c0 % it->c1;
     }
 
+    // improper block
     ofs.close();
   }
 

@@ -219,8 +219,16 @@ int main(int argc, char * argv[]) {
     atomSettings.ffID = DI->getFFID();
     bondSettings.ffID = DI->getFFID();
     twSettings.ffID = DI->getFFID();
-    TOP.ffinclude = DI->getFFInclude().c_str();
-    TOP.ffinfo = forcefield + " revision " + DI->getFFRev();
+    if (twSettings.ffSeparate) {
+      TOP.ffinclude = output_ff;
+      TOP.ffinfo = forcefield + " revision " + DI->getFFRev() + "[selected part]";
+      TOP.ffcheck = string("TPPREV_") + DI->getFFRev() + TOP.res_name;
+      twSettings.ffFullPrint = false;
+    } else {
+      TOP.ffinclude = DI->getFFInclude().c_str();
+      TOP.ffinfo = forcefield + " revision " + DI->getFFRev();
+      TOP.ffcheck = string("TPPREV_") + DI->getFFRev();
+    }
     TOP.ffdefaults = DI->getFFDefaults();
     TPPD << ("Force field defaults: "+TOP.ffdefaults);
     TPPD << DI->getStatistics();

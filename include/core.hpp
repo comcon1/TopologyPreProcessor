@@ -273,6 +273,7 @@ namespace tpp {
     std::string ffinclude; //!< string for mother parameters include for TOP-file
     std::string ffdefaults;//!< string for force field defaults (required for expanded mode)
     std::string ffinfo;    //!< information about the force field
+    std::string ffcheck;   //!< define that should be defined in force field ITP
     std::string res_name;  //!< residue name (short & caps)
     std::string name;      //!< molecule name (long)
 
