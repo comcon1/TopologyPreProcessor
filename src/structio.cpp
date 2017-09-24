@@ -275,6 +275,11 @@ namespace tpp {
         }
       } else {
         tp.res_name = "VMO";
+        for (AtomArray::iterator it = tp.atoms.begin(); it != tp.atoms.end(); ++it) {
+              Atom at(*it);
+              at.res_name = "VMO";
+              tp.atoms.replace(it, at);
+            }
       }
 
       if ( tp.atoms.empty() ) {

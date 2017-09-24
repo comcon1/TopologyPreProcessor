@@ -172,17 +172,26 @@ int main(int argc, char * argv[]) {
     tpp::Topology topology;
     tpp::StructureIO io(ignore_index, rtp_file);
 
+#ifndef DEBUG
     tpp::run_with_timeout<void>(TPP_LOADFILE_TIMELIMIT,
-            [&]() { io.loadFromFile(topology, iform, input_file.c_str()); }
-             );
+            [&]() {
+#endif
+            io.loadFromFile(topology, iform, input_file.c_str());
+#ifndef DEBUG
+            } );
+#endif
 
-
+#ifndef DEBUG
     tpp::run_with_timeout<void>(TPP_RENUMBER_TIMELIMIT,
         [&]() {
+#endif // DEBUG
           tpp::Renumberer rnr(topology.mol, verbose);
           std::vector<unsigned> tail1 = rnr.findLongestChain();
-          topology.atoms = rnr.molRenumber(topology.atoms, tail1, b36Flag);
+          tpp::AtomArray a0 (topology.atoms);
+          topology.atoms = rnr.molRenumber(a0, tail1, b36Flag);
+#ifndef DEBUG
           } );
+#endif // DEBUG
 
     io.saveToFile(topology, oform, output_file.c_str());
   } // of global try

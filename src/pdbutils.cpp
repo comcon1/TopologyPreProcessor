@@ -111,12 +111,12 @@ namespace tpp {
   AtomArray Renumberer::molRenumber(AtomArray &ar, std::vector<unsigned> tail, bool b36Flag) {
 
     TPPI << "Starting C1 renumerator alrogithm.";
-  #ifdef DEBUG
+#ifdef DEBUG
     FOR_ATOMS_OF_MOL(pt, const_cast<OBMol&>(mol) ) {
       cout << format(" %1$3d %2$4s %3$3d\n") %pt->GetIdx() % pt->GetType() % pt->GetAtomicNum();
     }
     cout << "================================" << endl;
-  #endif
+#endif
 
     /* ATOM RENUMBERING SECTION. preparing to recursion */
     AtomArray A; // final atom array with new names and numbers
@@ -132,8 +132,8 @@ namespace tpp {
       os << "New atom names and numbers:\n";
       for (AtomArray::iterator ait = A.begin(); ait != A.end(); ++ait) {
         os
-          << format(" %1$3d %2$4s %3$3d\n") % (int) ait->index
-          % ait->atom_name % (int) ait->ncharge;
+          << format(" %1$3d %2$4s %3$3d %4$4s\n") % (int) ait->index
+          % ait->atom_name % (int) ait->ncharge % ait->res_name;
       }
       os << "Table of converting numbers:\n";
       for (AtomArray::iterator ait = A.begin(); ait != A.end(); ++ait) {
