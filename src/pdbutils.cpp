@@ -15,8 +15,6 @@
 #include <boost/format.hpp>
 #include <boost/lexical_cast.hpp>
 
-#include <assert.h>
-
 using std::string;
 using std::ostringstream;
 using std::cout;
@@ -126,7 +124,8 @@ namespace tpp {
 
     // STARTING RECURSION
     recurseMolRenum(ar, tail, tailed, A, n, h, b36Flag);
-
+    TPPD << "SIZE BEFORE" << ar.size() << endl; //todo: delete
+    TPPD << "SIZE AFTER" << A.size() << endl; //todo: delete
     { // output block
       ostringstream os;
       os << "New atom names and numbers:\n";
@@ -167,7 +166,15 @@ namespace tpp {
       for (auto p: _tail) {
         { // area of defining local variables
           OBAtom *pA = mol.GetAtom(p);
-          assert(_ar.count(p) == 1);
+          if (_ar.count(p) != 1) {
+            TPPE << format("Failed to find an atom no. %d") % p;
+            // throwing ..
+            tpp::Exception e("Error in recurse scan.");
+            e.add("procname", "tpp::detail::recurse_mol_scan");
+            e.add("error","Error in atom numeration. See the log.");
+            throw e;
+           }
+
           Atom tat = *(_ar.find(p));
           _n++;
           _h++;
@@ -178,7 +185,14 @@ namespace tpp {
           tat.ncharge = pA->GetAtomicNum();
           AtomNameGenerator ang(tat);
           tat.atom_name = ang.setNums(_h,0,b36Flag).getName();
-          assert(_A.insert(tat).second);
+          if (! _A.insert(tat).second) {
+            TPPE << format("Failed to insert atom no. %d") % p;
+            // throwing ..
+            tpp::Exception e("Error in recurse scan.");
+            e.add("procname", "tpp::detail::recurse_mol_scan");
+            e.add("error","Error in atom numeration. See the log.");
+            throw e;
+          }
           int k = 0; // hydrogen local counter
           // arrange hydrogens
           FOR_NBORS_OF_ATOM(pQ, &*pA){

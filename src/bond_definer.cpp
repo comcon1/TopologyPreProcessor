@@ -4,7 +4,7 @@
 #include "strutil.hpp"
 
 #include <mysql.h>
-#include <assert.h>
+#include <stdexcept>
 #include <boost/multi_index_container.hpp>
 
 #include <openbabel/obconversion.h>
@@ -103,7 +103,8 @@ namespace tpp {
 
     for (mysqlpp::Row::size_type co = 0; co < res.num_rows(); ++co) {
       row = res.at(co);
-      assert(namemap.find(string(row["uname"].c_str())) != namemap.end());
+      if (namemap.find(string(row["uname"].c_str())) == namemap.end())
+          throw std::logic_error("code error");
       namemap.find(string(row["uname"].c_str()))->second =
           row["name"].c_str();
     }
@@ -538,7 +539,8 @@ void BondDefiner::fillImpropers() {
             % row["PAT"] % pat.NumAtoms();
     TPPD << os.str();
     pat.Match(tp.mol);
-    assert(pat.NumAtoms() == 4);
+    if (pat.NumAtoms() != 4)
+        throw std::logic_error("code error");
     maplist.clear();
     maplist = pat.GetUMapList();
     #ifdef CDB
@@ -551,25 +553,32 @@ void BondDefiner::fillImpropers() {
     // manipulating matches
     for (int i = 0; i < maplist.size(); ++i) {
       int oo = (int) (row["order"]);
-      assert(oo <= 4321 and oo >= 1234);
+      if (oo > 4321 or oo < 1234)
+        throw std::logic_error("code error");
       TopElement tel;
-      assert(oo % 10 <= 4); // 4312 -> 2
+      if (oo % 10 > 4) // 4312 -> 2
+        throw std::logic_error("code error");
       tel.l = maplist[i][oo % 10 - 1];
       oo = oo / 10;
-      assert(oo % 10 <= 4); // 431 -> 1
+      if (oo % 10 > 4) // 431 -> 1
+        throw std::logic_error("code error");
       tel.k = maplist[i][oo % 10 - 1];
       oo = oo / 10;
-      assert(oo % 10 <= 4); // 43 -> 3
+      if (oo % 10 > 4) // 43 -> 3
+        throw std::logic_error("code error");
       tel.j = maplist[i][oo % 10 - 1];
       oo = oo / 10;
-      assert(oo <= 4); // 4 -> 4
+      if (oo > 4) // 4 -> 4
+        throw std::logic_error("code error");
       tel.i = maplist[i][oo - 1];
       tel.defname = (string) row["name"];
-      assert(
+      if (! ( 
           (tp.atoms.find(tel.i) != tp.atoms.end())
               && (tp.atoms.find(tel.j) != tp.atoms.end())
               && (tp.atoms.find(tel.k) != tp.atoms.end())
-              && (tp.atoms.find(tel.l) != tp.atoms.end()));
+              && (tp.atoms.find(tel.l) != tp.atoms.end())) )
+        throw std::logic_error("code error");
+
       #ifdef CDB
       cout << format(" --- %1$d  %2$d  %3$d  %4$d ---") % tel.i % tel.j % tel.k % tel.l << endl;
       #endif
@@ -619,9 +628,11 @@ void BondDefiner::fillPairs() {
     FOR_TORSIONS_OF_MOL(it,tp.mol) {
       TopElement tel;
       tel.defname = "ONE_PAIR";
-      assert(tp.atoms.find((*it)[0]+1) != tp.atoms.end());
+      if (tp.atoms.find((*it)[0]+1) == tp.atoms.end());
+        throw std::logic_error("code error");
       tel.i = tp.atoms.find((*it)[0]+1)->index;
-      assert(tp.atoms.find((*it)[1]+1) != tp.atoms.end());
+      if (tp.atoms.find((*it)[1]+1) == tp.atoms.end());
+        throw std::logic_error("code error");
       tel.j = tp.atoms.find((*it)[3]+1)->index;
       tp.elements.push_back(tel);
     }

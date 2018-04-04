@@ -3,7 +3,7 @@
 
 #include "db_base.hpp"
 
-#include <cassert>
+#include <stdexcept>
 
 namespace tpp {
   using namespace boost::multi_index;
@@ -25,7 +25,8 @@ namespace tpp {
       public:
         ElemType first() const  { return (i < j) ? i : j; }
         ElemType second() const { return (i < j) ? j : i; }
-        Spec2(ElemType a, ElemType b): i(a), j(b) { assert(a != b); }
+        Spec2(ElemType a, ElemType b): i(a), j(b) { 
+            if (a == b) throw std::logic_error("violation spec2 type"); }
     };
 
     /** \brief Simple pair<int,int>
@@ -52,7 +53,8 @@ namespace tpp {
         ElemType second() const { return j; }
         ElemType third() const { return (i < k) ? k : i; }
         Spec3(ElemType a, ElemType b, ElemType c): i(a), j(b), k(c) {
-          assert( (a != b) && (a != c) && (b != c) );
+          if (! ( (a != b) && (a != c) && (b != c) ) )
+              throw std::logic_error("violation spec3 type");
         }
     };
 
@@ -82,7 +84,8 @@ namespace tpp {
         ElemType fourth() const { return (i < l) ? l : i; }
         Spec4(ElemType a, ElemType b, ElemType c, ElemType d) :
             i(a), j(b), k(c), l(d) {
-          assert( (a != b) && (a != c) && (a != d) && (b != c) && (b != d) && (c != d) );
+          if ( !( (a != b) && (a != c) && (a != d) && (b != c) && (b != d) && (c != d) ))
+              throw std::logic_error("violation spec4 type");
         }
     };
 

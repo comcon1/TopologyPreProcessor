@@ -214,7 +214,7 @@ namespace tpp {
       } else {
         /// This situation can not occur. Just test that the code is correct.
         TPPE << "No AIBondSpec was prepared!";
-        assert(0);
+        throw std::logic_error("code error");
       }
     } // end FOR_BONDS_OF_MOL
     TPPI << "                                ..finished! <---- ";
@@ -328,7 +328,7 @@ namespace tpp {
       } else {
         /// This situation can not occur. Just test that the code is correct.
         TPPE << format("No AIAngleSpec was prepared: %d-%d-%d ") % a1 % a2 % a3 ;
-        assert(0);
+        throw std::logic_error("code error");
       }
     } // end FOR_ANGLES_OF_MOL
 
@@ -445,7 +445,7 @@ namespace tpp {
       } else {
         /// This situation can not occur. Just test that the code is correct.
         TPPE << format("No AIDihdSpec was prepared: %d-%d-%d-%d ") % a1 % a2 % a3 % a4 ;
-        assert(0);
+        throw std::logic_error("code error");
       }
     } // end FOR_TORSIONS_OF_MOL
 
@@ -522,11 +522,13 @@ namespace tpp {
           max = mmm.first;
         }
       chk0 = atom_mapper.find(max); // iterator to best atom in atom_mapper
-      assert(chk0 != atom_mapper.end());
+      if (chk0 == atom_mapper.end());
+        throw std::logic_error("code error");
       name = chk0->type; // name of best atom
       tp.mol.GetAtom(sit.first)->SetType(name);
       AtomArray::iterator newa_ = tp.atoms.find(sit.first);
-      assert(newa_ != tp.atoms.end());
+      if (newa_ == tp.atoms.end());
+        throw std::logic_error("code error");
       Atom newa = *newa_;
       newa.atom_type = chk0->type;
       newa.atom_type2 = chk0->type2;
@@ -843,7 +845,8 @@ namespace tpp {
                             #ifdef CDB
                             cout << maplist[i][j] << " " << flush;
                             #endif
-                            assert(cur_it != tp.atoms.end());
+                            if (cur_it == tp.atoms.end());
+                                throw std::logic_error("code error");
                             Atom cur0 = *cur_it;
                             cur0.c_gnr = curCG;
                             tp.atoms.replace(cur_it, cur0);
@@ -891,7 +894,8 @@ namespace tpp {
                       }
                       for (set<TppIndex>::iterator ii = _tempset.begin(); ii != _tempset.end(); ++ii) {
                           AtomArray::iterator cit = tp.atoms.find(*ii);
-                          assert( cit != tp.atoms.end() );
+                          if ( cit != tp.atoms.end() )
+                            throw std::logic_error("code error");
                           Atom cur0 = *cit;
                           cur0.c_gnr = current_cgr;
                           tp.atoms.replace(cit, cur0);
@@ -985,13 +989,15 @@ namespace tpp {
                << "Matches: " << maplist.size() << endl;
           #endif
           for(int i=0;i<maplist.size();++i) {
-            assert( maplist[i].size() >= (int)(row["pos"]) );
+            if ( maplist[i].size() < (int)(row["pos"]) )
+                throw std::logic_error("code error");
             atoms_suite.insert( maplist[i][row["pos"]-1] );
           }
 
           for (set_it = atoms_suite.begin(); set_it != atoms_suite.end(); ++set_it) {
             score_it = sf_scores.find(*set_it);
-            assert( score_it != sf_scores.end() );
+            if ( score_it == sf_scores.end() )
+                throw std::logic_error("code error");
             score_subit = score_it->second.find( row["atom_ids"] );
             if ( score_subit == score_it->second.end() ) {
               Exception e("SMARTS-DB ERROR!");
