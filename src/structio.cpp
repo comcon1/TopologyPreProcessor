@@ -175,10 +175,10 @@ namespace tpp {
                       tppe.add("line", lexical_cast<string>(strc).c_str());
                       throw tppe;
                     } catch (const boost::bad_numeric_cast &e) {
-                      TPPE << format("** Caught bad numeric cast with error: ") % e.what();
+                      TPPE << format("** Caught bad numeric cast with error: %s") % e.what();
                       TPPE << format("** Last field read: [%1$s]") % field;
                       TPPE << curString;
-                      Exception tppe("Some of ATOM indexes is out of bonds.");
+                      Exception tppe("Some of ATOM indexes is out of bonds. Note that TPP accepts only 0-255 residue number!");
                       tppe.add("classname", "StructIO");
                       tppe.add("procname", "loadFromStream");
                       tppe.add("error", "PDB numeric conversion error");
