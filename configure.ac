@@ -156,6 +156,8 @@ PKG_CHECK_MODULES([OPENBABEL], [openbabel-2.0],
 AC_CHECK_LIB([openbabel], [main],,
              [AC_MSG_ERROR([Can not link to libopenbabel!])]
 )
+LDFLAGS="$LDFLAGS $OPENBABEL_LIBS"
+
 AC_CHECK_HEADERS_ONCE([openbabel/parsmart.h openbabel/obiter.h openbabel/obconversion.h openbabel/mol.h],,
                 [AC_MSG_ERROR([OpenBabel headers are required! Install libopenbabel-dev!])]
 )

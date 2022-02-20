@@ -1,6 +1,28 @@
 This is the startup project of TPPMKTOP utility for generating molecular
 dynamic topology directly from the chemical structure file.
 
+== INSTALL ==
+
+Install mysql++, boost and openbabel. Project tested with openbabel-2.4 (install it by hands).
+
+For ubuntu:20.04 these libraries are required:
+
+apt-get install -y \
+  libmysqlclient21 libmysql++3v5 libboost-thread1.71.0 libboost-filesystem1.71.0 \
+  libboost-program-options1.71.0 libboost-regex1.71.0 libboost-log1.71.0 \
+  libmysql++-dev libboost1.71-dev libboost-thread1.71-dev libboost-filesystem1.71-dev \
+  libboost-program-options1.71-dev libboost-regex1.71-dev libboost-log1.71-dev
+
+To install run from folder:
+                   
+./bootstrap.sh
+OPENBABEL_CFLAGS=-I/usr/local/openbabel-240/include/openbabel-2.0/ \
+ OPENBABEL_LIBS=-Wl,-rpath=/usr/local/openbabel-240/lib \
+ LDFLAGS=-L/usr/local/openbabel-240/lib ./configure
+make && make install
+
+== DESCRIPTION ==
+
 There are two working programs now:
 
 * TPPRENUM
