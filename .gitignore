@@ -1,5 +1,3 @@
-syntax: glob
-
 src/programs/tppmktop
 src/programs/tpprenum
 src/programs/tppreadbonds
@@ -35,13 +33,13 @@ doxydoc
 compile
 misc/*
 
-syntax: regexp
+# syntax: regexp
 
-^.*\.sw[po]$
-^.*\.o$
-^.*\.pdb$
-^.*\.itp$
-^.*\log$
-^.*\cash$
-^.*\.orig$
+# ^.*\.sw[po]$
+# ^.*\.o$
+# ^.*\.pdb$
+# ^.*\.itp$
+# ^.*\log$
+# ^.*\cash$
+# ^.*\.orig$
 
