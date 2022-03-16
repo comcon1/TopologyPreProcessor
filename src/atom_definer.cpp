@@ -522,12 +522,12 @@ namespace tpp {
           max = mmm.first;
         }
       chk0 = atom_mapper.find(max); // iterator to best atom in atom_mapper
-      if (chk0 == atom_mapper.end());
+      if (chk0 == atom_mapper.end())
         throw std::logic_error("code error");
       name = chk0->type; // name of best atom
       tp.mol.GetAtom(sit.first)->SetType(name);
       AtomArray::iterator newa_ = tp.atoms.find(sit.first);
-      if (newa_ == tp.atoms.end());
+      if (newa_ == tp.atoms.end())
         throw std::logic_error("code error");
       Atom newa = *newa_;
       newa.atom_type = chk0->type;
@@ -845,8 +845,10 @@ namespace tpp {
                             #ifdef CDB
                             cout << maplist[i][j] << " " << flush;
                             #endif
-                            if (cur_it == tp.atoms.end());
+                            if (cur_it == tp.atoms.end()) {
+                                TPPE << "Invalid atom in CGNR-1 list!";
                                 throw std::logic_error("code error");
+                            }
                             Atom cur0 = *cur_it;
                             cur0.c_gnr = curCG;
                             tp.atoms.replace(cur_it, cur0);
@@ -894,8 +896,10 @@ namespace tpp {
                       }
                       for (set<TppIndex>::iterator ii = _tempset.begin(); ii != _tempset.end(); ++ii) {
                           AtomArray::iterator cit = tp.atoms.find(*ii);
-                          if ( cit != tp.atoms.end() )
+                          if ( cit == tp.atoms.end() ) {
+                            TPPE << "Invalid atom in CGNR-2 list!";
                             throw std::logic_error("code error");
+                          }
                           Atom cur0 = *cit;
                           cur0.c_gnr = current_cgr;
                           tp.atoms.replace(cit, cur0);

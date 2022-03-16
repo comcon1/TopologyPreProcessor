@@ -628,10 +628,10 @@ void BondDefiner::fillPairs() {
     FOR_TORSIONS_OF_MOL(it,tp.mol) {
       TopElement tel;
       tel.defname = "ONE_PAIR";
-      if (tp.atoms.find((*it)[0]+1) == tp.atoms.end());
+      if (tp.atoms.find((*it)[0]+1) == tp.atoms.end())
         throw std::logic_error("code error");
       tel.i = tp.atoms.find((*it)[0]+1)->index;
-      if (tp.atoms.find((*it)[1]+1) == tp.atoms.end());
+      if (tp.atoms.find((*it)[1]+1) == tp.atoms.end())
         throw std::logic_error("code error");
       tel.j = tp.atoms.find((*it)[3]+1)->index;
       tp.elements.push_back(tel);
