@@ -272,8 +272,15 @@ namespace tpp {
         for (auto it0 = top.elements.get<1>().lower_bound(it->defname);
              it0 != top.elements.get<1>().upper_bound(it->defname); ++it0)
           // impropers are always with defines (!)
-            out << format("%1$3d %2$3d %3$3d %4$3d  %5$-15s\n") % (int)it0->i % (int)it0->j % (int)it0->k % (int)it0->l % it0->defname;
+            out << format("%1$3d %2$3d %3$3d %4$3d  %5$2d %6$-15s\n") 
+                    % (int)it0->i 
+                    % (int)it0->j 
+                    % (int)it0->k 
+                    % (int)it0->l 
+                    % (int)it->f
+                    % it0->defname;
           //TODO: default improper type should be incorporated
+          
     }
     // pairs
     if ( top.parameters.get<1>().count(TPP_TTYPE_PAIR) > 0 ) {
@@ -465,6 +472,25 @@ namespace tpp {
     }
 
     // improper block
+    if ( top.parameters.get<1>().find(TPP_TTYPE_SPECIMP) != top.parameters.get<1>().end() ) {
+      ofs << "\n ; Improper defines\n";
+      for (auto it = top.parameters.get<1>().lower_bound(TPP_TTYPE_SPECIMP);
+        it != top.parameters.get<1>().upper_bound(TPP_TTYPE_SPECIMP); ++it) {
+          // by some historical reasons, spec.impropers are always with defines
+          // and potential type is not defined here
+          ofs << format("#define %-15s   ") %  it->defname;
+          if (it->f == 1)
+            ofs << format("%8.1f %10.5f %d \n") %
+                    it->c0 % it->c1 % (int) it->c2;
+          else if (it->f == 3)
+            ofs << format("%+5.1f %+5.1f %+5.1f %+5.1f %+5.1f %+5.1f \n") %
+              it->c0 % it->c1 % it->c2 % it->c3 % it->c4 % it->c5;
+          else if (it->f == 2)
+            ofs << format("%10.5f %10.1f \n") %
+              it->c0 % it->c1;
+          ofs << std::flush;
+      }
+    }
     ofs.close();
   }
 
