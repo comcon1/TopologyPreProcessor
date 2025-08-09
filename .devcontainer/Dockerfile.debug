@@ -1,5 +1,9 @@
 FROM ubuntu:20.04
 
+ARG USERNAME=myuser
+ARG USER_UID=1000
+ARG USER_GID=1000
+
 ENV TZ=Europe/Oslo
 
 RUN echo $TZ && ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone && \
@@ -35,8 +39,12 @@ RUN echo $TZ && ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /et
     		   libboost-program-options1.71-dev libboost-regex1.71-dev libboost-log1.71-dev && \
     apt-get install -y vim gdb && \
     apt-get -y autoremove --purge && apt-get clean && apt-get purge && \
-    rm -rf /var/lib/apt/lists/* && \
-    mkdir /work
+    rm -rf /var/lib/apt/lists/*
+
+RUN groupadd --gid $USER_GID $USERNAME \
+    && useradd --uid $USER_UID --gid $USER_GID -m $USERNAME
+
+USER $USERNAME
 
 WORKDIR /work
 
