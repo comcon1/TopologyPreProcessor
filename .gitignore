@@ -32,6 +32,8 @@ doxydoc
 .settings
 compile
 misc/*
+src/*.o
+src/programs/*.o
 
 # syntax: regexp
 
