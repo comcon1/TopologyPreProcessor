@@ -1,0 +1,15 @@
+{
+  "name": "TPP Build Container",
+  "build": {
+    "dockerfile": "Dockerfile.debug"
+  },
+  "context": "..",
+  "workspaceFolder": "/work",
+  "mounts": [
+    "source=${localWorkspaceFolder},target=/work,type=bind,consistency=cached"
+  ],
+  "remoteUser": "root",
+  "extensions": [
+    "ms-vscode.cpptools"
+  ]
+}
