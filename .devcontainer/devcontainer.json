@@ -1,15 +1,22 @@
 {
   "name": "TPP Build Container",
   "build": {
-    "dockerfile": "Dockerfile.debug"
+    "dockerfile": "Dockerfile.debug",
+    "args": {
+        "USER_UID": "1000",
+        "USER_GID": "1000",
+        "USERNAME": "comcon1"
+    }
   },
   "context": "..",
   "workspaceFolder": "/work",
   "mounts": [
     "source=${localWorkspaceFolder},target=/work,type=bind,consistency=cached"
   ],
-  "remoteUser": "root",
+  "remoteUser": "comcon1",
   "extensions": [
-    "ms-vscode.cpptools"
+    "ms-vscode.cpptools",
+    "ms-vscode.cpptools-extension-pack",
+    "ms-vscode.makefile-tools"
   ]
 }
