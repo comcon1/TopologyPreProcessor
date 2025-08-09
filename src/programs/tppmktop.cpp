@@ -71,13 +71,13 @@ int main(int argc, char * argv[]) {
             p_o::value<std::string>()->default_value("lack.itp"),
             "Topology lack filename (default 'lack.itp')")
         ("expanded",
-            p_o::value<bool>()->default_value(false)->implicit_value(false),
-            "Create expanded topology (do not required FF includes)")
+            p_o::bool_switch()->default_value(false),
+            "[not impl.] Create expanded topology (do not required FF includes)")
         ("separate",
             p_o::bool_switch()->default_value(false),
             "Create separated FF file <filename>_ff.itp")
         ("finalize",
-            p_o::value<bool>()->default_value(false)->implicit_value(false),
+            p_o::bool_switch()->default_value(false),
             "Create final topology (don't create lack-file, overwrite dihedrals with pairs)")
         ("max-bonds,m",
             p_o::bool_switch()->default_value(false),
@@ -228,6 +228,7 @@ int main(int argc, char * argv[]) {
       TOP.ffinclude = DI->getFFInclude().c_str();
       TOP.ffinfo = forcefield + " revision " + DI->getFFRev();
       TOP.ffcheck = string("TPPREV_") + DI->getFFRev();
+      twSettings.ffFullPrint = true;
     }
     TOP.ffdefaults = DI->getFFDefaults();
     TPPD << ("Force field defaults: "+TOP.ffdefaults);
