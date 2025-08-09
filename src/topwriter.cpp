@@ -464,7 +464,7 @@ namespace tpp {
         ofs << format("%2d %8.1f %10.5f %d \n") %
           (int)it->f % it->c0 % it->c1 % (int) it->c2;
       else if (it->type == TPP_TTYPE_RBDIH)
-        ofs << format("%2d %+5.1f %+5.1f %+5.1f %+5.1f %+5.1f %+5.1f \n") %
+        ofs << format("%2d %7.3f %7.3f %7.3f %7.3f %7.3f %7.3f \n") %
           (int)it->f % it->c0 % it->c1 % it->c2 % it->c3 % it->c4 % it->c5;
       else if (it->type == TPP_TTYPE_IMPDIH)
         ofs << format("%2d %10.5f %10.1f \n") %
