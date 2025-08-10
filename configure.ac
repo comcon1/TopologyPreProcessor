@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.69])
-AC_INIT([Topology PreProcessor], [0.2], [comconadin@gmail.com])
+AC_INIT([Topology PreProcessor], [0.3.0], [comconadin@gmail.com])
 : ${CXXFLAGS=""}
 : ${CFLAGS=""}
 AM_INIT_AUTOMAKE([])
