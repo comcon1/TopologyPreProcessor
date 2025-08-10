@@ -1,7 +1,7 @@
 {
   "name": "TPP Build Container",
   "build": {
-    "dockerfile": "Dockerfile.debug",
+    "dockerfile": "Dockerfile.devc",
     "args": {
         "USER_UID": "1000",
         "USER_GID": "1000",

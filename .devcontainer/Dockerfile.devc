@@ -1,0 +1,19 @@
+# --------------------------------------------------------------------
+# Example file for final configuration of devcontainer can be found in 
+# https://github.com/comcon1/TPP-docker
+# --------------------------------------------------------------------
+
+FROM comcon1/tppcon:0.3.0-devbase
+
+ARG USERNAME=myuser
+ARG USER_UID=1000
+ARG USER_GID=1000
+
+RUN groupadd --gid $USER_GID $USERNAME \
+    && useradd --uid $USER_UID --gid $USER_GID -m $USERNAME
+
+USER $USERNAME
+
+WORKDIR /work
+
+CMD ["/bin/bash"]
