@@ -5,10 +5,10 @@ if DEBUGMODE
 AM_CFLAGS = -g3 -O0 -DDEBUG
 AM_CXXFLAGS = -g3 -O0 -DDEBUG
 else
-AM_CFLAGS = -O3 -DNDEBUG
-AM_CXXFLAGS = -O3 -DNDEBUG
+AM_CFLAGS = -O3 -fno-omit-frame-pointer
+AM_CXXFLAGS = -O3 -fno-omit-frame-pointer
 endif
-AM_CXXFLAGS += -std=c++11 -fpermissive
+AM_CXXFLAGS += -std=c++14 -fpermissive
 
 bin_PROGRAMS = programs/tpprenum programs/tppmktop
 MODULES = strutil.cpp structio.cpp tppnames.cpp exceptions.cpp logger.cpp bond_matrix.cpp core.cpp process_options.cpp
