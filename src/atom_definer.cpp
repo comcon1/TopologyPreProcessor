@@ -645,8 +645,6 @@ namespace tpp {
     cout << endl;
     TPPI << "== Starting AtomDefiner ==";
     checkAtomlistConsistency();
-    connectDB();
-    scoresZeroFill();
   }
 
   /// crucial internal check
@@ -723,6 +721,8 @@ namespace tpp {
       throw e;
     }
     qu.reset();
+    TPPD << "Setting zero to all scores.";
+    scoresZeroFill();
 
     return true;
   } // connectDB

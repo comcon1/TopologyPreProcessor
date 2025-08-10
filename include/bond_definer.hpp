@@ -26,6 +26,8 @@ namespace tpp {
       ~BondDefiner();
       void bondAlign();
       void log_needed_bonds();
+      // methods
+      bool connectDB() override;
 
     private:
       BondDefiner::Settings bondSettings;
@@ -37,8 +39,6 @@ namespace tpp {
 
       bool verbose;
 
-      // methods
-      bool connectDB() override;
 
       /** \brief Complete bonds exploiting DB definitions.
         */

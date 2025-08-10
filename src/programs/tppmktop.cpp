@@ -26,10 +26,12 @@
 #include <boost/filesystem.hpp>
 #include <boost/format.hpp>
 #include <sstream>
+#include <locale>
+#include <memory>
 
 #define TPP_LOADFILE_TIMELIMIT 600
 #define TPP_MKTOP_TIMELIMIT 600
-#define TPP_SQLCON_TIMELIMIT 10
+#define TPP_SQLCON_TIMELIMIT 20
 
 namespace p_o = boost::program_options;
 namespace bfs = boost::filesystem;
@@ -47,6 +49,9 @@ void printInfo();
 double sumcharge(const tpp::Topology &);
 
 int main(int argc, char * argv[]) {
+  std::locale::global(std::locale::classic());
+  setlocale(LC_ALL, "C");
+
   string progname("Execution rules for TPPMKTOP ");
   progname = progname + VERSION;
   p_o::options_description desc(progname), mandatory("Mandatory settings"),
@@ -211,10 +216,11 @@ int main(int argc, char * argv[]) {
 
     // initial DB queries
     // @todo: check connection ..
-    tpp::DbInfo *DI;
+    std::unique_ptr<tpp::DbInfo> DI;
     tpp::run_with_timeout<void>(TPP_SQLCON_TIMELIMIT,
         [&]() {
-      DI = new tpp::DbInfo(baseSettings, forcefield);
+      DI = std::make_unique<tpp::DbInfo>(baseSettings, forcefield);
+      DI->connectDB();
         });
     atomSettings.ffID = DI->getFFID();
     bondSettings.ffID = DI->getFFID();
@@ -232,23 +238,25 @@ int main(int argc, char * argv[]) {
     }
     TOP.ffdefaults = DI->getFFDefaults();
     TPPD << ("Force field defaults: "+TOP.ffdefaults);
-    TPPD << DI->getStatistics();
-    delete DI;
+    // TPPD << DI->getStatistics();
+    DI.reset();
 
-    tpp::AtomDefiner *AD; // @TODO: change to auto_ptr
-    tpp::BondDefiner *BD;
+    std::unique_ptr<tpp::AtomDefiner> AD;
+    std::unique_ptr<tpp::BondDefiner> BD;
 
     // starting program body
     tpp::run_with_timeout<void>(TPP_MKTOP_TIMELIMIT,
         [&]() {
-          AD = new tpp::AtomDefiner(baseSettings, atomSettings, TOP);
+          AD = std::make_unique<tpp::AtomDefiner>(baseSettings, atomSettings, TOP);
+          AD->connectDB();
           AD->proceed();
           AD->atomAlign();
-          BD = new tpp::BondDefiner(baseSettings, bondSettings, TOP);
+          BD = std::make_unique<tpp::BondDefiner>(baseSettings, bondSettings, TOP);
+          BD->connectDB();
           BD->bondAlign();
         } );
-    delete AD;
-    delete BD;
+    AD.reset();
+    BD.reset();
 
     // TODO: finalize & expanded
     tpp::TopologyWriter tio(twSettings, TOP);

@@ -40,7 +40,6 @@ namespace tpp {
     cout << endl;
     TPPI << "== Starting BondDefiner ==";
     cout << endl;
-    connectDB();
   }
 
   BondDefiner::~BondDefiner() {

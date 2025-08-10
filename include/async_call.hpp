@@ -20,7 +20,8 @@ namespace tpp {
     auto future = std::async(std::launch::async, f, x...);
     if (future.wait_for(std::chrono::seconds(timeout)) == std::future_status::timeout) {
       TPPE << boost::format(" << Timeout %d failed! >>") % timeout; // TPP log entry will be placed here
-      std::terminate();
+      // std::terminate();
+      throw std::runtime_error("Timeout occurred");
     }
     std::clock_t en = std::clock();
     TPPD << boost::format(" << Asynchronous call finished in %.3f sec. >>") % ((double)(en - beg) / CLOCKS_PER_SEC);
