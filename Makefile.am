@@ -5,7 +5,7 @@ else
 AM_CFLAGS = -O3
 AM_CXXFLAGS = -O3
 endif
-AM_CXXFLAGS += -std=c++11
+AM_CXXFLAGS += -std=c++14
 SUBDIRS = src
 #AM_CPPFLAGS = -I$(PWD)/include 
 dist_doc_DATA = README
