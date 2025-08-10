@@ -27,7 +27,7 @@ namespace tpp {
    */
   DbBase::DbBase(const Settings& set) :
        settings(set), con(new mysqlpp::Connection(false)) {
-
+    ;
   }
 
   DbBase::~DbBase(){
@@ -64,7 +64,7 @@ namespace tpp {
     mysqlpp::Row row;
     ostringstream os,os2;
 
-    os << "Checking DB version." << endl;
+    TPPD << "Checking DB version." << endl;
     os2 << "SELECT `id`,`keyword`,`value` FROM `properties` WHERE keyword='magic_number'";
     #ifdef SQLDEBUG
     TPPD << os2.str();
@@ -113,7 +113,7 @@ namespace tpp {
     * \brief DB INFO implementation
     */
   DbInfo::DbInfo(const Settings& sets, const std::string& ffn): DbBase(sets), ffName(ffn) {
-    this->connectDB();
+    ;
   }
 
   /**
@@ -122,6 +122,7 @@ namespace tpp {
   bool DbInfo::connectDB() {
     DbBase::connectDB();
     this->loadFFData();
+    return true;
   }
 
   /** \brief Load FF data from DB and set up object variables

@@ -186,6 +186,11 @@ namespace tpp {
                   const AtomDefiner::Settings&,
                   Topology &);
 
+      /** \brief Now this function is not overriden.
+        * See parent function for details.
+        */
+      bool connectDB() override;
+
       /** \brief Print current scores into log-file
         */
       void logScores();
@@ -269,11 +274,6 @@ namespace tpp {
 
     protected:
       AtomMapper atom_mapper; //!< map of atomtypes loaded completely from DB
-
-      /** \brief Now this function is not overriden.
-        * See parent function for details.
-        */
-      virtual bool connectDB();
 
       /** \brief Prints useful information about SMART fit procedure results.
         *

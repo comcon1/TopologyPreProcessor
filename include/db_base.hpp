@@ -52,14 +52,15 @@ namespace tpp {
         */
       virtual ~DbBase();
 
-    protected:
-      Settings settings;         //!< Structure with DB connection settings
-      mysqlpp::Connection *con;  //!< Pointer to Connection object
-
       /** \brief Connect to database.
         *  Method is called from the constructor.
         */
       virtual bool connectDB();
+
+    protected:
+      Settings settings;         //!< Structure with DB connection settings
+      mysqlpp::Connection *con;  //!< Pointer to Connection object
+
   };
 
   /**
@@ -68,11 +69,6 @@ namespace tpp {
   class DbInfo: public DbBase {
 
     protected:
-      /** \brief Overriden method of DB connection.
-        *
-        * Loads FF information via loadFFData call.
-        */
-      bool connectDB() override;
 
       int ffID;                   //!< ID of the force field in DB.
       std::string ffName;         //!< Name of the force field
@@ -94,6 +90,12 @@ namespace tpp {
     public:
       DbInfo(const Settings& set, const std::string& ffn);
 
+      /** \brief Overriden method of DB connection.
+        *
+        * Loads FF information via loadFFData call.
+        */
+      bool connectDB() override;
+      
       int getFFID() { return ffID; }                    //!< Public alias to ffID
       std::string getFFInclude() { return ffInclude; }  //!< Public alias to ffInclude [DEPRECATED]
       std::string getFFRev() { return ffRev; }          //!< Public alias to ffRev
